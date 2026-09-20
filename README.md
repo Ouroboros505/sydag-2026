@@ -65,8 +65,13 @@ R/                R scripts; setup.R installs the R toolkit
 scripts/          doctor.sh, build_data.py, phone.sh, anvil.md, job.slurm
 data/raw/         untouched inputs (gitignored)
 data/processed/   cleaned outputs (gitignored)
-docs/             setup, bootstrap prompt, pitch outline
+docs/             setup, bootstrap prompt, track brief, pitch outline
 ```
+
+## Before the event
+
+Read [docs/track-brief.md](docs/track-brief.md) — what the two sponsors work on, the role
+split, and the first-hour protocol.
 
 ## Working agreement
 
