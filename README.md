@@ -10,47 +10,49 @@ Purdue Symposium of Digital Agriculture hackathon, **25–27 September 2026**, r
 | Presentations | Sun 27th, 12:30 PM |
 | Finals + awards | Mon 28th, Beck Ag Center, 1:30 PM |
 
-## Setup (5 minutes, do this BEFORE Friday)
+The two tracks (Bayer, IoT4Ag) are announced at the Friday opening. This repo is a **skeleton
+on purpose** — no sample data, no example analysis, nothing that would anchor us to a problem
+shape before we know what the problem is.
 
-Windows people: see [docs/setup-windows.md](docs/setup-windows.md) first.
+## Setup
 
-```bash
-git clone git@github.com:Ouroboros505/sydag-2026.git
-cd sydag-2026
-uv venv
-uv pip install -r requirements.txt
-```
-
-Activate, then check it runs:
+New here? → **[docs/setup.md](docs/setup.md)**, or paste
+[docs/bootstrap-prompt.md](docs/bootstrap-prompt.md) into Claude Code and let it run.
 
 ```bash
-# macOS / Linux
+cd ~/hackathon/sydag-2026
+uv venv && uv pip install -r requirements.txt
 source .venv/bin/activate
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
-
 streamlit run app/app.py
 ```
-
-You should get a browser tab with the app shell. If you do, you're ready for Friday.
 
 ## Layout
 
 ```
-app/app.py          the demo — must run at all times
-src/data.py         loading + saving. all paths live here
-src/viz.py          shared plot style
-notebooks/<you>/    your scratch space. nobody else touches it
-data/raw/           untouched inputs (gitignored)
-data/processed/     cleaned outputs (gitignored)
-scripts/anvil.md    HPC cheatsheet
-docs/               setup + pitch outline
+app/app.py              demo shell — empty until we know what we're demoing
+src/data.py             paths + load/save. no hardcoded paths anywhere else
+src/viz.py              shared plot styling
+notebooks/<you>/        your scratch space. nobody else touches it
+data/raw/               untouched inputs (gitignored)
+data/processed/         cleaned outputs, written via src.data.save (gitignored)
+scripts/anvil.md        Anvil / ACCESS cheatsheet
+scripts/job.slurm       batch job template
+docs/setup.md           WSL setup
+docs/bootstrap-prompt.md  paste-in-Claude setup prompt
+docs/pitch-outline.md   presentation skeleton
 ```
 
 ## Working agreement
 
 - **Commit to `main`, small and often.** `git pull --rebase` before every push.
 - **Stay in your own files.** Conflicts come from two people editing one file.
-- **Notebooks are scratch.** Anything that matters gets moved into `src/`.
-- **No data in git.** Share it via the shared folder or a USB stick.
+- **Notebooks are scratch.** Anything that matters moves into `src/`.
+- **No data in git.**
 - **Never push a broken app.** The demo is the deliverable.
+
+## Before Friday
+
+- [ ] Registered on the Qualtrics form — **individually**, with the exact same team name
+- [ ] Repo cloned, `streamlit run app/app.py` works
+- [ ] ACCESS ID registered (@purdue.edu), sent to Alex
+- [ ] SSH public key sent to Alex

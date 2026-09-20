@@ -1,7 +1,7 @@
-"""Data loading. One place that knows where files live, so nobody hardcodes paths.
+"""Paths and IO. One place that knows where files live, so nobody hardcodes a path.
 
-Rule for the weekend: raw files land in data/raw/ untouched. Anything you clean
-gets written to data/processed/ by a function in here, never by a notebook.
+Convention: raw inputs land in data/raw/ untouched. Anything cleaned gets written to
+data/processed/ through save() — not by a notebook writing wherever it feels like.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ PROCESSED = ROOT / "data" / "processed"
 
 
 def find(name: str) -> Path:
-    """Locate a file by name anywhere under data/. Saves arguing about paths."""
+    """Locate a file by name anywhere under data/."""
     for base in (RAW, PROCESSED):
         hits = sorted(base.rglob(name))
         if hits:
@@ -24,22 +24,23 @@ def find(name: str) -> Path:
 
 
 def load(name: str, **kwargs) -> pd.DataFrame:
-    """Read csv/tsv/parquet/xlsx/json by extension. `name` is a filename or a path."""
+    """Read by extension. `name` is a filename (searched for) or an explicit path."""
     path = Path(name)
     if not path.exists():
         path = find(path.name)
-    suffix = path.suffix.lower()
-    if suffix in {".csv", ".txt"}:
-        return pd.read_csv(path, **kwargs)
-    if suffix in {".tsv", ".tab"}:
-        return pd.read_csv(path, sep="\t", **kwargs)
-    if suffix == ".parquet":
-        return pd.read_parquet(path, **kwargs)
-    if suffix in {".xlsx", ".xls"}:
-        return pd.read_excel(path, **kwargs)
-    if suffix in {".json", ".geojson"}:
-        return pd.read_json(path, **kwargs)
-    raise ValueError(f"no loader for {suffix!r}")
+    match path.suffix.lower():
+        case ".csv" | ".txt":
+            return pd.read_csv(path, **kwargs)
+        case ".tsv" | ".tab":
+            return pd.read_csv(path, sep="\t", **kwargs)
+        case ".parquet":
+            return pd.read_parquet(path, **kwargs)
+        case ".xlsx" | ".xls":
+            return pd.read_excel(path, **kwargs)
+        case ".json" | ".geojson":
+            return pd.read_json(path, **kwargs)
+        case other:
+            raise ValueError(f"no loader for {other!r}")
 
 
 def save(df: pd.DataFrame, name: str) -> Path:
@@ -48,16 +49,3 @@ def save(df: pd.DataFrame, name: str) -> Path:
     out = PROCESSED / (name if name.endswith(".parquet") else f"{name}.parquet")
     df.to_parquet(out, index=False)
     return out
-
-
-def overview(df: pd.DataFrame) -> pd.DataFrame:
-    """First thing to run on any new dataset: dtype, nulls, cardinality, a sample value."""
-    return pd.DataFrame(
-        {
-            "dtype": df.dtypes.astype(str),
-            "nulls": df.isna().sum(),
-            "null_pct": (df.isna().mean() * 100).round(1),
-            "unique": df.nunique(),
-            "sample": [df[c].dropna().iloc[0] if df[c].notna().any() else None for c in df.columns],
-        }
-    )
