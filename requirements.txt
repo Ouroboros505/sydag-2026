@@ -1,43 +1,60 @@
-# Mirrors the analytical stack on the team's Linux box, plus hackathon essentials.
-# Add a library here in the same commit you start using it.
+# General-purpose toolkit. Broad on purpose — we don't know the track yet, and
+# nobody should be blocked at 2 AM by a missing library.
+# Heavy deep-learning packages live in requirements-ml.txt so this install stays quick.
 
-# core
+# data
 pandas
 numpy
 scipy
+polars
+pyarrow
+duckdb
+
+# models
 scikit-learn
+statsmodels
+xgboost
+lightgbm
 
 # viz
 matplotlib
 seaborn
 plotly
+altair
 
 # geospatial / remote sensing
 geopandas
 rasterio
+rioxarray
+xarray
+netCDF4
 shapely
 pyproj
 folium
 
-# io
-pyarrow
-duckdb
-openpyxl
+# images
+pillow
+scikit-image
+opencv-python-headless
+
+# io / scraping / docs
 requests
-PyMuPDF
+httpx
+beautifulsoup4
+lxml
+openpyxl
 python-docx
+PyMuPDF
 
-# notebooks
-jupyterlab
-ipykernel
-
-# models
-xgboost
-lightgbm
-
-# demo
+# serving
 streamlit
+fastapi
+uvicorn
 
-# misc
+# cli / misc
+tqdm
+rich
+typer
+python-dotenv
 biopython
 anthropic

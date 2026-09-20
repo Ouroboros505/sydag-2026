@@ -1,0 +1,8 @@
+# Deep learning. Multi-GB download — install only if the track needs it:
+#   uv pip install -r requirements-ml.txt
+# CPU wheels by default. On Anvil's GPU nodes, install the CUDA build instead.
+torch
+torchvision
+transformers
+timm
+ultralytics

@@ -1,15 +1,24 @@
-# data never goes in git
-data/raw/*
-data/processed/*
-!data/**/.gitkeep
-
-# envs
+# local packages — installed per machine, never committed
+node_modules/
 .venv/
 venv/
 __pycache__/
 *.pyc
-.ipynb_checkpoints/
-.streamlit/secrets.toml
+
+# build output
+dist/
+*.tsbuildinfo
+dev-dist/
+
+# data stays out of git
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+
+# local secrets / notes
+.env
+.env.local
+*.local.md
 
 # os / editor
 .DS_Store
