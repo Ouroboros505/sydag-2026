@@ -43,7 +43,7 @@ uv --version
 ## 4. Clone and install
 
 ```powershell
-git clone https://github.com/OWNER/sydag-2026.git
+git clone https://github.com/Ouroboros505/sydag-2026.git
 cd sydag-2026
 uv venv
 uv pip install -r requirements.txt

@@ -15,7 +15,7 @@ Purdue Symposium of Digital Agriculture hackathon, **25–27 September 2026**, r
 Windows people: see [docs/setup-windows.md](docs/setup-windows.md) first.
 
 ```bash
-git clone git@github.com:OWNER/sydag-2026.git
+git clone git@github.com:Ouroboros505/sydag-2026.git
 cd sydag-2026
 uv venv
 uv pip install -r requirements.txt
