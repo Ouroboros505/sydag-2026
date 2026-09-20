@@ -1,0 +1,8 @@
+# Normalize line endings so Windows CRLF never shows up as a phantom diff.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.parquet binary
+*.xlsx binary
+# Notebooks: keep diffs from exploding
+*.ipynb -text

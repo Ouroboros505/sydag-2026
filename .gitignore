@@ -1,0 +1,22 @@
+# data never goes in git
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+
+# envs
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.streamlit/secrets.toml
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# outputs
+outputs/
+*.log
