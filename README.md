@@ -14,6 +14,14 @@ The two tracks (Bayer, IoT4Ag) are announced at the Friday opening. This repo is
 on purpose** — no sample data, no example analysis, nothing that would anchor us to a problem
 shape before we know what the problem is.
 
+## About this repo predating the event
+
+Most hackathons require that the submitted *work* be produced during the event. This repo is
+deliberately scaffolding only — environment setup, shared paths, plot styling, docs. There is
+no data, no analysis, no domain logic, and nothing track-specific, because none of that is
+known until Friday. Confirm the rules at the opening; if organizers want a repo created after
+the kickoff, we start a fresh one and copy the scaffolding in, which costs about five minutes.
+
 ## Setup
 
 New here? → **[docs/setup.md](docs/setup.md)**, or paste

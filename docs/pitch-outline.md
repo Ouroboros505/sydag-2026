@@ -13,8 +13,22 @@ Build these slides Saturday, not Sunday morning.
 6. **Impact** — $/acre, bushels, gallons of water, hours saved. Show the arithmetic.
 7. **What's next** — what a real deployment needs. Shows you know what you didn't build.
 
+## Harden the demo before you rehearse it
+
+Judges repeatedly name a stalled demo as the thing that sinks good projects. Remove every
+place it can stall:
+
+- **Pre-fill every input.** No typing on stage, no empty forms.
+- **Never call a live API in the demo path.** Cache the response to disk and read that.
+- **Pre-compute anything slow.** If a model takes 40 seconds to run, run it beforehand and
+  load the result. Nobody is grading you on doing it live.
+- **No live internet dependency.** Assume the venue wifi fails, because sometimes it does.
+- **One browser tab, one window, notifications off.**
+
 ## Rules
 
+- **Show something working inside 90 seconds.** If the demo runs long, cut features, not
+  the explanation of the problem.
 - Rehearse out loud at least twice. Time it.
 - **Record a screen capture of the demo working** by Saturday night. If the live demo
   breaks on stage, you play the video and keep talking.
