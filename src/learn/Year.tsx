@@ -130,7 +130,7 @@ export function CandidateYear() {
               <div className="row-actions" style={{ marginTop: 0 }}>
                 <div className="toggle">
                   <button className={!adjusted ? 'on' : ''} onClick={() => setAdjusted(false)}>raw yields</button>
-                  <button className={adjusted ? 'on' : ''} onClick={() => setAdjusted(true)}>compared with the field average</button>
+                  <button className={adjusted ? 'on' : ''} onClick={() => setAdjusted(true)}>compared with its neighbours in the same field</button>
                 </div>
               </div>
               <table className="harvest">
@@ -164,8 +164,8 @@ export function CandidateYear() {
               </div>
               <div className={'verdict ' + (adjusted ? 'strong' : 'warn')}>
                 {adjusted
-                  ? <>Now it's fair. Compared with the other plots <b>in the same fields</b>, {KID.id} beat the average by {signed(kidDiff)} bu/ac and {RIVAL.id} by only {signed(rivalDiff)}. {KID.id} is the better line; {RIVAL.id} was just planted in better dirt.</>
-                  : <>On raw numbers {RIVAL.id} looks better ({rivalRaw.toFixed(0)} vs {kidRaw.toFixed(0)}). But it was only grown in the two best fields. Switch to <b>compared with the field average</b>.</>}
+                  ? <>Now it's fair. Each plot is compared only with the other plots <b>in its own field</b> (same rain, same soil), then those differences are averaged: {KID.id} beat its neighbours by {signed(kidDiff)} bu/ac, {RIVAL.id} by only {signed(rivalDiff)}. {KID.id} is the better parent; {RIVAL.id} was just planted in better dirt.</>
+                  : <>On raw numbers {RIVAL.id} looks better ({rivalRaw.toFixed(0)} vs {kidRaw.toFixed(0)}). But it was only grown in the two best fields. Switch to <b>compared with its neighbours in the same field</b>.</>}
               </div>
             </>
           )}
@@ -207,8 +207,8 @@ export function CandidateYear() {
           'Where does this kid come from? Straight from section 3 (pools), step 3: two lines from the pool (usually earlier winners) were crossed, the family\'s kids were settled into lines, and here they are. Every kid from every family made this year lands in this January pile, around a thousand of them, all untested. They are not winners: the winners were their parents. In January the only real information about each kid is its DNA.',
           'Plots are the scarce resource: land, seed, labour, and one answer per season. Most kids will never get one. So every kid is predicted first, and the prediction decides.',
           'Think of the test hybrid as a blood sample: you take it, measure it, throw the sample away, and file the result under the patient\'s name. It never becomes a line or a parent (it\'s a mix, so its own seeds would be a lottery). Its only job is to answer "how good a parent is this kid?", which is the kid\'s real future job: being half of a hybrid. The same test seed goes to several fields so one bad storm doesn\'t decide its fate.',
-          'Yield depends heavily on the field and the year, often more than on the line. And in real trials not every line goes to every field: new lines have little seed, each field only has so many plots, and some plots get lost to hail or flooding. So a result only means something next to the other plots in the same field. The data we get has this built in: every row says which field (LOC) and year (YEAR) it came from, and the pipeline compares each plot with its own field before learning anything.',
-          'Nothing magic: this year\'s field results are next year\'s training data. The model gets a little more to learn from every year.',
+          'Yield depends heavily on the field and the year, often more than on the line. And in real trials not every line goes to every field: new lines have little seed, each field only has so many plots, and some plots get lost to hail or flooding. So a result only means something next to the other plots in the same field. Think of exams: two students who took different exams, one easy and one hard, can't be compared on raw scores, but "points above the class average on the same exam" is fair. Fields are the exams. The data we get has this built in: every row says which field (LOC) and year (YEAR) it came from, and the pipeline compares each plot with its own field before learning anything.',
+          'This step is about the loop: this year\'s field results become next year\'s training data, so the model gets a little more to learn from every year. Notice the LOC and YEAR columns: they are what make the fair comparison possible, because they say which neighbours each plot should be compared with. Section 7 shows what the whole table looks like.',
         ][stage]}
       </p>
       <div className="row-actions">
