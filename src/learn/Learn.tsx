@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
-import { IdDecoder, Pipeline, ProblemPicture, ReadsToNumbers } from './Basics'
+import { IdDecoder, ProblemPicture, ReadsToNumbers } from './Basics'
 import { DecisionToy, GLOSSARY, MoneyLine } from './Decision'
 import { PoolCycle, WhatIsALine } from './Lines'
 import { LeakageTrap, MarkerExplorer, MatrixView, Predictor } from './Model'
+import { CandidateYear } from './Year'
 
 interface Sec { id: string; title: string; oneLine: string; body: ReactNode }
 
@@ -11,7 +12,7 @@ const SECTIONS: Sec[] = [
   { id: 'problem', title: 'The problem in one picture', oneLine: 'Too many new corn lines, too few field plots to test them.', body: <ProblemPicture /> },
   { id: 'line', title: 'What is a line? (pure breed)', oneLine: 'A line is a corn variety you can copy exactly: plant its seeds and every plant comes out the same. You make one by letting a plant pollinate itself for a few seasons.', body: <WhatIsALine /> },
   { id: 'pools', title: 'Pools are a cycle', oneLine: 'A pool is many lines. Pairs of them make families; the best kids become next year\'s parents.', body: <PoolCycle /> },
-  { id: 'breeding', title: 'How a candidate is made and tested', oneLine: 'Cross two parents, get a family of kids, test each kid by crossing it with a fixed partner and planting the seed.', body: <Pipeline /> },
+  { id: 'year', title: 'One candidate\'s year', oneLine: 'Follow one kid from January, when all we have is its DNA, to December, when its field results become next year\'s training data.', body: <CandidateYear /> },
   { id: 'ids', title: 'Reading an ID', oneLine: 'C1.7.3 = pool 1, family 7, kid 3.', body: <IdDecoder /> },
   { id: 'dna', title: 'From DNA to numbers', oneLine: '−1, 0 and +1 are just a count of one letter at one spot, minus one.', body: <ReadsToNumbers /> },
   { id: 'table', title: 'The data table', oneLine: 'Rows are lines, columns are DNA spots, plus a yield for the lines already tested.', body: <MatrixView /> },

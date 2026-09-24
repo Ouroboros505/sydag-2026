@@ -184,3 +184,42 @@ table.matrix tr.sep td { border-top: 2px solid var(--text-3); }
 .purebar { height: 6px; background: var(--row-alt); border-radius: 3px; margin: 8px 0 4px; overflow: hidden; }
 .purebar > div { height: 100%; background: var(--good); transition: width .3s; }
 .tag-ok { color: var(--good); font-weight: 700; margin-left: 6px; }
+
+/* one candidate's year */
+.timeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 16px; }
+.tl {
+  font: inherit; cursor: pointer; text-align: left; background: var(--surface); color: var(--text-2);
+  border: 1px solid var(--border); border-top: 4px solid var(--border); border-radius: 8px; padding: 6px 10px;
+}
+.tl.done { border-top-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.tl.active { border-top-color: var(--accent); color: var(--text); box-shadow: inset 0 0 0 1px var(--accent); }
+.tlm { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); }
+.tlt { display: block; font-size: 13px; font-weight: 600; }
+@media (max-width: 640px) { .timeline { grid-template-columns: repeat(3, 1fr); } }
+
+.yeargrid { display: grid; grid-template-columns: 220px 1fr; gap: 18px; }
+@media (max-width: 720px) { .yeargrid { grid-template-columns: 1fr; } }
+.known { border: 1px solid var(--border); border-radius: 10px; padding: 12px; align-self: start; }
+.krow { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; font-size: 14px; }
+.kmark { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; flex: none; font-size: 13px; }
+.krow.ok .kmark { background: var(--good); color: #fff; }
+.krow.no .kmark { background: var(--row-alt); color: var(--text-3); border: 1px dashed var(--text-3); }
+.krow.no b { color: var(--text-3); }
+.yearmain { min-width: 0; }
+.lead { margin: 0 0 12px; font-size: 15px; }
+.dnachips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dchip { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; padding: 4px 8px; border-radius: 6px; }
+.dchip.v1 { background: color-mix(in srgb, var(--series-1) 22%, transparent); }
+.dchip.v2 { background: color-mix(in srgb, var(--series-2) 22%, transparent); }
+.dchip.more { color: var(--text-3); border: 1px dashed var(--border); }
+.bigq { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin: 6px 0 14px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
+.fieldcard { border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 14px; }
+.plotart { width: 60px; height: 38px; border-radius: 4px; background: color-mix(in srgb, var(--good) 15%, transparent); display: grid; align-content: space-evenly; padding: 0 6px; }
+.plotart span { height: 3px; background: var(--good); border-radius: 2px; }
+table.harvest { width: auto; min-width: 60%; margin-top: 10px; }
+table.harvest th, table.harvest td { padding: 5px 12px; }
+.good-t { color: var(--good); }
+.compare { display: grid; gap: 8px; margin-top: 14px; }
+.cmp { display: grid; grid-template-columns: 70px 1fr auto; gap: 12px; align-items: baseline; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; }
+.cmp.lead-cmp { border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, transparent); }
