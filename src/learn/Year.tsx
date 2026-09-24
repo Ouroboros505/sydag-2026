@@ -104,13 +104,14 @@ export function CandidateYear() {
             <>
               <p className="lead">It got plots. But the kid itself isn't what gets planted:</p>
               <div className="tcross">
-                <div className="tbox keep"><b>{KID.id}</b><span className="small">the kid, a pure line</span><span className="tag-ok">kept in storage</span></div>
+                <div className="tbox keep"><b>{KID.id}</b><span className="small">the kid, a pure line</span><span className="tag-ok">kept in storage</span><span className="small"><b>gives: its DNA</b> → the genotype file</span></div>
                 <div className="top">×</div>
                 <div className="tbox"><b>tester</b><span className="small">a fixed line from C2</span></div>
                 <div className="top">→</div>
-                <div className="tbox used"><b>test hybrid seed</b><span className="small">made only to be planted here</span><span className="tag-used">measured once, then discarded</span><span className="small muted">its DNA is never read: it's just kid + tester, and the tester is the same for everyone</span></div>
+                <div className="tbox used"><b>test hybrid seed</b><span className="small">made only to be planted here</span><span className="tag-used">measured once, then discarded</span><span className="small"><b>gives: the field results</b> → the phenotype file</span><span className="small muted">its DNA is never read: it's just kid + tester, and the tester is the same for everyone</span></div>
               </div>
-              <p className="lead" style={{ marginTop: 14 }}>That test seed is planted in <b>{FIELDS.length} fields</b> across the Corn Belt, next to hundreds of other kids' plots:</p>
+              <p className="small muted" style={{ marginTop: 8 }}>Both are filed under the kid's ID ({KID.id}), which is how the two files in the real data get joined.</p>
+              <p className="lead" style={{ marginTop: 10 }}>That test seed is planted in <b>{FIELDS.length} fields</b> across the Corn Belt, next to hundreds of other kids' plots:</p>
               <div className="fields">
                 {FIELDS.map((f) => (
                   <div key={f.loc} className="fieldcard">
