@@ -31,7 +31,7 @@ function Known({ stage }: { stage: number }) {
   const rows: [string, boolean, string][] = [
     ['Its ID', true, KID.id],
     ['Its parents', true, 'the two lines crossed to make family C1.7'],
-    ['Its DNA', true, 'read in a lab, a few dollars'],
+    ['Its DNA', true, 'read from the kid itself (the pure line), in a lab, a few dollars'],
     ['How it performs in a field', stage >= 3, stage >= 3 ? `${FIELDS.length} plots harvested` : 'unknown'],
   ]
   return (
@@ -108,7 +108,7 @@ export function CandidateYear() {
                 <div className="top">×</div>
                 <div className="tbox"><b>tester</b><span className="small">a fixed line from C2</span></div>
                 <div className="top">→</div>
-                <div className="tbox used"><b>test hybrid seed</b><span className="small">made only to be planted here</span><span className="tag-used">measured once, then discarded</span></div>
+                <div className="tbox used"><b>test hybrid seed</b><span className="small">made only to be planted here</span><span className="tag-used">measured once, then discarded</span><span className="small muted">its DNA is never read: it's just kid + tester, and the tester is the same for everyone</span></div>
               </div>
               <p className="lead" style={{ marginTop: 14 }}>That test seed is planted in <b>{FIELDS.length} fields</b> across the Corn Belt, next to hundreds of other kids' plots:</p>
               <div className="fields">
