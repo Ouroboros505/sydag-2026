@@ -218,16 +218,16 @@ export function PoolCycle() {
         <button className="btn" disabled={step === CYCLE.length - 1} onClick={() => setStep((s) => s + 1)}>next →</button>
         {step === 4 && (
           <div className="toggle">
-            <button className={!narrow ? 'on' : ''} onClick={() => setNarrow(false)}>winners from 3 families</button>
-            <button className={narrow ? 'on' : ''} onClick={() => setNarrow(true)}>all winners from one family</button>
+            <button className={!narrow ? 'on' : ''} onClick={() => setNarrow(false)}>Future A: winners from 3 different families</button>
+            <button className={narrow ? 'on' : ''} onClick={() => setNarrow(true)}>Future B: all winners are siblings</button>
           </div>
         )}
       </div>
       {step === 4 && (
         <div className={'verdict ' + (narrow ? 'warn' : 'strong')}>
           {narrow
-            ? <>All four new lines are siblings from C1.1. Next year's crosses would mostly be between relatives: the pool narrows, and there's less variety left to find the next winner in. This is what ProMaize's <b>family limit</b> protects against.</>
-            : <>New lines come from three different families, so the pool stays varied. Next year there are genuinely different parents to cross.</>}
+            ? <><b>Future B.</b> All four new parents are brothers and sisters from C1.1, with nearly the same DNA. Next year, crossing them together makes kids that are all alike: little new variety to find something better, and they share the same weak spots (one disease could hit all of them). This is what naturally happens when you just rank: siblings share their parents' good DNA, so they crowd the top of the list together. ProMaize's <b>family limit</b> prevents it.</>
+            : <><b>Future A.</b> The four new parents come from three different families, so they carry different DNA. Next year, crossing them together makes genuinely new combinations: more variety, more chances to find a better line, and no single weak spot shared by everything.</>}
         </div>
       )}
     </div>
