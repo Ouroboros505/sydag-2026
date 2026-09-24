@@ -1,7 +1,7 @@
 """Paths and IO. One place that knows where files live, so nobody hardcodes a path.
 
 Convention: raw inputs land in data/raw/ untouched. Anything cleaned gets written to
-data/processed/ through save() — not by a notebook writing wherever it feels like.
+data/processed/ through save(): not by a notebook writing wherever it feels like.
 """
 from __future__ import annotations
 

@@ -24,7 +24,7 @@ label_for() {
 }
 
 primary=""
-bold "Dev server — port $PORT"
+bold "Dev server on port $PORT"
 echo
 while read -r iface addr; do
   ip="${addr%%/*}"

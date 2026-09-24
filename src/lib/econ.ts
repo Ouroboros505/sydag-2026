@@ -41,7 +41,7 @@ export function score(cands: Candidate[], p: Prices): Scored[] {
 }
 
 /** Advancement order under a per-family cap. Greedy in ranking order, so the first k of the
- *  result is the advanced set for every budget k — one pass serves the whole frontier. */
+ *  result is the advanced set for every budget k, so one pass serves the whole frontier. */
 export function advanceOrder(ranked: Scored[], cap: number): Scored[] {
   if (!Number.isFinite(cap)) return ranked
   const n = new Map<string, number>()
@@ -67,7 +67,7 @@ export interface FrontierPoint {
   byYield: number    // same, chosen by yield
 }
 
-/** Expected gain per advanced acre versus advancing at random, for both rankings —
+/** Expected gain per advanced acre versus advancing at random, for both rankings:
  *  the selection differential, priced. Both respect the same family cap. */
 export function frontier(scored: Scored[], cap: number, step = 1): FrontierPoint[] {
   const mean = populationMean(scored)

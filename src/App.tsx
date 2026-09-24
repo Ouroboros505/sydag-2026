@@ -59,7 +59,7 @@ export default function App() {
   )
   const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
 
-  if (error) return <main><p>Could not load recommendations.json — {error}</p></main>
+  if (error) return <main><p>Could not load recommendations.json: {error}</p></main>
   if (!data || !prices || !summary) return <main><p className="muted">Loading…</p></main>
 
   return (
@@ -75,7 +75,7 @@ export default function App() {
       <p className="lede">
         {data.meta.n_candidates.toLocaleString()} candidate lines, none of them field-tested yet, and plots for{' '}
         {k.toLocaleString()}. Predictions come from markers and parentage; the ranking is by <b>dollars per acre</b>,
-        not bushels — yield after drying cost and lodging loss at the prices you set on the left.
+        not bushels: yield after drying cost and lodging loss at the prices you set on the left.
       </p>
 
       <div className="layout">
@@ -86,7 +86,7 @@ export default function App() {
         <div className="stack">
           {k < budget && (
             <p className="muted" style={{ margin: 0 }}>
-              The family limit leaves only {k.toLocaleString()} eligible lines — loosen it or lower the budget.
+              The family limit leaves only {k.toLocaleString()} eligible lines. Loosen it or lower the budget.
             </p>
           )}
           <StatTiles {...summary} capped={Number.isFinite(cap)} />

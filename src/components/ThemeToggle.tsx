@@ -23,7 +23,7 @@ export default function ThemeToggle() {
   }, [theme])
   const next = ORDER[(ORDER.indexOf(theme) + 1) % ORDER.length]
   return (
-    <button className="theme" onClick={() => setTheme(next)} title={`theme: ${theme} — click for ${next}`}>
+    <button className="theme" onClick={() => setTheme(next)} title={`theme: ${theme}, click for ${next}`}>
       {theme === 'auto' ? 'auto' : theme}
     </button>
   )

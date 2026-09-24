@@ -49,7 +49,7 @@ export default function GenomicMap({ all, advanced }: Props) {
 
   return (
     <div className="panel" style={{ position: 'relative' }}>
-      <h2>Genomic map — what you're advancing, and what you're leaving</h2>
+      <h2>Genomic map: what you're advancing, and what you're leaving</h2>
       <svg
         ref={ref} className="chart" viewBox={`0 0 ${W} ${H}`} role="img"
         aria-label="Candidates plotted by their top two genomic principal components; advanced lines highlighted"

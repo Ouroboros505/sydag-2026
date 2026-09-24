@@ -123,7 +123,7 @@ def _parents() -> dict[str, tuple[str, str]]:
 
 
 def markers(keep: pd.Index | None = None) -> pd.DataFrame:
-    """Progeny marker matrix. Pass `keep` (line ids) to bound memory on the full dataset —
+    """Progeny marker matrix. Pass `keep` (line ids) to bound memory on the full dataset -
     a fully flattened table of every population is tens of GB; the lines with phenotypes
     plus the candidate cohort are a small fraction of that."""
     parts = []

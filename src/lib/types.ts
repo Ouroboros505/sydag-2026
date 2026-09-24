@@ -17,7 +17,7 @@ export interface Meta {
 export interface PriceDefaults {
   corn_price: number              // $/bu
   drying_cost_per_point: number   // $/bu per percentage point of moisture removed
-  target_moisture: number         // % — drying stops here
+  target_moisture: number         // %, drying stops here
   lodging_loss_fraction: number   // share of yield lost on a lodged plant
 }
 

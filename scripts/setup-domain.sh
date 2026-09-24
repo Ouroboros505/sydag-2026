@@ -103,7 +103,7 @@ else
       else
         cf -X POST "$API/zones/$ZONE_ID/dns_records" \
           --data "{\"type\":\"CNAME\",\"name\":\"$HOST\",\"content\":\"$PROJECT.pages.dev\",\"proxied\":true}" >/dev/null
-        echo "    dns record created — certificate takes a minute or two"
+        echo "    dns record created (certificate takes a minute or two)"
       fi
     else
       echo "    could not find zone $ZONE_NAME; add the CNAME by hand:" >&2
