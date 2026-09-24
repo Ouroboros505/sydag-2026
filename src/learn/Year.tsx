@@ -180,10 +180,10 @@ export function CandidateYear() {
                 </table>
               </div>
               <div className="verdict strong">
-                The same kid, two roles. <b>This year</b> {KID.id} was a candidate: predicted in February from DNA.{' '}
-                <b>Next year</b> it has DNA and real results, so it becomes a <b>past line</b> the model learns from to
-                predict the next batch of kids. Kids that never got plots never get results, and drop out of the loop.
-                That loop, year after year, is the data we're handed.
+                {KID.id} was predicted <b>once</b>, in February, from its DNA. It's never predicted again: now we
+                have its real results. Next year it simply becomes one more <b>example</b> the model learns from, to
+                predict the <b>next</b> batch of kids (C1.8.x, C1.9.x…). Kids that never got plots never get results,
+                so they never become examples. That loop, year after year, is the data we're handed.
               </div>
             </>
           )}
