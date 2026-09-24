@@ -62,7 +62,7 @@ export function WhatIsALine() {
   const shown: Genome[] = dh
     ? history[1].map((g) => g.map(([a]) => [a, a] as [number, number]))
     : history[gen]
-  const label = dh ? 'The lab shortcut: settled in one step' : gen === 0 ? 'Season 0: we just crossed X and Y' : `Season ${gen}: the kids have pollinated themselves ${gen} time${gen > 1 ? 's' : ''}`
+  const label = dh ? 'Lab shortcut: one copy, photocopied. Settled in one step' : gen === 0 ? 'Season 0: we just crossed X and Y' : `Season ${gen}: the kids have pollinated themselves ${gen} time${gen > 1 ? 's' : ''}`
   return (
     <div>
       <div className="row-actions" style={{ marginTop: 0 }}>
@@ -77,7 +77,7 @@ export function WhatIsALine() {
             <div key={i} className={'lineage' + (p === 1 ? ' pure' : '')}>
               <div className="lname">Kid {i + 1}</div>
               <Chromosome g={g} />
-              <div className="small muted">top row and bottom row = its two copies of DNA</div>
+              <div className="small muted">{dh ? 'bottom row = a photocopy of the top row' : 'top row and bottom row = its two copies of DNA'}</div>
               <div className="purebar"><div style={{ width: `${p * 100}%` }} /></div>
               <div className="small"><b>{Math.round(p * 100)}%</b> settled {p === 1 && <span className="tag-ok">new line ✓</span>}</div>
             </div>
@@ -88,11 +88,11 @@ export function WhatIsALine() {
       <div className="row-actions">
         <button className="btn ghost" onClick={() => { setGen(0); setDh(false) }}>Start over</button>
         <button className="btn" disabled={gen >= MAX || dh} onClick={() => setGen((g) => g + 1)}>Next season →</button>
-        <button className="btn ghost" onClick={() => setDh(true)}>The lab shortcut</button>
+        <button className="btn ghost" onClick={() => setDh(true)}>Lab shortcut: photocopy the DNA</button>
       </div>
       <p className="explain">
         {dh
-          ? <>The fast way. A lab can grow a corn plant that has only <b>one</b> copy of its DNA, then double it. Now both copies are identical from day one: a settled line in one step instead of six years. Big seed companies do this all the time.</>
+          ? <>The fast way, done in a lab. Step 1: grow a plant that has only <b>one</b> copy of the kid's DNA (special pollen triggers the seed but its own DNA gets thrown out). Step 2: a chemical makes the plant <b>photocopy</b> that one copy. Now both copies are identical, so every spot matches: fully settled in one step instead of six seasons. Look at the panels: each bottom row is now an exact copy of the top row. Big seed companies make most of their lines this way. The jargon for it is <b>doubled haploid</b>: one copy, doubled.</>
           : gen === 0
           ? <>We crossed two corn lines, X (green) and Y (pink), and got three kids. Every plant has <b>two copies</b> of its DNA, one from each parent, so right now all three kids are <b>identical</b>: half X, half Y at every spot. It's a mix, and if you planted its seeds you'd get a lottery, every plant a bit different. Press <b>Next season</b>.</>
           : gen === 1

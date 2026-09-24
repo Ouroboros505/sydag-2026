@@ -134,7 +134,7 @@ export const GLOSSARY: [string, string][] = [
   ['Line', 'A pure breed of corn: plant its seeds and every plant comes out the same. Even purer than a dog breed, every plant is basically an identical twin.'],
   ['Self-pollination (selfing)', 'A plant making seed with its own pollen. Do it for about six seasons and the plant settles into a line.'],
   ['F1, F2', 'F1 = the first-generation plants of a cross (all alike). F2 = their offspring after selfing (all different: the genes get reshuffled).'],
-  ['Doubled haploid', 'A shortcut to a pure line: grow a plant with one set of chromosomes, then double it. Pure in one step instead of six seasons.'],
+  ['Doubled haploid', 'The lab shortcut: grow a plant with just one copy of its DNA, then make it photocopy it. Both copies match, so it is a settled line in one step instead of six seasons.'],
   ['Breeding cycle', 'Lines in a pool are crossed, the kids are tested, and the winners become next year\'s parents.'],
   ['Inbred', 'A line made pure by self-pollinating for generations, so both copies of every chromosome match. Weaker on its own; valuable as a parent.'],
   ['Hybrid', 'A crossbreed of two pure breeds (lines) from different pools. What farmers actually plant. Much more vigorous than either parent, and every seed from that cross comes out the same.'],
