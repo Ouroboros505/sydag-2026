@@ -126,47 +126,50 @@ export function CandidateYear() {
           )}
           {stage === 3 && (
             <>
-              <p className="lead">These numbers come from the <b>test hybrid</b> ({KID.id} × tester), not the pure line itself. They're filed under {KID.id} because they measure how good a parent it is.</p>
+              <p className="lead">These yields come from each kid's <b>test hybrid</b> (kid × tester), not the pure line itself. They're filed under the kid because they measure how good a parent it is.</p>
               <div className="row-actions" style={{ marginTop: 0 }}>
                 <div className="toggle">
                   <button className={!adjusted ? 'on' : ''} onClick={() => setAdjusted(false)}>raw yields</button>
                   <button className={adjusted ? 'on' : ''} onClick={() => setAdjusted(true)}>compared with its neighbours in the same field</button>
                 </div>
               </div>
-              <table className="harvest">
-                <thead>
-                  <tr><th className="l">field</th><th>{KID.id}'s test hybrid<div className="tiny">yield, bu/ac</div></th>{adjusted && <th>field average</th>}{adjusted && <th>difference</th>}<th>moisture %</th><th>lodging %</th></tr>
-                </thead>
-                <tbody>
-                  {FIELDS.map((f) => (
-                    <tr key={f.loc}>
-                      <td className="l">{f.state}</td>
-                      <td><b>{f.kid}</b></td>
-                      {adjusted && <td className="muted">{f.avg}</td>}
-                      {adjusted && <td className="good-t"><b>{signed(f.kid - f.avg)}</b></td>}
-                      <td>{f.mst}</td>
-                      <td>{f.lodg}</td>
+              <div className="tablewrap">
+                <table className="harvest two">
+                  <thead>
+                    <tr>
+                      <th className="l">field</th>
+                      <th>field average<div className="tiny">every kid's test hybrid in that field</div></th>
+                      <th>{KID.id}<div className="tiny">{adjusted ? 'vs field average' : 'test hybrid, bu/ac'}</div></th>
+                      <th>{RIVAL.id}<div className="tiny">{adjusted ? 'vs field average' : 'test hybrid, bu/ac'}</div></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="compare">
-                <div className={'cmp ' + (!adjusted ? 'lead-cmp' : '')}>
-                  <span className="mono">{RIVAL.id}</span>
-                  <span className="small muted">its test hybrid was planted only in Iowa and Illinois, the two best fields</span>
-                  <b>{adjusted ? `${signed(rivalDiff)} vs its fields` : `${rivalRaw.toFixed(0)} bu/ac`}</b>
-                </div>
-                <div className={'cmp ' + (adjusted ? 'lead-cmp' : '')}>
-                  <span className="mono">{KID.id}</span>
-                  <span className="small muted">its test hybrid was planted in all five</span>
-                  <b>{adjusted ? `${signed(kidDiff)} vs its fields` : `${kidRaw.toFixed(0)} bu/ac`}</b>
-                </div>
+                  </thead>
+                  <tbody>
+                    {FIELDS.map((f) => {
+                      const r = RIVAL.fields.find((x) => x.loc === f.loc)
+                      return (
+                        <tr key={f.loc}>
+                          <td className="l">{f.state}</td>
+                          <td className="muted">{f.avg}</td>
+                          <td><b className={adjusted ? 'good-t' : ''}>{adjusted ? signed(f.kid - f.avg) : f.kid}</b></td>
+                          <td>{r ? <b className={adjusted ? 'good-t' : ''}>{adjusted ? signed(r.kid - r.avg) : r.kid}</b> : <span className="muted">not planted here</span>}</td>
+                        </tr>
+                      )
+                    })}
+                    <tr className="avgrow">
+                      <td className="l"><b>average</b><div className="tiny">over the fields it was planted in</div></td>
+                      <td />
+                      <td><b>{adjusted ? `${signed(kidDiff)} bu/ac` : `${kidRaw.toFixed(0)} bu/ac`}</b><div className="tiny">5 fields</div></td>
+                      <td><b>{adjusted ? `${signed(rivalDiff)} bu/ac` : `${rivalRaw.toFixed(0)} bu/ac`}</b><div className="tiny">2 fields</div></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
               <div className={'verdict ' + (adjusted ? 'strong' : 'warn')}>
                 {adjusted
-                  ? <>Now it's fair. Each plot is compared only with the other plots <b>in its own field</b> (same rain, same soil), then those differences are averaged: {KID.id} beat its neighbours by {signed(kidDiff)} bu/ac, {RIVAL.id} by only {signed(rivalDiff)}. {KID.id} is the better parent; {RIVAL.id} was just planted in better dirt.</>
-                  : <>On raw numbers {RIVAL.id} looks better ({rivalRaw.toFixed(0)} vs {kidRaw.toFixed(0)}). But it was only grown in the two best fields. Switch to <b>compared with its neighbours in the same field</b>.</>}
+                  ? <>Now it's fair. Each plot is compared only with the other plots <b>in its own field</b> (same rain, same soil), then those differences are averaged. {KID.id} beats its neighbours by {signed(kidDiff)} bu/ac, {RIVAL.id} by only {signed(rivalDiff)}. {KID.id} is the better parent; {RIVAL.id} was just planted in the two easiest fields.</>
+                  : <>On raw averages {RIVAL.id} looks better ({rivalRaw.toFixed(0)} vs {kidRaw.toFixed(0)}). But its test hybrid was only planted in Iowa and Illinois, the two best fields, while {KID.id}'s had to face all five. Switch to <b>compared with its neighbours in the same field</b>.</>}
               </div>
+              <p className="small muted">Moisture and lodging are measured in every plot too. They don't change this comparison, which is about yield, but they matter for what an acre is worth: see section 11.</p>
             </>
           )}
           {stage === 4 && (

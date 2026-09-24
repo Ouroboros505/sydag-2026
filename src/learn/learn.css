@@ -253,3 +253,6 @@ table.harvest th, table.harvest td { padding: 5px 12px; }
 .top { font-size: 22px; color: var(--text-3); }
 .tag-used { color: var(--warn); font-weight: 700; font-size: 13px; }
 .tbox .tag-ok { margin-left: 0; font-size: 13px; }
+table.harvest.two td, table.harvest.two th { text-align: right; }
+table.harvest.two .l { text-align: left; }
+tr.avgrow td { border-top: 2px solid var(--text-3); background: var(--row-alt); }
