@@ -217,7 +217,7 @@ const PER_YEAR = 1000   // toy scale: new kids tested each year
 export function YearFlow() {
   const [target, setTarget] = useState(() => {
     const v = Number(new URLSearchParams(location.search).get('predict'))
-    return YEARS.includes(v) ? v : 2008
+    return YEARS.includes(v) ? v : YEARS[0]
   })
   const learn = YEARS.filter((y) => y < target)
   const nLearn = learn.length * PER_YEAR
