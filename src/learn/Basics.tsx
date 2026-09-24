@@ -119,6 +119,9 @@ export function ReadsToNumbers() {
               <div className="pname">{p.name}</div>
               <div className="small muted">{p.note}</div>
               <Pileup reads={p.reads} />
+              {stage === 0 && p.name === PLANTS[0].name && (
+                <div className="tiny" style={{ marginTop: 6 }}>top row: the DNA around spot M1</div>
+              )}
               {stage >= 1 && <div className="arrow">↓ {p.geno === 'TA' ? 'half T, half A' : `all ${p.geno[0]}`}</div>}
               {stage >= 1 && <div className="big">{p.geno}</div>}
               {stage >= 2 && <div className="arrow">↓ copies of A</div>}
@@ -131,10 +134,10 @@ export function ReadsToNumbers() {
       </div>
       <p className="explain">
         {[
-          'The sequencer can\'t read a whole genome in one go. It reads millions of short pieces (here 11 letters, in reality 100 to 150). Lined up against each other, several pieces overlap spot M1, the highlighted column. Everything else in them is just the neighbouring DNA. The only letter we care about is the one each read has at M1: all T for the first kid, all A for the last, a mix for the plant in the middle.',
+          'The sequencer can\'t read a whole genome in one go. It reads millions of short pieces (here 11 letters, in reality 100 to 150). Lined up against each other, several pieces overlap spot M1, the highlighted column. Everything else in them is just the neighbouring DNA. The only letter we care about is the one each read has at M1: all T for the first kid, all A for the last, a mix for the plant in the middle. Only M1 appears because the other markers (M2, M3…) are far away in the genome, often on other chromosomes; each marker gets its own pileup like this. And at almost every marker only two letters ever show up: spots with three are rare, and the data keeps only two-letter spots.',
           'A plant has two copies of every chromosome, one from each parent, and the reads come from both. All reads T means both copies are T. Half T and half A means one copy of each. "AT" and "TA" are the same thing: nobody knows or needs to know which copy is which. Settled lines like our kids are always TT or AA; a mix only shows up in a plant that isn\'t fully settled yet.',
           'Your counting table: at this spot only T and A exist, so counting one letter says everything. 0 A\'s = TT, 1 = TA, 2 = AA.',
-          'Subtract one and you have the numbers in the data file: −1, 0, +1. A 0 is a spot that hasn\'t settled yet: lines are often tested before they\'re fully settled. That\'s all they are. Every line with TT here gets −1, in every row of the table, so the letter is never lost, just renamed.',
+          'Subtract one and you have the numbers in the data file: −1, 0, +1. The minus one is only a convention that centres the scale; 0/1/2 would work exactly the same, and some datasets use it. A 0 is not "no information": it means one copy of each, and the model treats it as halfway between the two pure versions. It\'s also not missing data (that is written NA). A 0 is a spot that hasn\'t settled yet: lines are often tested before they\'re fully settled. That\'s all they are. Every line with TT here gets −1, in every row of the table, so the letter is never lost, just renamed.',
         ][stage]}
       </p>
     </div>
