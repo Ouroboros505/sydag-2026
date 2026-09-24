@@ -282,3 +282,15 @@ tr.avgrow td { border-top: 2px solid var(--text-3); background: var(--row-alt); 
 .prow .hit.v1 { background: color-mix(in srgb, var(--series-1) 35%, transparent); color: var(--text); }
 .prow .hit.v2 { background: color-mix(in srgb, var(--series-2) 35%, transparent); color: var(--text); }
 .wfill.v1 { background: var(--series-1); } .wfill.v2 { background: var(--series-2); }
+.effhead, .effrow { display: grid; grid-template-columns: 34px 1fr 2px 1fr; gap: 8px; align-items: center; }
+.effrow { margin: 5px 0; }
+.effmid { height: 22px; background: var(--text-3); }
+.effside { display: flex; align-items: center; gap: 8px; }
+.effside.left { flex-direction: row; justify-content: flex-end; }
+.effside.left .effbar { direction: rtl; }
+.effbar { width: 60%; height: 12px; background: var(--row-alt); border-radius: 3px; overflow: hidden; }
+.efill { height: 100%; }
+.efill.up { background: var(--good); }
+.efill.down { background: var(--bad); }
+.effside .small { white-space: nowrap; min-width: 72px; font-variant-numeric: tabular-nums; }
+.effside.left .small { text-align: right; }

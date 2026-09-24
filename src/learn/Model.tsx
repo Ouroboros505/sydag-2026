@@ -104,20 +104,35 @@ export function MarkerExplorer() {
           : 'Tiny: which version a line has here makes no difference. Noise.'}
       </div>
       <div className="weights">
-        <div className="small muted">
-          What the model learns: <b>one weight per marker</b> (half the gap). The sign says which version wins:
-          positive = version 2 is better, negative = version 1 is better. "Per step" = one move along −1 → 0 → +1.
+        <div className="small muted" style={{ marginBottom: 8 }}>
+          What the model learns, every marker at once: how far each version pushes yield <b>away from the average</b>.
+          The two versions are mirror images, and a line with one copy of each sits in the middle, at 0.
+        </div>
+        <div className="effhead">
+          <span />
+          <span className="small muted" style={{ textAlign: 'right' }}>version 1 does this</span>
+          <span />
+          <span className="small muted">version 2 does this</span>
         </div>
         {ranked.map(({ m, g }) => {
-          const v2wins = g >= 0
+          const w = g / 2
+          const pct = (Math.abs(w) / 10) * 100
           return (
-            <div key={m.id} className="wrow">
+            <div key={m.id} className="effrow">
               <span className="mono">{m.id}</span>
-              <div className="wbar"><div className={'wfill ' + (v2wins ? 'v2' : 'v1')} style={{ width: `${(Math.abs(g) / 20) * 100}%` }} /></div>
-              <span className="small">{sign(g / 2, 2)} per step · <b className={v2wins ? 't-v2' : 't-v1'}>{v2wins ? m.v2 + m.v2 : m.v1 + m.v1}</b> better</span>
+              <div className="effside left">
+                <span className="small"><b className="t-v1">{m.v1}{m.v1}</b> {sign(-w)}</span>
+                <div className="effbar"><div className={'efill ' + (-w >= 0 ? 'up' : 'down')} style={{ width: `${pct}%` }} /></div>
+              </div>
+              <div className="effmid" />
+              <div className="effside right">
+                <div className="effbar"><div className={'efill ' + (w >= 0 ? 'up' : 'down')} style={{ width: `${pct}%` }} /></div>
+                <span className="small"><b className="t-v2">{m.v2}{m.v2}</b> {sign(w)}</span>
+              </div>
             </div>
           )
         })}
+        <div className="legend-inline"><i className="sw" style={{ background: 'var(--good)' }} />more yield than average <i className="sw" style={{ background: 'var(--bad)' }} />less yield than average</div>
       </div>
       <div className="nextyear">
         <b>This toy is easy on purpose. The real thing is harder:</b>
