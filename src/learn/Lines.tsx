@@ -127,7 +127,7 @@ const CYCLE = [
   { t: 'Pick pairs', d: 'Each family is ONE pair of lines from the pool. The same line can parent several families: L3 is crossed with L9 and with L14; L9 with L3 and with L22.' },
   { t: 'Each pair makes a family', d: 'Each cross gives a family of kids, the candidates: C1.1, C1.2, C1.3. Hundreds of families per pool per year in the real data.' },
   { t: 'Test the kids', d: 'Every kid is crossed with the tester from pool C2 and planted. Pool C2 does the same thing in reverse, using a tester from C1.' },
-  { t: 'Winners join the pool', d: 'The best kids become new lines in the pool, and next year they are parents. The pool keeps renewing itself: that is the breeding cycle.' },
+  { t: 'Winners join the pool', d: 'A winner is a kid whose test results (mostly yield, averaged over several locations) stay near the top through a few rounds of bigger and bigger trials. Winners are added to the pool because the pool is where next year\'s parents come from: to make better kids, you cross your best lines. Old, outclassed lines slowly get retired. Each round the parents get a bit better, which is how corn improves year after year. The very best winners are also crossed with a line from the other pool to become a hybrid farmers can buy. Our data sits at the very first round of testing: who even gets into the race.' },
 ]
 
 export function PoolCycle() {
