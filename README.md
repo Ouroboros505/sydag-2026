@@ -25,7 +25,7 @@ bash scripts/doctor.sh
 
 When that prints **Ready**, your machine costs the team zero setup time at the event.
 
-## The demo: Trial Planner
+## The demo: ProMaize
 
 A budget allocator for line advancement. It ranks candidate lines that have never been
 field-tested by **dollars per acre** — predicted yield after drying cost and lodging loss at

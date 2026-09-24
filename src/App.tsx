@@ -65,8 +65,8 @@ export default function App() {
   return (
     <main>
       <header>
-        <h1>Trial Planner</h1>
-        <span className="sub">which lines get the ground this season</span>
+        <h1>ProMaize</h1>
+        <span className="sub">trial planner · which lines get the ground this season</span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           {data.meta.synthetic && <span className="banner" style={{ marginLeft: 0 }}>synthetic placeholder data</span>}
           <ThemeToggle />

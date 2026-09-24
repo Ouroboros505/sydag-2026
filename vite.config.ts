@@ -13,9 +13,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       manifest: {
-        name: 'SyDAg 2026',
-        short_name: 'SyDAg',
-        description: 'SyDAg 2026 hackathon',
+        name: 'ProMaize',
+        short_name: 'ProMaize',
+        description: 'Trial planner: which breeding lines get the ground this season',
         theme_color: '#1a1a19',
         background_color: '#1a1a19',
         display: 'standalone',
