@@ -194,9 +194,9 @@ export function CandidateYear() {
 
       <p className="explain">
         {[
-          'Where does this kid come from? Straight from the previous section, step 3: two lines from the pool (usually earlier winners) were crossed, the family\'s kids were settled into lines, and here they are. Every kid from every family made this year lands in this January pile, around a thousand of them, all untested. They are not winners: the winners were their parents. In January the only real information about each kid is its DNA.',
+          'Where does this kid come from? Straight from section 3 (pools), step 3: two lines from the pool (usually earlier winners) were crossed, the family\'s kids were settled into lines, and here they are. Every kid from every family made this year lands in this January pile, around a thousand of them, all untested. They are not winners: the winners were their parents. In January the only real information about each kid is its DNA.',
           'Plots are the scarce resource: land, seed, labour, and one answer per season. Most kids will never get one. So every kid is predicted first, and the prediction decides.',
-          'The kid itself isn\'t planted: its test seed is (the kid crossed with the fixed tester, as in the previous section). The same test seed goes to several fields so one bad storm doesn\'t decide its fate.',
+          'The kid itself isn\'t planted: its test seed is (the kid crossed with the fixed tester, as in section 3). The same test seed goes to several fields so one bad storm doesn\'t decide its fate.',
           'Yield depends heavily on the field and the year, often more than on the line. So a result only means something next to the other plots in the same field. The data we get has this built in: every row says which field (LOC) and year (YEAR) it came from, and the pipeline compares each plot with its own field before learning anything.',
           'Nothing magic: this year\'s field results are next year\'s training data. The model gets a little more to learn from every year.',
         ][stage]}
