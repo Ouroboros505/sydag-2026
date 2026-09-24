@@ -73,7 +73,7 @@ if cf "$API/accounts/$ACCOUNT_ID/pages/projects/$PROJECT" | ok; then
 else
   # --force: create on classic Pages. Without it, current wrangler tries to convert the
   # project to Workers, which needs broader permissions and rewrites build config.
-  npx wrangler pages project create "$PROJECT" --production-branch=main --force
+  npx --yes wrangler@4.138.0 pages project create "$PROJECT" --production-branch=main --force
 fi
 
 echo "==> building and deploying"
