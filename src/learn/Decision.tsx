@@ -149,7 +149,7 @@ export const GLOSSARY: [string, string][] = [
   ['Advance', 'Keep testing a line next season. Lines not advanced are dropped.'],
   ['Marker (SNP), the M in M1', 'One position in the genome where lines differ by a single letter. Datasets like this one have a few thousand.'],
   ['Allele / version', 'One of the two letters that can appear at a marker.'],
-  ['Genotype code', '−1 / 0 / +1: two copies of version 1, one of each, two copies of version 2.'],
+  ['Version count', '−1 / 0 / +1: two copies of version 1, one of each, two copies of version 2. It is the count of one letter at a spot, minus one (section 6).'],
   ['Bushel (bu)', 'US unit for grain, about 25 kg of corn. Prices are per bushel.'],
   ['bu/ac', 'Bushels per acre, the US way to express yield. 180 bu/ac ≈ 11 t/ha.'],
   ['YLD_BE', 'The yield column in the Bayer data, in bushels per acre (most likely adjusted to a standard moisture so plots compare fairly).'],

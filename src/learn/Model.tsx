@@ -172,7 +172,7 @@ export function Predictor() {
         <div className="sumrow head"><span>starting point (intercept): the average yield of the 8 past lines</span><b>{fmt(BASE)}</b></div>
         {parts.map(({ m, c, v }) => (
           <div key={m.id} className="sumrow">
-            <span><span className="mono">{m.id}</span> has <b className={c === -1 ? 't-v1' : 't-v2'}>{letters(m, c)}</b> → code {c > 0 ? '+1' : c} × weight {sign(WEIGHTS[MARKERS.indexOf(m)], 2)} =</span>
+            <span><span className="mono">{m.id}</span> has <b className={c === -1 ? 't-v1' : 't-v2'}>{letters(m, c)}</b> → version count {c > 0 ? '+1' : c} × weight {sign(WEIGHTS[MARKERS.indexOf(m)], 2)} =</span>
             <b>{sign(v)}</b>
           </div>
         ))}
@@ -184,7 +184,7 @@ export function Predictor() {
         <span className="muted small">In the toy data it's close. On real data it's much rougher. See the next section.</span>
       </div>
       <p className="explain">
-        The formula is: <b>prediction = starting point + (code × weight) for every marker</b>. Both the starting
+        The formula is: <b>prediction = starting point + (version count × weight) for every marker</b>. Both the starting
         point and the weights were learned from the past lines. The starting point is needed because the weights only
         say how far above or below average each version sits; on their own they don't add up to a yield. This line has
         never been in a field: the number comes only from its DNA plus what the past lines taught the model.
