@@ -29,3 +29,6 @@ Thumbs.db
 # outputs
 outputs/
 *.log
+
+# wrangler local state
+.wrangler/

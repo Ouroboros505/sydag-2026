@@ -71,7 +71,9 @@ echo "==> ensuring project $PROJECT exists"
 if cf "$API/accounts/$ACCOUNT_ID/pages/projects/$PROJECT" | ok; then
   echo "    exists"
 else
-  npx wrangler pages project create "$PROJECT" --production-branch=main
+  # --force: create on classic Pages. Without it, current wrangler tries to convert the
+  # project to Workers, which needs broader permissions and rewrites build config.
+  npx wrangler pages project create "$PROJECT" --production-branch=main --force
 fi
 
 echo "==> building and deploying"
@@ -117,10 +119,7 @@ fi
 cat <<EOF
 
 Done.
-
   https://$DOMAIN
 
-On the phone: open it in Chrome -> menu -> Add to Home Screen.
-Install from THIS url and not from a dev address — browser storage is keyed to
-origin, so the log follows whichever one you installed from.
+Certificates take a minute or two on the first attach.
 EOF
