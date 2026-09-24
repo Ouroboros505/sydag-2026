@@ -298,3 +298,16 @@ tr.avgrow td { border-top: 2px solid var(--text-3); background: var(--row-alt); 
 .effrow { cursor: pointer; border-radius: 6px; padding: 2px 4px; }
 .effrow:hover { background: var(--row-alt); }
 .effrow.sel { background: color-mix(in srgb, var(--accent) 14%, transparent); box-shadow: inset 0 0 0 1px var(--accent); }
+
+/* phones: keep every column inside the screen */
+.lgrid { grid-template-columns: 230px minmax(0, 1fr); }
+.lbody { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 900px) { .lgrid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .lsec h2, .lsec .oneline { padding-left: 38px; }
+  .yeargrid { grid-template-columns: minmax(0, 1fr); }
+  .effhead, .effrow { grid-template-columns: 30px 1fr 2px 1fr; gap: 4px; }
+  .effside .small { min-width: 58px; font-size: 11px; }
+  .effbar { width: 40%; }
+  .cmp { grid-template-columns: 1fr; gap: 2px; }
+}

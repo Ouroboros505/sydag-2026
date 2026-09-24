@@ -56,6 +56,7 @@ export default function Frontier({ points, budget, onBudget }: Props) {
   return (
     <div className="panel" style={{ position: 'relative' }}>
       <h2>Expected gain per advanced acre, as the budget grows</h2>
+      <div className="chartbox">
       <svg
         ref={ref}
         className="chart"
@@ -95,6 +96,7 @@ export default function Frontier({ points, budget, onBudget }: Props) {
           <line x1={x(hover.k)} x2={x(hover.k)} y1={M.t} y2={H - M.b} stroke="var(--text-2)" strokeWidth={1} opacity={0.5} />
         )}
       </svg>
+      </div>
       <div className="legend">
         <span><i style={{ background: 'var(--series-1)' }} />ranking by $/acre</span>
         <span><i style={{ background: 'var(--series-2)' }} />ranking by bushels</span>

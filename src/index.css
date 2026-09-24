@@ -137,3 +137,18 @@ a.pill {
   border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; white-space: nowrap;
 }
 a.pill:hover { color: var(--accent); border-color: var(--accent); }
+
+/* phones */
+.layout { grid-template-columns: 300px minmax(0, 1fr); }
+.stack { min-width: 0; }
+@media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.chartbox { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 640px) {
+  .chartbox .chart { min-width: 640px; }
+  .tablewrap h2 { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .hide-sm { display: none; }
+  .legend { flex-wrap: wrap; gap: 6px 14px; }
+  .legend span { white-space: nowrap; }
+}
+.stack { grid-template-columns: minmax(0, 1fr); }
+.panel { min-width: 0; }

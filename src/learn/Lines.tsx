@@ -147,6 +147,7 @@ export function PoolCycle() {
           </button>
         ))}
       </div>
+      <div className="chartbox">
       <svg className="chart" viewBox="0 0 760 360" role="img" aria-label="The breeding cycle within one pool">
         <defs>
           <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -214,6 +215,7 @@ export function PoolCycle() {
           })}
         </g>
       </svg>
+      </div>
       <p className="explain"><b>Step {step + 1}. {CYCLE[step].t}.</b> {CYCLE[step].d}</p>
       <div className="row-actions">
         <button className="btn ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>← back</button>

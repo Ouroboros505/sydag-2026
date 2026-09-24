@@ -50,6 +50,7 @@ export default function GenomicMap({ all, advanced }: Props) {
   return (
     <div className="panel" style={{ position: 'relative' }}>
       <h2>Genomic map: what you're advancing, and what you're leaving</h2>
+      <div className="chartbox">
       <svg
         ref={ref} className="chart" viewBox={`0 0 ${W} ${H}`} role="img"
         aria-label="Candidates plotted by their top two genomic principal components; advanced lines highlighted"
@@ -68,6 +69,7 @@ export default function GenomicMap({ all, advanced }: Props) {
           genomic PC1 →   (nearby points are close relatives)
         </text>
       </svg>
+      </div>
       <div className="legend">
         <span><i style={{ background: 'var(--series-1)', height: 8, width: 8, borderRadius: 4 }} />advanced</span>
         <span><i style={{ background: 'var(--text-3)', opacity: 0.4, height: 8, width: 8, borderRadius: 4 }} />not advanced</span>

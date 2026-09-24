@@ -78,7 +78,7 @@ export default function App() {
       <p className="lede">
         {data.meta.n_candidates.toLocaleString()} candidate lines, none of them field-tested yet, and plots for{' '}
         {k.toLocaleString()}. Predictions come from markers and parentage; the ranking is by <b>dollars per acre</b>,
-        not bushels: yield after drying cost and lodging loss at the prices you set on the left.
+        not bushels: yield after drying cost and lodging loss at the prices you set.
       </p>
 
       <div className="layout">

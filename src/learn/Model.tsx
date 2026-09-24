@@ -169,10 +169,10 @@ export function Predictor() {
         ))}
       </div>
       <div className="sum">
-        <div className="sumrow head"><span>start: the average yield of the 8 past lines</span><b>{fmt(BASE)}</b></div>
+        <div className="sumrow head"><span>starting point (intercept): the average yield of the 8 past lines</span><b>{fmt(BASE)}</b></div>
         {parts.map(({ m, c, v }) => (
-          <div key={m.id} className={'sumrow' + (Math.abs(v) > 3 ? ' heavy' : '')}>
-            <span><span className="mono">{m.id}</span>: this line has <b className={c === -1 ? 't-v1' : 't-v2'}>{letters(m, c)}</b>, and {letters(m, c)}'s effect there is</span>
+          <div key={m.id} className="sumrow">
+            <span><span className="mono">{m.id}</span> has <b className={c === -1 ? 't-v1' : 't-v2'}>{letters(m, c)}</b> → code {c > 0 ? '+1' : c} × weight {sign(WEIGHTS[MARKERS.indexOf(m)], 2)} =</span>
             <b>{sign(v)}</b>
           </div>
         ))}
@@ -184,10 +184,10 @@ export function Predictor() {
         <span className="muted small">In the toy data it's close. On real data it's much rougher. See the next section.</span>
       </div>
       <p className="explain">
-        How to read it: start from 172, the average yield of the 8 past lines. Then, marker by marker, look at which
-        letters this line carries and add that version's effect, the same numbers as in the chart in section 8. Most
-        effects are close to zero; M2 and M5 carry almost all of it. The total is the prediction. This line has never
-        been in a field: the number comes only from its DNA plus what the past lines taught the model.
+        The formula is: <b>prediction = starting point + (code × weight) for every marker</b>. Both the starting
+        point and the weights were learned from the past lines. The starting point is needed because the weights only
+        say how far above or below average each version sits; on their own they don't add up to a yield. This line has
+        never been in a field: the number comes only from its DNA plus what the past lines taught the model.
       </p>
     </div>
   )

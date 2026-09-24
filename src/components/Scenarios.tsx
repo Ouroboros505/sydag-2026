@@ -28,22 +28,22 @@ export default function Scenarios({ candidates, prices, budget, cap }: Props) {
         <thead>
           <tr>
             <th className="l">Scenario</th>
-            <th className="l">Assumes</th>
+            <th className="l hide-sm">Assumes</th>
             <th>Gain/acre by $</th>
             <th>Gain/acre by bu</th>
             <th>Left on the table</th>
-            <th>Lines that change hands</th>
+            <th className="hide-sm">Lines that change hands</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.name}>
               <td className="l"><b>{r.name}</b></td>
-              <td className="l muted">{r.note}</td>
+              <td className="l muted hide-sm">{r.note}</td>
               <td>{fmtUSD(r.gainByMargin)}</td>
               <td>{fmtUSD(r.gainByYield)}</td>
               <td><b>{fmtUSD(r.gap)}</b></td>
-              <td>{fmtNum(r.swapCount)}</td>
+              <td className="hide-sm">{fmtNum(r.swapCount)}</td>
             </tr>
           ))}
         </tbody>

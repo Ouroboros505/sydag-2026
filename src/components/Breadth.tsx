@@ -41,6 +41,7 @@ export default function Breadth({ scored, budget, cap, onCap }: Props) {
   return (
     <div className="panel" style={{ position: 'relative' }}>
       <h2>The price of genetic breadth</h2>
+      <div className="chartbox">
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img"
         aria-label="Margin gain per acre versus effective number of families in the advanced set, one point per family cap">
         {ticks.map((v) => {
@@ -74,6 +75,7 @@ export default function Breadth({ scored, budget, cap, onCap }: Props) {
           )
         })}
       </svg>
+      </div>
       <div className="legend">
         <span className="muted">each point is a per-family limit · click one to apply it</span>
       </div>
