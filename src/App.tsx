@@ -18,9 +18,20 @@ export default function App() {
   useEffect(() => {
     loadJson<Recommendations>('recommendations.json')
       .then((d) => {
+        const q = new URLSearchParams(location.search)
+        const num = (k: string, fallback: number) => {
+          const v = Number(q.get(k))
+          return q.has(k) && Number.isFinite(v) ? v : fallback
+        }
+        const p = d.price_defaults
         setData(d)
-        setPrices(d.price_defaults)
-        setBudget(Math.min(300, d.candidates.length))
+        setPrices({
+          corn_price: num('price', p.corn_price),
+          drying_cost_per_point: num('drying', p.drying_cost_per_point),
+          target_moisture: num('target', p.target_moisture),
+          lodging_loss_fraction: num('lodging', p.lodging_loss_fraction),
+        })
+        setBudget(Math.min(num('budget', 300), d.candidates.length))
       })
       .catch((e) => setError(String(e)))
   }, [])

@@ -56,6 +56,12 @@ if [ -d node_modules ]; then
   npm run build >/dev/null 2>&1 && ok "npm run build" || bad "npm run build fails" "see: npm run build"
 else bad "npm run build" "npm install first"; fi
 
+head_ "Demo"
+[ -s public/recommendations.json ] && ok "public/recommendations.json present" || bad "recommendations.json" "npm run data:synthetic"
+if [ -x .venv/bin/python ]; then
+  .venv/bin/python -c "import sys; sys.path.insert(0,'.'); from analysis import model, g2f, bayer" 2>/dev/null && ok "analysis modules import" || bad "analysis modules" "uv pip install -r requirements.txt"
+fi
+
 head_ "Anvil"
 [ -f ~/.ssh/id_ed25519.pub ] && ok "ssh key present" || bad "ssh key" "ssh-keygen -t ed25519 -C you@purdue.edu"
 
