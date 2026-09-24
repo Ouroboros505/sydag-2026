@@ -141,16 +141,6 @@ export function MarkerExplorer() {
         })}
         <div className="legend-inline"><i className="sw" style={{ background: 'var(--good)' }} />more yield than average <i className="sw" style={{ background: 'var(--bad)' }} />less yield than average</div>
       </div>
-      <div className="nextyear">
-        <b>This toy is easy on purpose. The real thing is harder:</b>
-        <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
-          <li><b>No single marker matters much.</b> Here M2 alone is worth 20 bushels. In real maize, thousands of spots each move yield a fraction of a bushel.</li>
-          <li><b>More markers than lines, and they're tangled.</b> Nearby spots are inherited together, so it's hard to tell which one is doing the work. Without keeping every weight small (ridge), the model memorises noise.</li>
-          <li><b>The field is noisy.</b> Weather and soil move yield more than genetics does, even after comparing with the field average.</li>
-          <li><b>The families are new.</b> The model has to predict kids of crosses it has never seen.</li>
-        </ul>
-        That's why honest accuracy on the real data is around r = 0.15 (section 11): a weak but real signal.
-      </div>
       <p className="explain">
         That's the whole idea of the model. Nobody knows what M2 <i>is</i>. It's not a gene we understand, just a spot
         that happens to sit next to something that matters on the chromosome, so the two get inherited together. The
