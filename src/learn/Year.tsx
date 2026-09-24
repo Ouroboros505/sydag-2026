@@ -174,7 +174,7 @@ export function CandidateYear() {
           )}
           {stage === 4 && (
             <>
-              <p className="lead">The results are written down under the kid's ID, one row per field. This is exactly the shape of the real data file:</p>
+              <p className="lead">The results are written down under the kid's ID, one row per field. This is a slice of the real phenotype file (the real one has a few more columns: plant height, ear height, root lodging, test weight, coordinates):</p>
               <div className="tablewrap">
                 <table className="harvest filerows">
                   <thead><tr>
@@ -187,7 +187,7 @@ export function CandidateYear() {
                   </tr></thead>
                   <tbody>
                     {FIELDS.map((f) => (
-                      <tr key={f.loc}><td className="l mono">{KID.id}</td><td>2008</td><td className="l mono">{f.loc}</td><td>{f.kid}</td><td>{f.mst}</td><td>{f.lodg}</td></tr>
+                      <tr key={f.loc}><td className="l mono">{KID.id}</td><td>2008</td><td className="l mono">{f.loc} <span className="tiny">{f.state}</span></td><td>{f.kid}</td><td>{f.mst}</td><td>{f.lodg}</td></tr>
                     ))}
                   </tbody>
                 </table>
@@ -211,7 +211,7 @@ export function CandidateYear() {
           'Plots are the scarce resource: land, seed, labour, and one answer per season. Most kids will never get one. So every kid is predicted first, and the prediction decides.',
           'Think of the test hybrid as a blood sample: you take it, measure it, throw the sample away, and file the result under the patient\'s name. It never becomes a line or a parent (it\'s a mix, so its own seeds would be a lottery). Its only job is to answer "how good a parent is this kid?", which is the kid\'s real future job: being half of a hybrid. The same test seed goes to several fields so one bad storm doesn\'t decide its fate.',
           'Yield depends heavily on the field and the year, often more than on the line. And in real trials not every line goes to every field: new lines have little seed, each field only has so many plots, and some plots get lost to hail or flooding. So a result only means something next to the other plots in the same field. Think of exams: two students who took different exams, one easy and one hard, cannot be compared on raw scores, but "points above the class average on the same exam" is fair. Fields are the exams. The data we get has this built in: every row says which field (LOC) and year (YEAR) it came from, and the pipeline compares each plot with its own field before learning anything.',
-          'This step is about the loop: this year\'s field results become next year\'s training data, so the model gets a little more to learn from every year. Notice the LOC and YEAR columns: they are what make the fair comparison possible, because they say which neighbours each plot should be compared with. Section 7 shows what the whole table looks like.',
+          'How these rows reach the model: LOC and YEAR say which field each plot was in, so each yield is compared with its neighbours in that field (the harvest step), and the five results are boiled down to one number per line: C1.7.3\'s +6. That one number is joined with C1.7.3\'s DNA, giving one row per line: DNA columns plus a result. That is the table in section 7, and it is what the model learns from.',
         ][stage]}
       </p>
       <div className="row-actions">
