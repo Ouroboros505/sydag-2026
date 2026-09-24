@@ -92,7 +92,7 @@ export function CandidateYear() {
               <div className="predbox">
                 <span className="small muted">The model's prediction for {KID.id}, from its DNA</span>
                 <span className="predval">{predict(KID).toFixed(0)} bu/ac</span>
-                <span className="small muted">learned from <b>past</b> lines: kids from earlier years that already have field results. Not from {KID.id}'s own harvest, which doesn't exist yet.</span>
+                <span className="small muted">The model learned from the kids of <b>2001–2007</b>: every one of them has DNA <b>and</b> real field results. It then reads {KID.id}'s DNA and gives this number. See the years below.</span>
               </div>
               <div className="verdict strong">
                 <b>This is where ProMaize works.</b> Every candidate gets a prediction like this, and the best predictions
@@ -190,6 +190,8 @@ export function CandidateYear() {
         </div>
       </div>
 
+      {stage === 1 && <YearFlow />}
+
       <p className="explain">
         {[
           'Every year a breeding program starts with a pile of kids like this one: new lines from this year\'s crosses. In January the only real information about each of them is its DNA.',
@@ -203,6 +205,62 @@ export function CandidateYear() {
         <button className="btn ghost" disabled={stage === 0} onClick={() => setStage((s) => s - 1)}>← back</button>
         <button className="btn" disabled={stage === STAGES.length - 1} onClick={() => setStage((s) => s + 1)}>next →</button>
       </div>
+    </div>
+  )
+}
+
+/* ---------------------------------------------------------------- the years, side by side */
+
+const YEARS = [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008]
+const PER_YEAR = 1000   // toy scale: new kids tested each year
+
+export function YearFlow() {
+  const [target, setTarget] = useState(() => {
+    const v = Number(new URLSearchParams(location.search).get('predict'))
+    return YEARS.includes(v) ? v : 2008
+  })
+  const learn = YEARS.filter((y) => y < target)
+  const nLearn = learn.length * PER_YEAR
+  const msg =
+    target === 2001
+      ? <>Nothing before 2001 to learn from, so <b>2001 can't be predicted</b>. The first year is only ever used as examples for the years after it.</>
+      : target === 2008
+      ? <><b>This is the hackathon task.</b> Learn from all of 2001–2007 ({nLearn.toLocaleString()} kids with results), then predict the 2008 kids from their DNA. Their real 2008 results exist, but they're kept aside and only used at the very end to check.</>
+      : target >= 2006
+      ? <><b>This is how we check honestly.</b> Pretend it's January {target}: learn only from {learn[0]}–{learn[learn.length - 1]}, predict the {target} kids, then compare with their real {target} results, which we do have. If the model does well here, we trust it for 2008.</>
+      : <>Learn from {learn.length === 1 ? learn[0] : `${learn[0]}–${learn[learn.length - 1]}`} ({nLearn.toLocaleString()} kids with results), predict {target}. Possible, but early years have little history, so these predictions are weak.</>
+  return (
+    <div className="yflow">
+      <div className="yhead">
+        <b>The years, side by side.</b> Pick the year you want to predict:
+        <div className="steps" style={{ margin: '8px 0 0' }}>
+          {YEARS.map((y) => (
+            <button key={y} className={'step' + (y === target ? ' active' : '')} onClick={() => setTarget(y)}>{y}</button>
+          ))}
+        </div>
+      </div>
+      <div className="ystrip">
+        {YEARS.map((y) => {
+          const role = y < target ? 'learn' : y === target ? (y === YEARS[0] ? 'impossible' : 'predict') : 'future'
+          return (
+            <div key={y} className={'ycol ' + role}>
+              <div className="yyear">{y}</div>
+              <div className="ydots">
+                {Array.from({ length: 6 }, (_, i) => <span key={i} className="ydot">{role === 'predict' ? '?' : role === 'learn' ? '✓' : role === 'impossible' ? '✗' : ''}</span>)}
+              </div>
+              <div className="yrole">
+                {role === 'learn' ? 'DNA + results' : role === 'predict' ? (y === 2008 ? 'DNA only' : 'predict, then check') : role === 'impossible' ? 'nothing to learn from' : 'not used yet'}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div className="ylegend">
+        <span><i className="sw ylearn" />learn from: DNA and real field results</span>
+        <span><i className="sw ypred" />predict: from DNA</span>
+        <span><i className="sw yfut" />later years: not used</span>
+      </div>
+      <div className={'verdict ' + (target === 2001 ? 'warn' : 'strong')}>{msg}</div>
     </div>
   )
 }
