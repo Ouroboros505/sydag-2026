@@ -32,7 +32,7 @@ function Known({ stage }: { stage: number }) {
     ['Its ID', true, KID.id],
     ['Its parents', true, 'the two lines crossed to make family C1.7'],
     ['Its DNA', true, 'read from the kid itself (the pure line), in a lab, a few dollars'],
-    ['How it performs in a field', stage >= 3, stage >= 3 ? `${FIELDS.length} plots harvested` : 'unknown'],
+    ['How good a parent it is', stage >= 3, stage >= 3 ? `its test hybrid was harvested in ${FIELDS.length} fields` : 'unknown: needs a field test'],
   ]
   return (
     <div className="known">
@@ -126,6 +126,7 @@ export function CandidateYear() {
           )}
           {stage === 3 && (
             <>
+              <p className="lead">These numbers come from the <b>test hybrid</b> ({KID.id} × tester), not the pure line itself. They're filed under {KID.id} because they measure how good a parent it is.</p>
               <div className="row-actions" style={{ marginTop: 0 }}>
                 <div className="toggle">
                   <button className={!adjusted ? 'on' : ''} onClick={() => setAdjusted(false)}>raw yields</button>
@@ -134,7 +135,7 @@ export function CandidateYear() {
               </div>
               <table className="harvest">
                 <thead>
-                  <tr><th className="l">field</th><th>{KID.id}</th>{adjusted && <th>field average</th>}{adjusted && <th>difference</th>}<th>moisture %</th><th>lodging %</th></tr>
+                  <tr><th className="l">field</th><th>{KID.id}'s test hybrid<div className="tiny">yield, bu/ac</div></th>{adjusted && <th>field average</th>}{adjusted && <th>difference</th>}<th>moisture %</th><th>lodging %</th></tr>
                 </thead>
                 <tbody>
                   {FIELDS.map((f) => (
@@ -152,12 +153,12 @@ export function CandidateYear() {
               <div className="compare">
                 <div className={'cmp ' + (!adjusted ? 'lead-cmp' : '')}>
                   <span className="mono">{RIVAL.id}</span>
-                  <span className="small muted">planted only in Iowa and Illinois, the two best fields</span>
+                  <span className="small muted">its test hybrid was planted only in Iowa and Illinois, the two best fields</span>
                   <b>{adjusted ? `${signed(rivalDiff)} vs its fields` : `${rivalRaw.toFixed(0)} bu/ac`}</b>
                 </div>
                 <div className={'cmp ' + (adjusted ? 'lead-cmp' : '')}>
                   <span className="mono">{KID.id}</span>
-                  <span className="small muted">planted in all five</span>
+                  <span className="small muted">its test hybrid was planted in all five</span>
                   <b>{adjusted ? `${signed(kidDiff)} vs its fields` : `${kidRaw.toFixed(0)} bu/ac`}</b>
                 </div>
               </div>
