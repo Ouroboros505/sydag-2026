@@ -34,26 +34,59 @@ export function score(cands: Candidate[], p: Prices): Scored[] {
 
 export interface FrontierPoint {
   k: number
-  byMargin: number   // share of total achievable margin captured by the top-k margin-ranked set
-  byYield: number    // same, but choosing top-k by yield
+  byMargin: number   // $/acre: mean margin of the top-k margin-ranked set, minus the population mean
+  byYield: number    // same, choosing top-k by yield
 }
 
-/** Cumulative margin captured as a share of advancing everything, for both rankings. */
+export function populationMean(scored: Scored[]): number {
+  return scored.reduce((s, c) => s + c.margin, 0) / (scored.length || 1)
+}
+
+/** Expected gain per advanced acre versus advancing at random, for both rankings.
+ *  This is the selection differential, priced. */
 export function frontier(scored: Scored[], step = 1): FrontierPoint[] {
-  const total = scored.reduce((s, c) => s + Math.max(0, c.margin), 0) || 1
-  const byMargin = scored // already sorted by margin desc
+  const mean = populationMean(scored)
+  const byMargin = scored // sorted by margin desc
   const byYield = [...scored].sort((a, b) => b.pred_yield - a.pred_yield)
-  const out: FrontierPoint[] = [{ k: 0, byMargin: 0, byYield: 0 }]
+  const out: FrontierPoint[] = []
   let cm = 0
   let cy = 0
   for (let i = 0; i < scored.length; i++) {
-    cm += Math.max(0, byMargin[i].margin)
-    cy += Math.max(0, byYield[i].margin)
-    if ((i + 1) % step === 0 || i === scored.length - 1) {
-      out.push({ k: i + 1, byMargin: cm / total, byYield: cy / total })
+    cm += byMargin[i].margin
+    cy += byYield[i].margin
+    const k = i + 1
+    if (k % step === 0 || k === scored.length || k === 1) {
+      out.push({ k, byMargin: cm / k - mean, byYield: cy / k - mean })
     }
   }
   return out
+}
+
+export interface Summary {
+  gainByMargin: number   // $/acre over population mean, advanced set ranked by margin
+  gainByYield: number    // $/acre over population mean, advanced set ranked by yield
+  gap: number            // $/acre left on the table by ranking on bushels
+  swapCount: number
+}
+
+export function summarize(scored: Scored[], k: number): Summary {
+  const mean = populationMean(scored)
+  const byYield = [...scored].sort((a, b) => b.pred_yield - a.pred_yield)
+  const m = scored.slice(0, k).reduce((s, c) => s + c.margin, 0) / k - mean
+  const y = byYield.slice(0, k).reduce((s, c) => s + c.margin, 0) / k - mean
+  return { gainByMargin: m, gainByYield: y, gap: m - y, swapCount: swaps(scored, k).length }
+}
+
+/** Evenly spaced "nice" tick values from 0 to at least max. */
+export function niceTicks(max: number, count = 5): number[] {
+  if (max <= 0) return [0]
+  const raw = max / count
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)))
+  const stepv = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((v) => v >= raw) ?? raw
+  const ticks: number[] = []
+  for (let v = 0; v <= max + 1e-9; v += stepv) ticks.push(Number(v.toFixed(6)))
+  if (ticks[ticks.length - 1] < max) ticks.push(ticks[ticks.length - 1] + stepv)
+  return ticks
 }
 
 /** Lines the margin ranking advances that the yield ranking would have cut, at budget k. */

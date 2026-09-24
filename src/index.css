@@ -114,3 +114,8 @@ tbody tr.swap { background: var(--highlight); }
   white-space: nowrap; z-index: 2;
 }
 .tip b { font-variant-numeric: tabular-nums; }
+
+button.theme {
+  font: inherit; font-size: 12px; color: var(--text-2); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; cursor: pointer;
+}

@@ -3,8 +3,9 @@ import CandidateTable from './components/CandidateTable'
 import Controls from './components/Controls'
 import Frontier from './components/Frontier'
 import StatTiles from './components/StatTiles'
+import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
-import { frontier, score, swaps, type Prices } from './lib/econ'
+import { frontier, score, summarize, type Prices } from './lib/econ'
 import type { Recommendations } from './lib/types'
 
 export default function App() {
@@ -26,20 +27,10 @@ export default function App() {
   const scored = useMemo(() => (data && prices ? score(data.candidates, prices) : []), [data, prices])
   const curve = useMemo(() => (scored.length ? frontier(scored, Math.max(1, Math.floor(scored.length / 200))) : []), [scored])
 
-  const summary = useMemo(() => {
-    if (!scored.length) return null
-    const k = Math.min(budget, scored.length)
-    const byYield = [...scored].sort((a, b) => b.pred_yield - a.pred_yield)
-    const total = scored.reduce((s, c) => s + Math.max(0, c.margin), 0) || 1
-    const mSum = scored.slice(0, k).reduce((s, c) => s + c.margin, 0)
-    const ySum = byYield.slice(0, k).reduce((s, c) => s + c.margin, 0)
-    return {
-      capturedByMargin: mSum / total,
-      capturedByYield: ySum / total,
-      dollarGap: mSum - ySum,
-      swapCount: swaps(scored, k).length,
-    }
-  }, [scored, budget])
+  const summary = useMemo(
+    () => (scored.length ? summarize(scored, Math.min(budget, scored.length)) : null),
+    [scored, budget],
+  )
 
   if (error) return <main><p>Could not load recommendations.json — {error}</p></main>
   if (!data || !prices || !summary) return <main><p className="muted">Loading…</p></main>
@@ -49,7 +40,10 @@ export default function App() {
       <header>
         <h1>Trial Planner</h1>
         <span className="sub">which lines get the ground this season</span>
-        {data.meta.synthetic && <span className="banner">synthetic placeholder data</span>}
+        <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          {data.meta.synthetic && <span className="banner" style={{ marginLeft: 0 }}>synthetic placeholder data</span>}
+          <ThemeToggle />
+        </span>
       </header>
       <p className="lede">
         {data.meta.n_candidates.toLocaleString()} candidate lines, none of them field-tested yet. Predictions come from
