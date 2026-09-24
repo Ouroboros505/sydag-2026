@@ -58,10 +58,44 @@ export function IdDecoder() {
 /* ---------------------------------------------------------------- 4. reads -> numbers */
 
 const PLANTS = [
-  { name: 'Plant 1', reads: 'TTTTTTTT', geno: 'TT' },
-  { name: 'Plant 2', reads: 'TATTAATA', geno: 'TA' },
-  { name: 'Plant 3', reads: 'AAAAAAAA', geno: 'AA' },
+  { name: 'Kid C1.7.2', note: 'a settled line', reads: 'TTTTTT', geno: 'TT' },
+  { name: 'An unsettled plant', note: 'not a line yet', reads: 'TATTAA', geno: 'TA' },
+  { name: 'Kid C1.7.1', note: 'a settled line', reads: 'AAAAAA', geno: 'AA' },
 ]
+
+/* The DNA around spot M1. Reads are short pieces that overlap it at different offsets. */
+const FLANK_L = 'GATCCAGTC'
+const FLANK_R = 'GCATTACGA'
+const READ_LEN = 11
+const OFFSETS = [0, 3, 1, 5, 2, 6]   // where each read starts, relative to the left flank
+
+function Pileup({ reads }: { reads: string }) {
+  const full = (x: string) => FLANK_L + x + FLANK_R
+  const center = FLANK_L.length
+  return (
+    <div className="pileup" aria-label="Sequencing reads stacked over spot M1">
+      <div className="prow ref">
+        {full('·').split('').map((c, i) => <span key={i} className={i === center ? 'hit' : ''}>{i === center ? 'M1' : c}</span>)}
+      </div>
+      {reads.split('').map((allele, r) => {
+        const start = OFFSETS[r % OFFSETS.length]
+        const seq = full(allele)
+        return (
+          <div key={r} className="prow">
+            {seq.split('').map((c, i) => {
+              const inRead = i >= start && i < start + READ_LEN
+              return (
+                <span key={i} className={!inRead ? 'gap' : i === center ? 'hit ' + (c === 'A' ? 'v2' : 'v1') : 'fl'}>
+                  {inRead ? c : ''}
+                </span>
+              )
+            })}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 export function ReadsToNumbers() {
   const [stage, setStage] = useState(0)
@@ -83,11 +117,8 @@ export function ReadsToNumbers() {
           return (
             <div key={p.name} className="plant">
               <div className="pname">{p.name}</div>
-              <div className="reads">
-                {p.reads.split('').map((c, i) => (
-                  <span key={i} className={'read ' + (c === 'A' ? 'v2' : 'v1')}>{c}</span>
-                ))}
-              </div>
+              <div className="small muted">{p.note}</div>
+              <Pileup reads={p.reads} />
               {stage >= 1 && <div className="arrow">↓ {p.geno === 'TA' ? 'half T, half A' : `all ${p.geno[0]}`}</div>}
               {stage >= 1 && <div className="big">{p.geno}</div>}
               {stage >= 2 && <div className="arrow">↓ copies of A</div>}
@@ -100,8 +131,8 @@ export function ReadsToNumbers() {
       </div>
       <p className="explain">
         {[
-          'The sequencer reads many short pieces of DNA that cover this spot. Each little box is one read, showing which letter it saw.',
-          'A plant has two copies of every chromosome, one from each parent. All reads T means both copies are T. Half and half means one of each. "AT" and "TA" are the same thing: nobody knows or needs to know which copy is which.',
+          'The sequencer can\'t read a whole genome in one go. It reads millions of short pieces (here 11 letters, in reality 100 to 150). Lined up against each other, several pieces overlap spot M1, the highlighted column. Everything else in them is just the neighbouring DNA. The only letter we care about is the one each read has at M1: all T for the first kid, all A for the last, a mix for the plant in the middle.',
+          'A plant has two copies of every chromosome, one from each parent, and the reads come from both. All reads T means both copies are T. Half T and half A means one copy of each. "AT" and "TA" are the same thing: nobody knows or needs to know which copy is which. Settled lines like our kids are always TT or AA; a mix only shows up in a plant that isn\'t fully settled yet.',
           'Your counting table: at this spot only T and A exist, so counting one letter says everything. 0 A\'s = TT, 1 = TA, 2 = AA.',
           'Subtract one and you have the numbers in the data file: −1, 0, +1. A 0 is a spot that hasn\'t settled yet: lines are often tested before they\'re fully settled. That\'s all they are. Every line with TT here gets −1, in every row of the table, so the letter is never lost, just renamed.',
         ][stage]}
