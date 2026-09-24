@@ -198,6 +198,13 @@ export function CandidateYear() {
                 predict the <b>next</b> batch of kids (C1.8.x, C1.9.x…). Kids that never got plots never get results,
                 so they never become examples. That loop, year after year, is the data we're handed.
               </div>
+              <div className="nextyear">
+                <b>And next year's pile?</b> It comes from the <b>same pool</b>: new pairs of pool lines are crossed, and
+                their kids are next January's candidates (section 3, once more). Usually <b>not</b> {KID.id}'s kids: if it
+                keeps winning it goes through a second and third round of trials, and only then joins the pool as a parent,
+                a few years later. That's also why, in the Bayer data, every family appears in just one year: the data is
+                only this first test, and each year brings a brand-new pile.
+              </div>
             </>
           )}
         </div>

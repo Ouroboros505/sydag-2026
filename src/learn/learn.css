@@ -256,3 +256,5 @@ table.harvest th, table.harvest td { padding: 5px 12px; }
 table.harvest.two td, table.harvest.two th { text-align: right; }
 table.harvest.two .l { text-align: left; }
 tr.avgrow td { border-top: 2px solid var(--text-3); background: var(--row-alt); }
+.nextyear { margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--border); border-radius: 8px; font-size: 14.5px; color: var(--text-2); line-height: 1.6; }
+.nextyear b { color: var(--text); }
