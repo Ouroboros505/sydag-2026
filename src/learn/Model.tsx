@@ -169,10 +169,10 @@ export function Predictor() {
         ))}
       </div>
       <div className="sum">
-        <div className="sumrow head"><span>starting point: average of the past lines</span><b>{fmt(BASE)}</b></div>
-        {parts.map(({ m, c, w, v }) => (
+        <div className="sumrow head"><span>start: the average yield of the 8 past lines</span><b>{fmt(BASE)}</b></div>
+        {parts.map(({ m, c, v }) => (
           <div key={m.id} className={'sumrow' + (Math.abs(v) > 3 ? ' heavy' : '')}>
-            <span><span className="mono">{m.id}</span> has <b className={c === -1 ? 't-v1' : 't-v2'}>{letters(m, c)}</b> ({c > 0 ? '+1' : c}) × weight {sign(w, 2)}</span>
+            <span><span className="mono">{m.id}</span>: this line has <b className={c === -1 ? 't-v1' : 't-v2'}>{letters(m, c)}</b>, and {letters(m, c)}'s effect there is</span>
             <b>{sign(v)}</b>
           </div>
         ))}
@@ -184,8 +184,10 @@ export function Predictor() {
         <span className="muted small">In the toy data it's close. On real data it's much rougher. See the next section.</span>
       </div>
       <p className="explain">
-        A prediction is just the average plus a small push from each marker. Most pushes are near zero; M2 and M5 do
-        the work. This line has never been in a field, and we still get a number, from DNA alone, before planting.
+        How to read it: start from 172, the average yield of the 8 past lines. Then, marker by marker, look at which
+        letters this line carries and add that version's effect, the same numbers as in the chart in section 8. Most
+        effects are close to zero; M2 and M5 carry almost all of it. The total is the prediction. This line has never
+        been in a field: the number comes only from its DNA plus what the past lines taught the model.
       </p>
     </div>
   )

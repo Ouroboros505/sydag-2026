@@ -17,7 +17,7 @@ const SECTIONS: Sec[] = [
   { id: 'dna', title: 'From DNA to numbers', oneLine: '−1, 0 and +1 are just a count of one letter at one spot, minus one.', body: <ReadsToNumbers /> },
   { id: 'table', title: 'The data table', oneLine: 'Rows are lines, columns are DNA spots, plus a yield for the lines already tested.', body: <MatrixView /> },
   { id: 'learn', title: 'How the model learns', oneLine: 'For each DNA spot, compare lines with one version against lines with the other.', body: <MarkerExplorer /> },
-  { id: 'predict', title: 'Predicting a line nobody has grown', oneLine: 'Average, plus a small push from each marker.', body: <Predictor /> },
+  { id: 'predict', title: 'Predicting a line nobody has grown', oneLine: 'Start from the average yield of the past lines, then add the effect of the letters this line carries at each marker (the numbers from section 8).', body: <Predictor /> },
   { id: 'honest', title: 'The honesty trap', oneLine: 'Test on a family the model never saw, or the score is fake.', body: <LeakageTrap /> },
   { id: 'money', title: 'From bushels to dollars', oneLine: 'Wet corn costs money to dry, fallen corn is lost: bushels are not the whole story.', body: <MoneyLine /> },
   { id: 'decide', title: 'The decision', oneLine: 'Pick which lines get plots: by dollars, and without putting every plot in one family.', body: <DecisionToy /> },
