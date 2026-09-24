@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { Candidate } from '../lib/types'
 import { fmtNum, fmtUSD, scenarios, score, summarize, type Prices } from '../lib/econ'
+import Info from './Info'
 
 interface Props {
   candidates: Candidate[]
@@ -21,7 +22,12 @@ export default function Scenarios({ candidates, prices, budget, cap }: Props) {
   return (
     <div className="panel tablewrap">
       <h2>
-        When the ranking changes
+        <span>When the ranking changes<Info wide>
+          The same budget and the same predictions, under different season economics. Each row recalculates the tiles
+          above with one price changed: expensive drying (a propane spike), cheaper corn, or a year where fallen plants
+          are mostly lost. It shows <b>when</b> ranking by dollars instead of bushels matters most: the gap grows when
+          drying or lodging get expensive.
+        </Info></span>
         <span className="muted">same {fmtNum(budget)} lines, different season economics</span>
       </h2>
       <table>

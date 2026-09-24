@@ -152,3 +152,33 @@ a.pill:hover { color: var(--accent); border-color: var(--accent); }
 }
 .stack { grid-template-columns: minmax(0, 1fr); }
 .panel { min-width: 0; }
+
+/* ⓘ explanations */
+.info {
+  position: relative; display: inline-grid; place-items: center; width: 15px; height: 15px; margin-left: 6px;
+  border-radius: 50%; border: 1px solid var(--text-3); color: var(--text-3); font-size: 10px; font-weight: 700;
+  font-style: normal; text-transform: none; letter-spacing: 0; cursor: help; vertical-align: 1px; flex: none;
+}
+.info:hover, .info:focus { border-color: var(--accent); color: var(--accent); outline: none; }
+.infotip {
+  display: none; position: absolute; z-index: 20; top: 20px; left: 50%; transform: translateX(-50%);
+  width: 280px; padding: 10px 12px; border-radius: 8px; background: var(--surface); color: var(--text-2);
+  border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  font-size: 12.5px; font-weight: 400; line-height: 1.5; text-align: left; white-space: normal;
+}
+.infotip.wide { width: 360px; }
+.infotip b { color: var(--text); }
+.info:hover .infotip, .info:focus .infotip, .info:focus-within .infotip { display: block; }
+@media (max-width: 640px) { .infotip, .infotip.wide { width: 240px; left: auto; right: -8px; transform: none; } }
+.tile .k { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; }
+/* anchor tips to the tile/panel, so they never run off the screen edge */
+.tile, .panel { position: relative; }
+.tile .info, .panel h2 .info { position: static; }
+.tile .infotip { top: 34px; left: 8px; right: 8px; width: auto; min-width: 0; transform: none; }
+.panel h2 .infotip { top: 40px; left: 16px; transform: none; max-width: calc(100% - 32px); }
+.tile .infotip { width: 290px; max-width: calc(100vw - 40px); left: 8px; right: auto; }
+.tiles .tile:nth-child(n+4) .infotip { left: auto; right: 8px; }
+@media (max-width: 640px) {
+  .tiles .tile:nth-child(odd) .infotip { left: 8px; right: auto; }
+  .tiles .tile:nth-child(even) .infotip { left: auto; right: 8px; }
+}

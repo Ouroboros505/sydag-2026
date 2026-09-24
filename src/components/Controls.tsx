@@ -1,4 +1,5 @@
 import type { Prices } from '../lib/econ'
+import Info from './Info'
 
 interface Props {
   n: number
@@ -19,7 +20,10 @@ export default function Controls({ n, budget, cap, maxFamily, prices, onBudget, 
 
   return (
     <div className="panel">
-      <h2>Your season</h2>
+      <h2>Your season<Info>
+        <b>Lines you can field-test</b>: the plot budget, how many candidates get into the field this year.<br />
+        <b>Most lines from one family</b>: a limit to keep the advanced set varied; "no limit" ranks purely on value.
+      </Info></h2>
 
       <div className="control">
         <label>
@@ -40,7 +44,12 @@ export default function Controls({ n, budget, cap, maxFamily, prices, onBudget, 
         <div className="hint">Keeps the advanced set genetically broad. The tiles show what it costs.</div>
       </div>
 
-      <h2 style={{ marginTop: 20 }}>Your economics</h2>
+      <h2 style={{ marginTop: 20 }}>Your economics<Info>
+        The prices that turn predicted bushels into dollars per acre:<br />
+        <b>$/acre = yield × corn price − drying cost − lodging loss</b><br /><br />
+        Drying cost = points of moisture above the target × cost per point × yield.<br />
+        Lodging loss = share of plants fallen × share of their yield lost × yield × price.
+      </Info></h2>
 
       <div className="control">
         <label>Corn price <b>${prices.corn_price.toFixed(2)} / bu</b></label>

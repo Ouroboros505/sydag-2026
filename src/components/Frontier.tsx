@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import type { FrontierPoint } from '../lib/econ'
 import { fmtNum, fmtUSD, niceTicks } from '../lib/econ'
+import Info from './Info'
 
 interface Props {
   points: FrontierPoint[]
@@ -55,7 +56,13 @@ export default function Frontier({ points, budget, onBudget }: Props) {
 
   return (
     <div className="panel" style={{ position: 'relative' }}>
-      <h2>Expected gain per advanced acre, as the budget grows</h2>
+      <h2>Expected gain per advanced acre, as the budget grows<Info wide>
+        For every possible budget (x-axis: how many lines you advance), how much more an acre of the advanced lines is
+        worth than a random line (y-axis). <b>Blue</b>: pick the lines by predicted $/acre. <b>Orange</b>: pick them by
+        predicted bushels, then value them in dollars. With a small budget you only take the very best, so the gain is
+        high; as the budget grows you dig deeper into the list and the average falls. The gap between the lines is the
+        money a bushel ranking leaves behind. The dashed line is your current budget; click the chart to move it.
+      </Info></h2>
       <div className="chartbox">
       <svg
         ref={ref}

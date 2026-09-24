@@ -1,5 +1,6 @@
 import type { Scored } from '../lib/econ'
 import { breakdown, fmtNum, fmtUSD, toCSV, type Prices } from '../lib/econ'
+import Info from './Info'
 
 interface Props {
   advanced: Scored[]
@@ -24,7 +25,14 @@ export default function CandidateTable({ advanced, yieldSet, prices, limit = 40 
   return (
     <div className="panel tablewrap">
       <h2>
-        Advancement list
+        <span>Advancement list<Info wide>
+          The lines to advance, best first, ranked by predicted $/acre. <b>Yield</b> is the predicted yield of the line's
+          test hybrid; the <b>90% band</b> is where the real yield will probably land (it's wide: predictions from DNA are
+          rough). <b>Moisture</b> and <b>lodging</b> are predicted too, and feed the dollar value. <b>Rank by bu</b> is
+          where the same line would sit in a bushel ranking. <b>Highlighted rows</b> are lines a bushel ranking would
+          have cut. <b>Confidence</b> is how closely related the line is to lines with field records. Hover a $/acre
+          value to see its breakdown.
+        </Info></span>
         <span className="muted">
           top {Math.min(limit, advanced.length)} of {fmtNum(advanced.length)} · highlighted rows would be cut by a bushel ranking ·{' '}
           <button className="link" onClick={download}>download all {fmtNum(advanced.length)} as CSV</button>

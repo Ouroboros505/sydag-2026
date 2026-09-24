@@ -10,6 +10,7 @@ import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
 import { advanceOrder, byYieldOrder, frontier, score, summarize, type Prices } from './lib/econ'
 import type { Recommendations } from './lib/types'
+import Info from './components/Info'
 
 export default function App() {
   const [data, setData] = useState<Recommendations | null>(null)
@@ -99,7 +100,13 @@ export default function App() {
           <GenomicMap all={scored} advanced={advancedIds} />
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={prices} />
           <div className="panel validation">
-            <h2>How much to trust this</h2>
+            <h2>How much to trust this<Info wide>
+              How good the predictions are, measured honestly: the model learned only from earlier years, then predicted
+              lines it had never seen, and was checked against their real results. <b>r</b> is the correlation between
+              predicted and real (1 = perfect ranking, 0 = no better than random). The <b>baselines</b> are simpler
+              methods to beat. The <b>leaky</b> number is what you'd get by testing on relatives of training lines: it
+              looks better and isn't real, and it's shown so nobody confuses the two.
+            </Info></h2>
             <p>
               <b>{data.validation.scheme}.</b> On {data.validation.n_test.toLocaleString()} held-out lines the model's
               correlation with realised yield is <b>r = {data.validation.r.toFixed(2)}</b>, and it recovers{' '}

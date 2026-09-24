@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Scored } from '../lib/econ'
 import { fmtNum, fmtUSD, niceTicks, summarize } from '../lib/econ'
+import Info from './Info'
 
 interface Props {
   scored: Scored[]
@@ -40,7 +41,12 @@ export default function Breadth({ scored, budget, cap, onCap }: Props) {
 
   return (
     <div className="panel" style={{ position: 'relative' }}>
-      <h2>The price of genetic breadth</h2>
+      <h2>The price of genetic breadth<Info wide>
+        Each point is one family limit ("at most N lines from any single family"). Left to right: the advanced set gets
+        more varied (more effective families). Top to bottom: it gets worth less per acre, because the limit forces you
+        to skip some of the highest-ranked siblings. It prices diversity in dollars: a limit around 40 roughly doubles
+        the breadth for a couple of dollars an acre. Click a point to apply it.
+      </Info></h2>
       <div className="chartbox">
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img"
         aria-label="Margin gain per acre versus effective number of families in the advanced set, one point per family cap">

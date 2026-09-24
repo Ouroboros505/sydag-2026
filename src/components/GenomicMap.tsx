@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import type { Scored } from '../lib/econ'
 import { fmtUSD } from '../lib/econ'
+import Info from './Info'
 
 interface Props {
   all: Scored[]
@@ -49,7 +50,12 @@ export default function GenomicMap({ all, advanced }: Props) {
 
   return (
     <div className="panel" style={{ position: 'relative' }}>
-      <h2>Genomic map: what you're advancing, and what you're leaving</h2>
+      <h2>Genomic map: what you're advancing, and what you're leaving<Info wide>
+        Every candidate is a dot, placed by its DNA: lines that sit close together are genetically similar, usually
+        relatives. (Technically the top two principal components of the marker matrix; the axes have no units.)
+        <b>Blue</b> dots are the lines you're advancing. If the blue dots bunch into one tight cluster, the budget is
+        going to one family; spread out means a varied set.
+      </Info></h2>
       <div className="chartbox">
       <svg
         ref={ref} className="chart" viewBox={`0 0 ${W} ${H}`} role="img"
