@@ -102,7 +102,15 @@ export function CandidateYear() {
           )}
           {stage === 2 && (
             <>
-              <p className="lead">It got plots. Its test seed (the kid crossed with the tester) is planted in <b>{FIELDS.length} fields</b> across the Corn Belt, next to hundreds of other kids' plots.</p>
+              <p className="lead">It got plots. But the kid itself isn't what gets planted:</p>
+              <div className="tcross">
+                <div className="tbox keep"><b>{KID.id}</b><span className="small">the kid, a pure line</span><span className="tag-ok">kept in storage</span></div>
+                <div className="top">×</div>
+                <div className="tbox"><b>tester</b><span className="small">a fixed line from C2</span></div>
+                <div className="top">→</div>
+                <div className="tbox used"><b>test hybrid seed</b><span className="small">made only to be planted here</span><span className="tag-used">measured once, then discarded</span></div>
+              </div>
+              <p className="lead" style={{ marginTop: 14 }}>That test seed is planted in <b>{FIELDS.length} fields</b> across the Corn Belt, next to hundreds of other kids' plots:</p>
               <div className="fields">
                 {FIELDS.map((f) => (
                   <div key={f.loc} className="fieldcard">
@@ -196,7 +204,7 @@ export function CandidateYear() {
         {[
           'Where does this kid come from? Straight from section 3 (pools), step 3: two lines from the pool (usually earlier winners) were crossed, the family\'s kids were settled into lines, and here they are. Every kid from every family made this year lands in this January pile, around a thousand of them, all untested. They are not winners: the winners were their parents. In January the only real information about each kid is its DNA.',
           'Plots are the scarce resource: land, seed, labour, and one answer per season. Most kids will never get one. So every kid is predicted first, and the prediction decides.',
-          'The kid itself isn\'t planted: its test seed is (the kid crossed with the fixed tester, as in section 3). The same test seed goes to several fields so one bad storm doesn\'t decide its fate.',
+          'Think of the test hybrid as a blood sample: you take it, measure it, throw the sample away, and file the result under the patient\'s name. It never becomes a line or a parent (it\'s a mix, so its own seeds would be a lottery). Its only job is to answer "how good a parent is this kid?", which is the kid\'s real future job: being half of a hybrid. The same test seed goes to several fields so one bad storm doesn\'t decide its fate.',
           'Yield depends heavily on the field and the year, often more than on the line. So a result only means something next to the other plots in the same field. The data we get has this built in: every row says which field (LOC) and year (YEAR) it came from, and the pipeline compares each plot with its own field before learning anything.',
           'Nothing magic: this year\'s field results are next year\'s training data. The model gets a little more to learn from every year.',
         ][stage]}

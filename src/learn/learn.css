@@ -246,3 +246,10 @@ table.harvest th, table.harvest td { padding: 5px 12px; }
 .sw.ylearn { background: var(--good); } .sw.ypred { background: var(--accent); } .sw.yfut { background: var(--text-3); opacity: .5; }
 .ycol.impossible { background: color-mix(in srgb, var(--warn) 12%, transparent); border-color: var(--warn); }
 .ycol.impossible .ydot { background: var(--warn); }
+.tcross { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.tbox { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; min-width: 150px; }
+.tbox.keep { border-color: var(--good); }
+.tbox.used { border-style: dashed; border-color: var(--warn); }
+.top { font-size: 22px; color: var(--text-3); }
+.tag-used { color: var(--warn); font-weight: 700; font-size: 13px; }
+.tbox .tag-ok { margin-left: 0; font-size: 13px; }
