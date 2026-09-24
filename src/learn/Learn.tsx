@@ -9,7 +9,7 @@ import { CandidateYear } from './Year'
 interface Sec { id: string; title: string; oneLine: string; body: ReactNode }
 
 const SECTIONS: Sec[] = [
-  { id: 'problem', title: 'The problem in one picture', oneLine: 'Too many new corn lines, too few field plots to test them.', body: <ProblemPicture /> },
+  { id: 'problem', title: 'The problem in one picture', oneLine: 'Too many new corn lines, too few field plots to test them. (Testing a line means planting its test hybrid; section 5 shows how. Bayer uses the same shorthand: which lines to advance into field plots.)', body: <ProblemPicture /> },
   { id: 'line', title: 'What is a line? (pure breed)', oneLine: 'A line is a corn variety you can copy exactly: plant its seeds and every plant comes out the same. You make one by letting a plant pollinate itself for a few seasons.', body: <WhatIsALine /> },
   { id: 'pools', title: 'Pools are a cycle', oneLine: 'A pool is many lines. Pairs of them make families; the best kids become next year\'s parents.', body: <PoolCycle /> },
   { id: 'ids', title: 'Reading an ID', oneLine: 'C1.7.3 = pool 1, family 7, kid 3.', body: <IdDecoder /> },
