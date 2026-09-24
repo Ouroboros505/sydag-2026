@@ -1,13 +1,14 @@
 import type { Scored } from '../lib/econ'
-import { fmtNum, fmtUSD } from '../lib/econ'
+import { breakdown, fmtNum, fmtUSD, type Prices } from '../lib/econ'
 
 interface Props {
   rows: Scored[]
   budget: number
+  prices: Prices
   limit?: number
 }
 
-export default function CandidateTable({ rows, budget, limit = 40 }: Props) {
+export default function CandidateTable({ rows, budget, prices, limit = 40 }: Props) {
   const shown = rows.slice(0, limit)
   // Family is only informative when it differs from the line id (population-structured data).
   const showFamily = shown.some((c) => c.family !== c.id)
@@ -40,7 +41,9 @@ export default function CandidateTable({ rows, budget, limit = 40 }: Props) {
                 <td>{c.rankByMargin}</td>
                 <td className="l id" title={c.id}>{c.id}</td>
                 {showFamily && <td className="l muted id" title={c.family}>{c.family}</td>}
-                <td><b>{fmtUSD(c.margin)}</b></td>
+                <td title={(() => { const b = breakdown(c, prices); return `gross ${fmtUSD(b.gross)}  −  drying ${fmtUSD(b.drying)}  −  lodging ${fmtUSD(b.lodging)}` })()}>
+                  <b>{fmtUSD(c.margin)}</b>
+                </td>
                 <td>{c.pred_yield.toFixed(1)}</td>
                 <td className="muted">{c.lo.toFixed(0)}–{c.hi.toFixed(0)}</td>
                 <td>{c.pred_mst.toFixed(1)}</td>

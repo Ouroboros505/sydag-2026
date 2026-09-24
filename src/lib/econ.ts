@@ -99,3 +99,24 @@ export const fmtUSD = (v: number, digits = 0) =>
 export const fmtNum = (v: number, digits = 0) =>
   v.toLocaleString('en-US', { maximumFractionDigits: digits })
 export const fmtPct = (v: number, digits = 0) => `${(v * 100).toFixed(digits)}%`
+
+export interface Breakdown { gross: number; drying: number; lodging: number }
+
+export function breakdown(c: Candidate, p: Prices): Breakdown {
+  const gross = c.pred_yield * p.corn_price
+  const drying = Math.max(0, c.pred_mst - p.target_moisture) * p.drying_cost_per_point * c.pred_yield
+  const lodging = (c.pred_lodging / 100) * p.lodging_loss_fraction * c.pred_yield * p.corn_price
+  return { gross, drying, lodging }
+}
+
+export interface Scenario { name: string; note: string; prices: Prices }
+
+/** Economic conditions under which a bushel ranking and a dollar ranking part ways. */
+export function scenarios(base: Prices): Scenario[] {
+  return [
+    { name: 'Today', note: 'the prices set on the left', prices: base },
+    { name: 'Propane spike', note: 'drying at $0.09 / bu / pt', prices: { ...base, drying_cost_per_point: 0.09 } },
+    { name: 'Cheap corn', note: '$3.50 / bu', prices: { ...base, corn_price: 3.5 } },
+    { name: 'Lodging year', note: '90% of a lodged plant lost', prices: { ...base, lodging_loss_fraction: 0.9 } },
+  ]
+}

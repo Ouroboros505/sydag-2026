@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import CandidateTable from './components/CandidateTable'
 import Controls from './components/Controls'
 import Frontier from './components/Frontier'
+import Scenarios from './components/Scenarios'
 import StatTiles from './components/StatTiles'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
@@ -56,7 +57,8 @@ export default function App() {
         <div className="stack">
           <StatTiles budget={Math.min(budget, scored.length)} {...summary} />
           <Frontier points={curve} budget={budget} onBudget={setBudget} />
-          <CandidateTable rows={scored} budget={budget} />
+          <Scenarios candidates={data.candidates} prices={prices} budget={budget} />
+          <CandidateTable rows={scored} budget={budget} prices={prices} />
           <div className="panel validation">
             <h2>How much to trust this</h2>
             <p>
