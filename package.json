@@ -10,7 +10,8 @@
     "preview": "vite preview --host",
     "data": "python scripts/build_data.py",
     "data:synthetic": "python scripts/build_data.py --synthetic",
-    "deploy": "npm run build && npx wrangler pages deploy dist --project-name=promaize"
+    "deploy": "npm run build && npx wrangler pages deploy dist --project-name=promaize",
+    "setup:domain": "bash scripts/setup-domain.sh"
   },
   "dependencies": {
     "dexie": "^4.0.11",
