@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MARKERS, NEW, letters } from './toy'
+import { MARKERS, NEW, letters, predict } from './toy'
 
 /* One candidate's year: what we know in January, the plot decision, the field, and how the
    result becomes next year's training data. Picks up where "Pools are a cycle" leaves off. */
@@ -89,9 +89,14 @@ export function CandidateYear() {
             <>
               <p className="lead">It's one of <b>1,000</b> new kids this year. There are field plots for <b>300</b>.</p>
               <div className="bigq">Does {KID.id} get plots?</div>
+              <div className="predbox">
+                <span className="small muted">The model's prediction for {KID.id}, from its DNA</span>
+                <span className="predval">{predict(KID).toFixed(0)} bu/ac</span>
+                <span className="small muted">learned from <b>past</b> lines: kids from earlier years that already have field results. Not from {KID.id}'s own harvest, which doesn't exist yet.</span>
+              </div>
               <div className="verdict strong">
-                <b>This is where ProMaize works.</b> The decision has to be made now, in winter, from DNA alone,
-                because planting is in spring. Every plot given to a weak kid is a plot a strong one doesn't get.
+                <b>This is where ProMaize works.</b> Every candidate gets a prediction like this, and the best predictions
+                get the plots. It has to happen now, in winter, from DNA alone, because planting is in spring.
               </div>
             </>
           )}
@@ -159,7 +164,14 @@ export function CandidateYear() {
               <p className="lead">The results are written down under the kid's ID, one row per field. This is exactly the shape of the real data file:</p>
               <div className="tablewrap">
                 <table className="harvest filerows">
-                  <thead><tr><th className="l">LINE</th><th>YEAR</th><th className="l">LOC</th><th>YLD_BE</th><th>MST</th><th>STLP</th></tr></thead>
+                  <thead><tr>
+                    <th className="l">LINE<div className="tiny">the kid</div></th>
+                    <th>YEAR</th>
+                    <th className="l">LOC<div className="tiny">the field</div></th>
+                    <th>YLD_BE<div className="tiny">yield, bu/ac</div></th>
+                    <th>MST<div className="tiny">moisture %</div></th>
+                    <th>STLP<div className="tiny">stalk lodging %</div></th>
+                  </tr></thead>
                   <tbody>
                     {FIELDS.map((f) => (
                       <tr key={f.loc}><td className="l mono">{KID.id}</td><td>2008</td><td className="l mono">{f.loc}</td><td>{f.kid}</td><td>{f.mst}</td><td>{f.lodg}</td></tr>
@@ -168,9 +180,10 @@ export function CandidateYear() {
                 </table>
               </div>
               <div className="verdict strong">
-                Next January, {KID.id} is no longer a question mark: it has DNA <b>and</b> results. It becomes one more
-                <b> past line</b> the model learns from, to predict the next batch of kids. That loop, year after year,
-                is the data we're handed.
+                The same kid, two roles. <b>This year</b> {KID.id} was a candidate: predicted in February from DNA.{' '}
+                <b>Next year</b> it has DNA and real results, so it becomes a <b>past line</b> the model learns from to
+                predict the next batch of kids. Kids that never got plots never get results, and drop out of the loop.
+                That loop, year after year, is the data we're handed.
               </div>
             </>
           )}
@@ -180,7 +193,7 @@ export function CandidateYear() {
       <p className="explain">
         {[
           'Every year a breeding program starts with a pile of kids like this one: new lines from this year\'s crosses. In January the only real information about each of them is its DNA.',
-          'Plots are the scarce resource: land, seed, labour, and one answer per season. Most kids will never get one.',
+          'Plots are the scarce resource: land, seed, labour, and one answer per season. Most kids will never get one. So every kid is predicted first, and the prediction decides.',
           'The kid itself isn\'t planted: its test seed is (the kid crossed with the fixed tester, as in the previous section). The same test seed goes to several fields so one bad storm doesn\'t decide its fate.',
           'Yield depends heavily on the field and the year, often more than on the line. So a result only means something next to the other plots in the same field. The data we get has this built in: every row says which field (LOC) and year (YEAR) it came from, and the pipeline compares each plot with its own field before learning anything.',
           'Nothing magic: this year\'s field results are next year\'s training data. The model gets a little more to learn from every year.',

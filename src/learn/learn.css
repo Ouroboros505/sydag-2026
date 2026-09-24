@@ -223,3 +223,5 @@ table.harvest th, table.harvest td { padding: 5px 12px; }
 .compare { display: grid; gap: 8px; margin-top: 14px; }
 .cmp { display: grid; grid-template-columns: 70px 1fr auto; gap: 12px; align-items: baseline; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; }
 .cmp.lead-cmp { border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, transparent); }
+.predbox { display: grid; gap: 4px; border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.predval { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }

@@ -51,7 +51,7 @@ export function MatrixView() {
         </table>
       </div>
       <p className="explain">
-        One row per line, one column per marker. <b>Past lines</b> have DNA <i>and</i> a yield: they're the training data.
+        One row per line, one column per <b>marker</b> (that's the M: M1 is one spot in the DNA, and its cell sums up both copies at that spot). <b>Past lines</b> have DNA <i>and</i> a yield: they're the training data.
         The <b>new kids</b> have DNA only: their yield is the <b>?</b> we have to predict. Look at the new kids next to their
         parents: in every column each kid carries <b>either Parent A's version or Parent B's</b>. C1.7.1 took A for the first
         three markers and B for the last three. DNA is inherited in chunks, and that's what the table shows.
