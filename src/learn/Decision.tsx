@@ -131,8 +131,8 @@ export function DecisionToy() {
 /* ---------------------------------------------------------------- glossary */
 
 export const GLOSSARY: [string, string][] = [
-  ['Line', 'A genetically fixed plant variety: plant its seed and you get the same thing again. Like a strain.'],
-  ['Self-pollination (selfing)', 'A plant fertilising itself. Repeated for ~6 generations, it makes a line pure.'],
+  ['Line', 'A corn variety you can copy exactly: plant its seeds and every plant comes out the same. Like a strain.'],
+  ['Self-pollination (selfing)', 'A plant making seed with its own pollen. Do it for about six seasons and the plant settles into a line.'],
   ['F1, F2', 'F1 = the first-generation plants of a cross (all alike). F2 = their offspring after selfing (all different: the genes get reshuffled).'],
   ['Doubled haploid', 'A shortcut to a pure line: grow a plant with one set of chromosomes, then double it. Pure in one step instead of six seasons.'],
   ['Breeding cycle', 'Lines in a pool are crossed, the kids are tested, and the winners become next year\'s parents.'],

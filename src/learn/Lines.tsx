@@ -62,12 +62,12 @@ export function WhatIsALine() {
   const shown: Genome[] = dh
     ? history[1].map((g) => g.map(([a]) => [a, a] as [number, number]))
     : history[gen]
-  const label = dh ? 'Doubled haploid: pure in one step' : gen === 0 ? 'F1: first cross, X × Y' : `After ${gen} round${gen > 1 ? 's' : ''} of self-pollination`
+  const label = dh ? 'The lab shortcut: settled in one step' : gen === 0 ? 'Season 0: we just crossed X and Y' : `Season ${gen}: the kids have pollinated themselves ${gen} time${gen > 1 ? 's' : ''}`
   return (
     <div>
       <div className="row-actions" style={{ marginTop: 0 }}>
         <span className="legend-inline" style={{ marginTop: 0 }}>
-          <i className="sw lx" />DNA from line X <i className="sw ly" />DNA from line Y
+          <i className="sw lx" />DNA from parent X <i className="sw ly" />DNA from parent Y
         </span>
       </div>
       <div className="lineages">
@@ -75,29 +75,29 @@ export function WhatIsALine() {
           const p = purity(g)
           return (
             <div key={i} className={'lineage' + (p === 1 ? ' pure' : '')}>
-              <div className="lname">{gen === 0 && !dh ? 'F1 plant' : `Sibling lineage ${i + 1}`}</div>
+              <div className="lname">Kid {i + 1}</div>
               <Chromosome g={g} />
-              <div className="small muted">two copies of one chromosome, 10 spots</div>
+              <div className="small muted">top row and bottom row = its two copies of DNA</div>
               <div className="purebar"><div style={{ width: `${p * 100}%` }} /></div>
-              <div className="small"><b>{Math.round(p * 100)}%</b> pure {p === 1 && <span className="tag-ok">new line ✓</span>}</div>
+              <div className="small"><b>{Math.round(p * 100)}%</b> settled {p === 1 && <span className="tag-ok">new line ✓</span>}</div>
             </div>
           )
         })}
       </div>
       <div className="verdict strong">{label}</div>
       <div className="row-actions">
-        <button className="btn ghost" onClick={() => { setGen(0); setDh(false) }}>Reset to F1</button>
-        <button className="btn" disabled={gen >= MAX || dh} onClick={() => setGen((g) => g + 1)}>Self-pollinate once more →</button>
-        <button className="btn ghost" onClick={() => setDh(true)}>Shortcut: doubled haploid</button>
+        <button className="btn ghost" onClick={() => { setGen(0); setDh(false) }}>Start over</button>
+        <button className="btn" disabled={gen >= MAX || dh} onClick={() => setGen((g) => g + 1)}>Next season →</button>
+        <button className="btn ghost" onClick={() => setDh(true)}>The lab shortcut</button>
       </div>
       <p className="explain">
         {dh
-          ? <>The modern shortcut. Grow a plant with only <b>one</b> set of chromosomes, then double it with a chemical. Both copies are identical by construction, so the line is 100% pure straight away, instead of after six seasons. Big seed companies use this heavily.</>
+          ? <>The fast way. A lab can grow a corn plant that has only <b>one</b> copy of its DNA, then double it. Now both copies are identical from day one: a settled line in one step instead of six years. Big seed companies do this all the time.</>
           : gen === 0
-          ? <>Cross two existing lines, X and Y. The F1 plant got <b>one copy from each</b>, so at every spot its two copies differ: 0% pure. Press the button to self-pollinate it: the plant fertilises itself.</>
+          ? <>We crossed two corn lines, X (green) and Y (pink), and got three kids. Every plant has <b>two copies</b> of its DNA, one from each parent, so right now all three kids are <b>identical</b>: half X, half Y at every spot. It's a mix, and if you planted its seeds you'd get a lottery, every plant a bit different. Press <b>Next season</b>.</>
           : gen === 1
-          ? <>After one round the siblings already <b>differ from each other</b>: each got its own reshuffle of X and Y. Some spots have become fixed (both copies the same colour). That reshuffle is why siblings become different lines.</>
-          : <>Every round, each mixed spot has a 50% chance of becoming fixed, and fixed spots stay fixed. After about six rounds a lineage is essentially pure: plant its seed and you get the same plant every time. <b>That is a line.</b> Each sibling lineage becomes its own line, like C1.7.1, C1.7.2, C1.7.3.</>}
+          ? <>Corn can pollinate itself, so each kid now makes seed with itself. Look: the three kids are <b>already different from each other</b>, because each one got its own random shuffle of X and Y. Some spots have <b>settled</b>: both copies are the same colour.</>
+          : <>Keep going. Once a spot settles it stays that way. After about six seasons a kid is fully settled, and then something useful happens: <b>every plant grown from its seed is the same</b>. That's what a line is. Each kid ends up as its own line, with its own mix of X and Y. These are the C1.7.1, C1.7.2 and so on in the rest of this page.</>}
       </p>
     </div>
   )
