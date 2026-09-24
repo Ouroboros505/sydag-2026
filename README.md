@@ -25,6 +25,33 @@ bash scripts/doctor.sh
 
 When that prints **Ready**, your machine costs the team zero setup time at the event.
 
+## The demo: Trial Planner
+
+A budget allocator for line advancement. It ranks candidate lines that have never been
+field-tested by **dollars per acre** — predicted yield after drying cost and lodging loss at
+prices the user sets — and shows what a bushel ranking would leave on the table.
+
+```
+npm run data          # analysis -> public/recommendations.json  (real pipeline)
+npm run data:synthetic  # placeholder with the same shape, clearly flagged in the UI
+npm run dev           # http://localhost:5173
+```
+
+How the pieces connect — **analysis computes, the app displays**:
+
+```
+data/raw/<dataset>/  ->  analysis/<adapter>.py   ->  analysis/model.py  ->  scripts/build_data.py  ->  public/recommendations.json  ->  src/
+                          hybrids() + markers()      ridge (GBLUP-equiv.)   emits the contract         (gitignored data never leaves)
+```
+
+`analysis/g2f.py` is the adapter for the public Genomes to Fields set, used as the stand-in
+until the challenge data arrives. **Plugging in a new dataset is one new adapter file** with
+the same two functions and one import swap in `scripts/build_data.py`. The contract the app
+reads is `src/lib/types.ts`; nothing in `src/` knows what the raw data looked like.
+
+Validation is year-forward on lines never seen in training, with the leaky random-k-fold
+number shown beside it so nobody mistakes one for the other.
+
 ## Stack
 
 Everything installs **locally per machine** and is gitignored. Only source goes to git.
@@ -58,11 +85,11 @@ needs the internet is a demo that can die on stage.
 ## Layout
 
 ```
-src/              React + TypeScript app; src/lib/ for shared logic
+src/              React + TypeScript app; lib/types.ts is the contract, lib/econ.ts the pricing
 public/           static assets and the JSON analysis writes
-analysis/         Python — data.py owns all paths, viz.py owns plot styling
+analysis/         Python — data.py (paths), g2f.py (adapter), model.py (ridge + forward validation)
 R/                R scripts; setup.R installs the R toolkit
-scripts/          doctor.sh, build_data.py, phone.sh, anvil.md, job.slurm
+scripts/          build_data.py (pipeline -> JSON), doctor.sh, phone.sh, anvil.md, job.slurm
 data/raw/         untouched inputs (gitignored)
 data/processed/   cleaned outputs (gitignored)
 docs/             setup, bootstrap prompt, track brief, pitch outline

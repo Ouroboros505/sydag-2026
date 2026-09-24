@@ -8,7 +8,8 @@
     "phone": "bash scripts/phone.sh",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host",
-    "data": "python scripts/build_data.py"
+    "data": "python scripts/build_data.py",
+    "data:synthetic": "python scripts/build_data.py --synthetic"
   },
   "dependencies": {
     "dexie": "^4.0.11",

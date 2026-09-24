@@ -60,16 +60,17 @@ export default function App() {
           <div className="panel validation">
             <h2>How much to trust this</h2>
             <p>
-              Validation scheme: <b>{data.validation.scheme}</b>. Correlation with realised yield
-              <b> r = {data.validation.r.toFixed(2)}</b>; the model recovers <b>{Math.round(data.validation.top20_recovery * 100)}%</b> of
-              the true top 20% (chance is 20%). That's a weak signal, and it's the honest one — random cross-validation
-              on this kind of data reads around 0.55 and is leakage.
+              <b>{data.validation.scheme}.</b> On {data.validation.n_test.toLocaleString()} held-out lines the model's
+              correlation with realised yield is <b>r = {data.validation.r.toFixed(2)}</b>, and it recovers{' '}
+              <b>{Math.round(data.validation.top20_recovery * 100)}%</b> of the true top 20% (chance is 20%).
+              Intervals in the table are 90% bands from that same forward error, not from a random split.
             </p>
             <ul>
               {data.baselines.map((b) => (
-                <li key={b.name}>{b.name}: {b.metric} = {b.value.toFixed(2)}</li>
+                <li key={b.name}>{b.name}: <b>{b.metric} = {b.value.toFixed(2)}</b></li>
               ))}
             </ul>
+            {data.meta.notes && <p className="muted">{data.meta.notes}</p>}
           </div>
         </div>
       </div>

@@ -10,7 +10,8 @@ user's prices on top. See src/lib/types.ts for the contract.
 Until the challenge dataset is in data/raw/, this emits a clearly-flagged synthetic set
 with the same shape as the target data: C1/C2 clusters, C{cluster}.{family}.{line} IDs,
 yield in bu/ac, harvest moisture, lodging. The synthetic signal is deliberately weak
-(forward-year r ~ 0.15) so the demo doesn't flatter the model.
+(forward-year r ~ 0.15) so the demo doesn't flatter the model. Spreads are calibrated
+to the public Genomes to Fields data.
 """
 from __future__ import annotations
 
@@ -53,9 +54,9 @@ def synthetic(n: int = 2000, seed: int = 7) -> dict:
         # Later-maturing material tends to yield more and dry slower: the trade-off that
         # makes a dollar ranking differ from a bushel ranking.
         maturity = rng.normal(0, 1)
-        yld = 168 + fmean + 4.5 * maturity + rng.normal(0, 7)
-        mst = 16.8 + fmst + 1.6 * maturity + rng.normal(0, 0.9)
-        lodging = float(np.clip(rng.gamma(1.6, 1.8), 0, 30))
+        yld = 152 + fmean + 4.0 * maturity + rng.normal(0, 11)      # sd ~14 bu/ac, as in G2F
+        mst = 18.7 + fmst + 0.5 * maturity + rng.normal(0, 0.7)      # sd ~1.3 pts, corr(y,m) ~ +0.15
+        lodging = float(np.clip(rng.gamma(1.4, 7.2), 0, 60))         # mean ~10%, p90 ~21%, as in G2F
         conf = rng.choice(["high", "medium", "low"], p=[0.35, 0.45, 0.20])
         half = {"high": 9.0, "medium": 12.5, "low": 17.0}[conf]
         rows.append({
@@ -102,10 +103,70 @@ def synthetic(n: int = 2000, seed: int = 7) -> dict:
 
 
 def real() -> dict:
-    """Wire the real pipeline here once data/raw/ has the challenge files:
-    load C1/C2 phenotypes + markers via analysis.data, fit the baseline and the model,
-    predict the candidate cohort, and return the same dict shape as synthetic()."""
-    raise SystemExit("Real pipeline not wired yet — run with --synthetic, or add the data and implement real().")
+    """G2F pipeline. Swap `g2f` for the challenge adapter on Friday; nothing else changes."""
+    import numpy as np
+    from analysis import g2f as src, model
+
+    h = src.hybrids()
+    M = src.markers()
+    h = h[h.index.isin(M.index)]
+    M = M.loc[M.index.intersection(h.index).union(src.candidates_2024().index.intersection(M.index))]
+
+    # honest validation on the trait we rank by, on lines never seen in training
+    alpha = model.pick_alpha(M.loc[h.index], h["yield_adj"])
+    val = model.year_forward(h, M, "yield_adj", test_year=int(h.first_year.max()), alpha=alpha)
+
+    # final models on everything with a record
+    fits = {t: model.fit(M.loc[h.index], h[t], alpha) for t in ("yield_adj", "mst_adj", "lodging")}
+
+    # the cohort to rank: never field-tested
+    cand = src.candidates_2024()
+    cand = cand[cand.index.isin(M.index)]
+    Mc = M.loc[cand.index]
+    tier = model.relatedness_tier(M.loc[h.index], Mc)
+    yld = fits["yield_adj"].predict(Mc) + h.attrs["mean_yield_bu"]
+    mst = fits["mst_adj"].predict(Mc) + h.attrs["mean_mst"]
+    lodg = np.clip(fits["lodging"].predict(Mc), 0, None)
+    half = 1.645 * val.rmse   # 90% interval from the forward-validation error
+
+    rows = []
+    for i, hid in enumerate(cand.index):
+        fam = f"{cand.parent1[hid]}/{cand.parent2[hid]}"
+        rows.append({
+            "id": hid, "group": str(cand.parent2[hid]), "family": fam,
+            "pred_yield": round(float(yld[i]), 2),
+            "lo": round(float(yld[i] - half), 1), "hi": round(float(yld[i] + half), 1),
+            "pred_mst": round(float(mst[i]), 2), "pred_lodging": round(float(lodg[i]), 2),
+            "confidence": str(tier[hid]),
+        })
+
+    # baselines on the same forward split, for the validation panel
+    train = h[h.first_year < h.first_year.max()]; test = h[h.first_year == h.first_year.max()]
+    def parent_mean(row):
+        rel = train[(train.parent1.isin([row.parent1, row.parent2])) | (train.parent2.isin([row.parent1, row.parent2]))]
+        return rel.yield_adj.mean() if len(rel) else np.nan
+    pm = test.apply(parent_mean, axis=1)
+    ok = pm.notna()
+    r_parent = float(np.corrcoef(pm[ok], test.yield_adj[ok])[0, 1]) if ok.sum() > 10 else float("nan")
+
+    return {
+        "meta": {
+            "synthetic": False, "target": "yield (bu/ac, environment-adjusted)", "unit": "bu/ac",
+            "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "n_candidates": len(rows),
+            "notes": f"Genomes to Fields 2014-2023 training; {len(h):,} lines with records, "
+                     f"{M.shape[1]:,} markers; ridge alpha={alpha}. Candidates are the 2024 cohort.",
+        },
+        "price_defaults": PRICE_DEFAULTS,
+        "candidates": rows,
+        "baselines": [
+            {"name": "environmental mean (no genetics)", "metric": "r", "value": 0.0},
+            {"name": "mean of relatives sharing a parent", "metric": "r", "value": round(r_parent, 3)},
+            {"name": "ridge on markers (GBLUP-equivalent)", "metric": "r", "value": round(val.r, 3)},
+            {"name": "same model, random k-fold (leaky)", "metric": "r", "value": round(val.leaky_r, 3)},
+        ],
+        "validation": {"scheme": val.scheme, "r": round(val.r, 3), "top20_recovery": round(val.top20, 3), "n_test": val.n_test},
+    }
 
 
 def write(payload: dict, name: str = "recommendations.json") -> Path:
