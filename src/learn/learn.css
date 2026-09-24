@@ -258,3 +258,16 @@ table.harvest.two .l { text-align: left; }
 tr.avgrow td { border-top: 2px solid var(--text-3); background: var(--row-alt); }
 .nextyear { margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--border); border-radius: 8px; font-size: 14.5px; color: var(--text-2); line-height: 1.6; }
 .nextyear b { color: var(--text); }
+.lanes { margin-top: 14px; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.lanes-title { font-weight: 700; margin-bottom: 10px; }
+.lane-grid { display: grid; grid-template-columns: 110px repeat(3, 1fr); gap: 6px; }
+.lane-label { font-weight: 700; font-size: 14px; display: flex; flex-direction: column; justify-content: center; }
+.lane-label span { font-weight: 400; font-size: 12px; color: var(--text-3); }
+.lane-cell { font-size: 13px; padding: 8px 10px; border-radius: 8px; color: var(--text-2); }
+.lane-cell b { color: var(--text); }
+.lane-cell.nursery { background: color-mix(in srgb, var(--fam-3) 14%, transparent); }
+.lane-cell.fieldlane { background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.lane-cell.pool { background: color-mix(in srgb, var(--series-1) 12%, transparent); }
+@media (max-width: 640px) { .lane-grid { grid-template-columns: 1fr; } .lane-cell.pool { grid-column: span 1 !important; } }
+.lane-year { font-weight: 700; font-size: 13px; color: var(--text-3); padding-left: 10px; }
+@media (max-width: 640px) { .lane-year { display: none; } }

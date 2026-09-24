@@ -226,6 +226,31 @@ export function PoolCycle() {
         )}
       </div>
       {step === 4 && (
+        <div className="lanes">
+          <div className="lanes-title">Two things happen every year, in parallel</div>
+          <div className="lane-grid">
+            <div />
+            {[2008, 2009, 2010].map((y) => <div key={'h' + y} className="lane-year">{y}</div>)}
+            <div className="lane-label">Nursery<span>makes kids</span></div>
+            {[2008, 2009, 2010].map((y) => (
+              <div key={'n' + y} className="lane-cell nursery">cross pool lines → <b>{y + 1} pile</b> of new kids</div>
+            ))}
+            <div className="lane-label">Field<span>makes data</span></div>
+            {[2008, 2009, 2010].map((y) => (
+              <div key={'f' + y} className="lane-cell fieldlane">test the <b>{y} pile</b> → harvest → data</div>
+            ))}
+            <div className="lane-label">Pool<span>the parents</span></div>
+            <div className="lane-cell pool" style={{ gridColumn: 'span 3' }}>
+              the field's data decides who gets <b>promoted</b>: after 2 or 3 more rounds of testing, a few lines join the pool, and from then on the nursery can cross them
+            </div>
+          </div>
+          <p className="small muted" style={{ margin: '8px 0 0' }}>
+            So a tested kid never goes back into a January pile: candidates are always brand-new. The test makes only
+            numbers; kids are made in the nursery, from pool lines.
+          </p>
+        </div>
+      )}
+      {step === 4 && (
         <div className={'verdict ' + (narrow ? 'warn' : 'strong')}>
           {narrow
             ? <><b>Future B.</b> All four new parents are brothers and sisters from C1.1, with nearly the same DNA. Next year, crossing them together makes kids that are all alike: little new variety to find something better, and they share the same weak spots (one disease could hit all of them). This is what naturally happens when you just rank: siblings share their parents' good DNA, so they crowd the top of the list together. ProMaize's <b>family limit</b> prevents it.</>
