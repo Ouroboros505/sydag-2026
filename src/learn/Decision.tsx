@@ -132,6 +132,10 @@ export function DecisionToy() {
 
 export const GLOSSARY: [string, string][] = [
   ['Line', 'A genetically fixed plant variety: plant its seed and you get the same thing again. Like a strain.'],
+  ['Self-pollination (selfing)', 'A plant fertilising itself. Repeated for ~6 generations, it makes a line pure.'],
+  ['F1, F2', 'F1 = the first-generation plants of a cross (all alike). F2 = their offspring after selfing (all different: the genes get reshuffled).'],
+  ['Doubled haploid', 'A shortcut to a pure line: grow a plant with one set of chromosomes, then double it. Pure in one step instead of six seasons.'],
+  ['Breeding cycle', 'Lines in a pool are crossed, the kids are tested, and the winners become next year\'s parents.'],
   ['Inbred', 'A line made pure by self-pollinating for generations, so both copies of every chromosome match. Weaker on its own; valuable as a parent.'],
   ['Hybrid', 'The cross of two inbreds from different pools. What farmers actually plant. Much more vigorous than either parent.'],
   ['Pool (cluster)', 'One of two gene pools kept apart on purpose, C1 and C2. New lines are made within a pool; hybrids across pools.'],

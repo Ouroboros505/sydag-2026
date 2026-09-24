@@ -169,3 +169,18 @@ table.matrix tr.sep td { border-top: 2px solid var(--text-3); }
 .gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px 24px; margin: 0; }
 .gloss dt { font-weight: 700; }
 .gloss dd { margin: 2px 0 0; color: var(--text-2); font-size: 14px; }
+
+/* what is a line: X and Y get their own hues (not the version colours) */
+.sw.lx { background: var(--fam-3); } .sw.ly { background: var(--fam-5); }
+.lineages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; }
+@media (max-width: 640px) { .lineages { grid-template-columns: 1fr; } }
+.lineage { border: 1px solid var(--border); border-radius: 10px; padding: 12px; transition: border-color .2s; }
+.lineage.pure { border-color: var(--good); }
+.lname { font-weight: 600; margin-bottom: 8px; }
+.chromo { display: grid; gap: 4px; margin-bottom: 6px; }
+.copy { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
+.seg { height: 16px; border-radius: 3px; transition: background .3s; }
+.seg.x { background: var(--fam-3); } .seg.y { background: var(--fam-5); }
+.purebar { height: 6px; background: var(--row-alt); border-radius: 3px; margin: 8px 0 4px; overflow: hidden; }
+.purebar > div { height: 100%; background: var(--good); transition: width .3s; }
+.tag-ok { color: var(--good); font-weight: 700; margin-left: 6px; }

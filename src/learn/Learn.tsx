@@ -2,12 +2,15 @@ import type { ReactNode } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import { IdDecoder, Pipeline, ProblemPicture, ReadsToNumbers } from './Basics'
 import { DecisionToy, GLOSSARY, MoneyLine } from './Decision'
+import { PoolCycle, WhatIsALine } from './Lines'
 import { LeakageTrap, MarkerExplorer, MatrixView, Predictor } from './Model'
 
 interface Sec { id: string; title: string; oneLine: string; body: ReactNode }
 
 const SECTIONS: Sec[] = [
   { id: 'problem', title: 'The problem in one picture', oneLine: 'Too many new corn lines, too few field plots to test them.', body: <ProblemPicture /> },
+  { id: 'line', title: 'What is a line?', oneLine: 'A plant type that breeds true: plant its seed, get the same plant. Made by self-pollinating until it is pure.', body: <WhatIsALine /> },
+  { id: 'pools', title: 'Pools are a cycle', oneLine: 'A pool is many lines. Pairs of them make families; the best kids become next year\'s parents.', body: <PoolCycle /> },
   { id: 'breeding', title: 'How a candidate is made and tested', oneLine: 'Cross two parents, get a family of kids, test each kid by crossing it with a fixed partner and planting the seed.', body: <Pipeline /> },
   { id: 'ids', title: 'Reading an ID', oneLine: 'C1.7.3 = pool 1, family 7, kid 3.', body: <IdDecoder /> },
   { id: 'dna', title: 'From DNA to numbers', oneLine: '−1, 0 and +1 are just a count of one letter at one spot, minus one.', body: <ReadsToNumbers /> },

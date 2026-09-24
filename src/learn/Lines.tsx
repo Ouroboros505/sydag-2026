@@ -1,0 +1,235 @@
+import { useMemo, useState } from 'react'
+
+/** Start an interactive at a given step via the URL, e.g. /learn/?cycle=5#pools. */
+const param = (k: string, max: number) => {
+  const v = Number(new URLSearchParams(location.search).get(k))
+  return Number.isFinite(v) && v > 0 ? Math.min(v, max) : 0
+}
+
+/* ---------------------------------------------------------------- what is a line */
+
+const N_MARK = 10
+const LINEAGES = 3
+
+/** Small seeded generator so the demo shows the same story every time. */
+function rng(seed: number) {
+  let s = seed >>> 0
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0
+    return s / 2 ** 32
+  }
+}
+
+type Genome = [number, number][]   // per marker, the two copies: 0 = from line X, 1 = from line Y
+
+/** Simulate selfing: each generation, every marker's two copies are drawn from the parent's two. */
+function simulate(seed: number, gens: number): Genome[][] {
+  const r = rng(seed)
+  const f1: Genome = Array.from({ length: N_MARK }, () => [0, 1] as [number, number])
+  const history: Genome[][] = [Array.from({ length: LINEAGES }, () => f1)]
+  for (let g = 1; g <= gens; g++) {
+    history.push(
+      history[g - 1].map((gen) =>
+        gen.map(([a, b]) => [r() < 0.5 ? a : b, r() < 0.5 ? a : b] as [number, number]),
+      ),
+    )
+  }
+  return history
+}
+
+const purity = (g: Genome) => g.filter(([a, b]) => a === b).length / g.length
+
+function Chromosome({ g }: { g: Genome }) {
+  return (
+    <div className="chromo">
+      {[0, 1].map((copy) => (
+        <div key={copy} className="copy">
+          {g.map((pair, i) => (
+            <span key={i} className={'seg ' + (pair[copy] === 0 ? 'x' : 'y')} />
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function WhatIsALine() {
+  const MAX = 6
+  const history = useMemo(() => simulate(11, MAX), [])
+  const [gen, setGen] = useState(() => param('gen', MAX))
+  const [dh, setDh] = useState(false)
+  // doubled haploid: one copy duplicated, pure in one step
+  const shown: Genome[] = dh
+    ? history[1].map((g) => g.map(([a]) => [a, a] as [number, number]))
+    : history[gen]
+  const label = dh ? 'Doubled haploid: pure in one step' : gen === 0 ? 'F1: first cross, X × Y' : `After ${gen} round${gen > 1 ? 's' : ''} of self-pollination`
+  return (
+    <div>
+      <div className="row-actions" style={{ marginTop: 0 }}>
+        <span className="legend-inline" style={{ marginTop: 0 }}>
+          <i className="sw lx" />DNA from line X <i className="sw ly" />DNA from line Y
+        </span>
+      </div>
+      <div className="lineages">
+        {shown.map((g, i) => {
+          const p = purity(g)
+          return (
+            <div key={i} className={'lineage' + (p === 1 ? ' pure' : '')}>
+              <div className="lname">{gen === 0 && !dh ? 'F1 plant' : `Sibling lineage ${i + 1}`}</div>
+              <Chromosome g={g} />
+              <div className="small muted">two copies of one chromosome, 10 spots</div>
+              <div className="purebar"><div style={{ width: `${p * 100}%` }} /></div>
+              <div className="small"><b>{Math.round(p * 100)}%</b> pure {p === 1 && <span className="tag-ok">new line ✓</span>}</div>
+            </div>
+          )
+        })}
+      </div>
+      <div className="verdict strong">{label}</div>
+      <div className="row-actions">
+        <button className="btn ghost" onClick={() => { setGen(0); setDh(false) }}>Reset to F1</button>
+        <button className="btn" disabled={gen >= MAX || dh} onClick={() => setGen((g) => g + 1)}>Self-pollinate once more →</button>
+        <button className="btn ghost" onClick={() => setDh(true)}>Shortcut: doubled haploid</button>
+      </div>
+      <p className="explain">
+        {dh
+          ? <>The modern shortcut. Grow a plant with only <b>one</b> set of chromosomes, then double it with a chemical. Both copies are identical by construction, so the line is 100% pure straight away, instead of after six seasons. Big seed companies use this heavily.</>
+          : gen === 0
+          ? <>Cross two existing lines, X and Y. The F1 plant got <b>one copy from each</b>, so at every spot its two copies differ: 0% pure. Press the button to self-pollinate it: the plant fertilises itself.</>
+          : gen === 1
+          ? <>After one round the siblings already <b>differ from each other</b>: each got its own reshuffle of X and Y. Some spots have become fixed (both copies the same colour). That reshuffle is why siblings become different lines.</>
+          : <>Every round, each mixed spot has a 50% chance of becoming fixed, and fixed spots stay fixed. After about six rounds a lineage is essentially pure: plant its seed and you get the same plant every time. <b>That is a line.</b> Each sibling lineage becomes its own line, like C1.7.1, C1.7.2, C1.7.3.</>}
+      </p>
+    </div>
+  )
+}
+
+/* ---------------------------------------------------------------- pools are a cycle */
+
+const POOL = [
+  { id: 'L3', x: 95, y: 90 }, { id: 'L9', x: 150, y: 60 }, { id: 'L14', x: 205, y: 95 },
+  { id: 'L22', x: 70, y: 150 }, { id: 'L5', x: 130, y: 130 }, { id: 'L17', x: 190, y: 150 },
+  { id: 'L8', x: 95, y: 205 }, { id: 'L11', x: 155, y: 195 }, { id: 'L26', x: 215, y: 210 },
+  { id: 'L2', x: 125, y: 250 }, { id: 'L30', x: 185, y: 255 },
+]
+const FAMS = [
+  { id: 'C1.1', a: 'L3', b: 'L9', y: 70, cls: 'f3' },
+  { id: 'C1.2', a: 'L3', b: 'L14', y: 150, cls: 'f4' },
+  { id: 'C1.3', a: 'L22', b: 'L9', y: 230, cls: 'f5' },
+]
+const KID_X = [520, 548, 576, 604]
+// empty spots inside the pool where new lines land
+const NEW_SPOTS: [number, number][] = [[52, 228], [80, 268], [42, 186], [150, 286]]
+const WINNERS: Record<string, number[]> = { 'C1.1': [1], 'C1.2': [0, 3], 'C1.3': [2] }
+const MONO: Record<string, number[]> = { 'C1.1': [0, 1, 2, 3], 'C1.2': [], 'C1.3': [] }
+
+const CYCLE = [
+  { t: 'A pool is many lines', d: 'Pool C1 is a collection of hundreds of existing inbred lines (11 shown). Pool C2 is a second, separate collection with exactly the same structure.' },
+  { t: 'Pick pairs', d: 'Each family is ONE pair of lines from the pool. The same line can parent several families: L3 is crossed with L9 and with L14; L9 with L3 and with L22.' },
+  { t: 'Each pair makes a family', d: 'Each cross gives a family of kids, the candidates: C1.1, C1.2, C1.3. Hundreds of families per pool per year in the real data.' },
+  { t: 'Test the kids', d: 'Every kid is crossed with the tester from pool C2 and planted. Pool C2 does the same thing in reverse, using a tester from C1.' },
+  { t: 'Winners join the pool', d: 'The best kids become new lines in the pool, and next year they are parents. The pool keeps renewing itself: that is the breeding cycle.' },
+]
+
+export function PoolCycle() {
+  const [step, setStep] = useState(() => Math.max(0, param('cycle', CYCLE.length) - 1))
+  const [narrow, setNarrow] = useState(() => new URLSearchParams(location.search).has('narrow'))
+  const wins = narrow ? MONO : WINNERS
+  const pos = (id: string) => POOL.find((p) => p.id === id)!
+  const parents = new Set(FAMS.flatMap((f) => [f.a, f.b]))
+  const newLines = FAMS.flatMap((f) => wins[f.id].map((k) => ({ fam: f, k })))
+  const at = (n: number) => (step >= n ? 1 : 0.12)
+  return (
+    <div>
+      <div className="steps">
+        {CYCLE.map((s, i) => (
+          <button key={s.t} className={'step' + (i === step ? ' active' : '')} onClick={() => setStep(i)}>
+            <b>{i + 1}</b> {s.t}
+          </button>
+        ))}
+      </div>
+      <svg className="chart" viewBox="0 0 760 360" role="img" aria-label="The breeding cycle within one pool">
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--text-3)" />
+          </marker>
+        </defs>
+        {/* pool */}
+        <ellipse cx={145} cy={160} rx={130} ry={135} fill="none" stroke="var(--series-1)" strokeWidth={2} strokeDasharray="6 4" />
+        <text x={30} y={22} fontSize={13} fontWeight={600} fill="var(--series-1)">Pool C1: many lines</text>
+        {POOL.map((p) => {
+          const isParent = parents.has(p.id) && step >= 1
+          return (
+            <g key={p.id}>
+              <circle cx={p.x} cy={p.y} r={isParent ? 11 : 8} fill="var(--series-1)" opacity={isParent || step === 0 ? 1 : 0.35}
+                stroke={isParent ? 'var(--text)' : 'none'} strokeWidth={2} />
+              <text x={p.x} y={p.y - 14} fontSize={10} fill="var(--text-2)" textAnchor="middle" opacity={isParent || step === 0 ? 1 : 0.5}>{p.id}</text>
+            </g>
+          )
+        })}
+        {/* pairs -> families */}
+        {FAMS.map((f) => (
+          <g key={f.id} opacity={at(1)}>
+            {[f.a, f.b].map((pid) => {
+              const p = pos(pid)
+              return <path key={pid} d={`M${p.x},${p.y} C300,${p.y} 320,${f.y} 385,${f.y}`} fill="none"
+                stroke={`var(--fam-${f.cls.slice(1)})`} strokeWidth={1.8} />
+            })}
+            <rect x={385} y={f.y - 16} width={90} height={32} rx={8} fill={`var(--fam-${f.cls.slice(1)})`} opacity={at(2) === 1 ? 1 : 0.5} />
+            <text x={430} y={f.y - 1} fontSize={12} fill="#fff" textAnchor="middle" fontWeight={700}>{f.id}</text>
+            <text x={430} y={f.y + 11} fontSize={9.5} fill="#fff" textAnchor="middle">{f.a} × {f.b}</text>
+          </g>
+        ))}
+        {/* kids */}
+        {FAMS.map((f) => (
+          <g key={f.id + 'k'} opacity={at(2)}>
+            {KID_X.map((x, k) => {
+              const won = step >= 4 && wins[f.id].includes(k)
+              const tested = step >= 3
+              return (
+                <circle key={k} cx={x} cy={f.y} r={9}
+                  fill={`var(--fam-${f.cls.slice(1)})`} opacity={step >= 4 && !won ? 0.25 : 1}
+                  stroke={won ? 'var(--good)' : tested ? 'var(--warn)' : 'var(--surface)'} strokeWidth={won ? 3 : 2} />
+              )
+            })}
+          </g>
+        ))}
+        <text x={562} y={32} fontSize={12} fill="var(--text-2)" textAnchor="middle" opacity={at(2)}>kids = candidates</text>
+        {/* tester from C2 */}
+        <g opacity={at(3)}>
+          <rect x={640} y={250} width={110} height={60} rx={10} fill="none" stroke="var(--series-2)" strokeWidth={2} strokeDasharray="6 4" />
+          <text x={650} y={268} fontSize={11} fontWeight={600} fill="var(--series-2)">Pool C2</text>
+          <circle cx={695} cy={288} r={9} fill="var(--series-2)" />
+          <text x={710} y={292} fontSize={10} fill="var(--text-2)">tester</text>
+          <path d="M715,250 C700,200 650,165 615,158" fill="none" stroke="var(--series-2)" strokeWidth={1.5} strokeDasharray="4 3" markerEnd="url(#arr2)" />
+        </g>
+        {/* winners back into the pool */}
+        <g opacity={step >= 4 ? 1 : 0}>
+          <path d="M562,258 C520,330 260,330 196,284" fill="none" stroke="var(--good)" strokeWidth={2} markerEnd="url(#arr2)" />
+          <text x={400} y={350} fontSize={12} fill="var(--good)" textAnchor="middle" fontWeight={600}>winners become next year's parents</text>
+          {newLines.map(({ fam }, i) => {
+            const [x, y] = NEW_SPOTS[i % NEW_SPOTS.length]
+            return <circle key={i} cx={x} cy={y} r={8} fill={`var(--fam-${fam.cls.slice(1)})`} stroke="var(--good)" strokeWidth={2.5} />
+          })}
+        </g>
+      </svg>
+      <p className="explain"><b>Step {step + 1}. {CYCLE[step].t}.</b> {CYCLE[step].d}</p>
+      <div className="row-actions">
+        <button className="btn ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>← back</button>
+        <button className="btn" disabled={step === CYCLE.length - 1} onClick={() => setStep((s) => s + 1)}>next →</button>
+        {step === 4 && (
+          <div className="toggle">
+            <button className={!narrow ? 'on' : ''} onClick={() => setNarrow(false)}>winners from 3 families</button>
+            <button className={narrow ? 'on' : ''} onClick={() => setNarrow(true)}>all winners from one family</button>
+          </div>
+        )}
+      </div>
+      {step === 4 && (
+        <div className={'verdict ' + (narrow ? 'warn' : 'strong')}>
+          {narrow
+            ? <>All four new lines are siblings from C1.1. Next year's crosses would mostly be between relatives: the pool narrows, and there's less variety left to find the next winner in. This is what ProMaize's <b>family limit</b> protects against.</>
+            : <>New lines come from three different families, so the pool stays varied. Next year there are genuinely different parents to cross.</>}
+        </div>
+      )}
+    </div>
+  )
+}
