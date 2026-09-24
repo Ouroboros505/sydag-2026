@@ -83,6 +83,10 @@ export default function App() {
                 <li key={b.name}>{b.name}: <b>{b.metric} = {b.value.toFixed(2)}</b></li>
               ))}
             </ul>
+            <p className="muted">
+              Confidence tiers are terciles of each candidate's closest genomic match to any line the model was
+              trained on: <b>high</b> has near relatives in the record, <b>low</b> is furthest from anything seen.
+            </p>
             {data.meta.notes && <p className="muted">{data.meta.notes}</p>}
           </div>
         </div>

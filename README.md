@@ -92,7 +92,7 @@ R/                R scripts; setup.R installs the R toolkit
 scripts/          build_data.py (pipeline -> JSON), doctor.sh, phone.sh, anvil.md, job.slurm
 data/raw/         untouched inputs (gitignored)
 data/processed/   cleaned outputs (gitignored)
-docs/             setup, bootstrap prompt, track brief, pitch outline
+docs/             setup, bootstrap prompt, track brief, pitch, screens/
 ```
 
 ## Before the event
