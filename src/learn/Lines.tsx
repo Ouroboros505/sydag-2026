@@ -126,7 +126,7 @@ const CYCLE = [
   { t: 'A pool is many lines', d: 'Pool C1 is a collection of hundreds of existing inbred lines (11 shown). Pool C2 is a second, separate collection with exactly the same structure.' },
   { t: 'Pick pairs', d: 'Each family is ONE pair of lines from the pool. The same line can parent several families: L3 is crossed with L9 and with L14; L9 with L3 and with L22.' },
   { t: 'Each pair makes a family', d: 'Each cross gives a family of kids, the candidates: C1.1, C1.2, C1.3. Hundreds of families per pool per year in the real data.' },
-  { t: 'Test the kids', d: 'Every kid is crossed with the tester from pool C2 and planted. Pool C2 does the same thing in reverse, using a tester from C1.' },
+  { t: 'Test the kids', d: 'Every kid is crossed with the tester, a fixed line from pool C2. That cross makes a test hybrid: its seed is planted in field plots, measured at harvest, and then discarded. The results are filed under the kid, because they show how good a parent it is. Pool C2 does the same thing in reverse, using a tester from C1.' },
   { t: 'Winners join the pool', d: 'A winner is a kid whose test results (mostly yield, averaged over several locations) stay near the top through a few rounds of bigger and bigger trials. Winners are added to the pool because the pool is where next year\'s parents come from: to make better kids, you cross your best lines. Old, outclassed lines slowly get retired. Each round the parents get a bit better, which is how corn improves year after year. The very best winners are also crossed with a line from the other pool to become a hybrid farmers can buy. Our data sits at the very first round of testing: who even gets into the race.' },
 ]
 
@@ -200,6 +200,8 @@ export function PoolCycle() {
           <text x={650} y={268} fontSize={11} fontWeight={600} fill="var(--series-2)">Pool C2</text>
           <circle cx={695} cy={288} r={9} fill="var(--series-2)" />
           <text x={710} y={292} fontSize={10} fill="var(--text-2)">tester</text>
+          <text x={672} y={330} fontSize={11} fill="var(--text)" textAnchor="middle" fontWeight={600}>kid × tester = test hybrid</text>
+          <text x={672} y={344} fontSize={10} fill="var(--text-2)" textAnchor="middle">planted, measured, discarded</text>
           <path d="M715,250 C700,200 650,165 615,158" fill="none" stroke="var(--series-2)" strokeWidth={1.5} strokeDasharray="4 3" markerEnd="url(#arr2)" />
         </g>
         {/* winners back into the pool */}
