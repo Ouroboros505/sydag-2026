@@ -8,6 +8,15 @@ export default defineConfig({
   define: { __BUILD__: JSON.stringify(BUILD_STAMP) },
   // Binds every interface so a phone on the same network can reach it.
   server: { host: true },
+  // Two pages: the demo at / and the learning walkthrough at /learn/.
+  build: {
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        learn: 'learn/index.html',
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
