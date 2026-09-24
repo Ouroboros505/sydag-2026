@@ -31,7 +31,7 @@ export function ProblemPicture() {
 /* ---------------------------------------------------------------- 2. the pipeline */
 
 const STEPS = [
-  { t: 'Two pools', d: 'The company keeps two separate gene pools, C1 and C2, that are never mixed when making new lines. Crossing one pool with the other later is what gives hybrid corn its vigour.' },
+  { t: 'Two pools', d: 'The company keeps separate gene pools that are never mixed when making new lines. US corn has three big ones (Stiff Stalk, Non-Stiff Stalk and Iodent); this dataset uses two, C1 and C2. Every hybrid still has just two parents, one from each side, and crossing across pools is what gives hybrid corn its vigour.' },
   { t: 'Cross two parents', d: 'Two parent lines from the SAME pool (here both C1) are crossed. Crossing is cheap: done by hand in a small nursery, bagging flowers and moving pollen.' },
   { t: 'Their kids = the candidates', d: 'All the kids of that one cross form a family, here family C1.7. Each kid is made pure (inbred) and becomes a new line. These are the candidates.' },
   { t: 'Read their DNA', d: 'Every candidate is genotyped. Cheap: a few dollars each, no field needed. This is the only thing we know about a candidate before choosing.' },

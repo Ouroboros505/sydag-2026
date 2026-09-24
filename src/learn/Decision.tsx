@@ -138,7 +138,7 @@ export const GLOSSARY: [string, string][] = [
   ['Breeding cycle', 'Lines in a pool are crossed, the kids are tested, and the winners become next year\'s parents.'],
   ['Inbred', 'A line made pure by self-pollinating for generations, so both copies of every chromosome match. Weaker on its own; valuable as a parent.'],
   ['Hybrid', 'A crossbreed of two pure breeds (lines) from different pools. What farmers actually plant. Much more vigorous than either parent, and every seed from that cross comes out the same.'],
-  ['Pool (cluster)', 'One of two gene pools kept apart on purpose, C1 and C2. New lines are made within a pool; hybrids across pools.'],
+  ['Pool (cluster)', 'A gene pool kept apart on purpose (breeders say heterotic group). US corn has three big ones; this dataset uses two, C1 and C2. New lines are made within a pool; hybrids across pools.'],
   ['Family (population)', 'All the kids of one cross between two parents. Siblings.'],
   ['Candidate', 'A new line from this year\'s families. DNA known, never field-tested. The thing we rank.'],
   ['Tester', 'One fixed, proven line from the other pool. Every candidate is crossed with it so they can be compared fairly.'],
