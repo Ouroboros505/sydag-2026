@@ -9,7 +9,7 @@ interface Sec { id: string; title: string; oneLine: string; body: ReactNode }
 
 const SECTIONS: Sec[] = [
   { id: 'problem', title: 'The problem in one picture', oneLine: 'Too many new corn lines, too few field plots to test them.', body: <ProblemPicture /> },
-  { id: 'line', title: 'What is a line?', oneLine: 'Think pure breed. A line is a corn variety you can copy exactly: plant its seeds and every plant comes out the same. You make one by letting a plant pollinate itself for a few seasons.', body: <WhatIsALine /> },
+  { id: 'line', title: 'What is a line? (pure breed)', oneLine: 'A line is a corn variety you can copy exactly: plant its seeds and every plant comes out the same. You make one by letting a plant pollinate itself for a few seasons.', body: <WhatIsALine /> },
   { id: 'pools', title: 'Pools are a cycle', oneLine: 'A pool is many lines. Pairs of them make families; the best kids become next year\'s parents.', body: <PoolCycle /> },
   { id: 'breeding', title: 'How a candidate is made and tested', oneLine: 'Cross two parents, get a family of kids, test each kid by crossing it with a fixed partner and planting the seed.', body: <Pipeline /> },
   { id: 'ids', title: 'Reading an ID', oneLine: 'C1.7.3 = pool 1, family 7, kid 3.', body: <IdDecoder /> },

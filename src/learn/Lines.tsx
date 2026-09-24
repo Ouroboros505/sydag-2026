@@ -97,7 +97,7 @@ export function WhatIsALine() {
           ? <>We crossed two corn lines, X (green) and Y (pink), and got three kids. Every plant has <b>two copies</b> of its DNA, one from each parent, so right now all three kids are <b>identical</b>: half X, half Y at every spot. It's a mix, and if you planted its seeds you'd get a lottery, every plant a bit different. Press <b>Next season</b>.</>
           : gen === 1
           ? <>Corn can pollinate itself, so each kid now makes seed with itself. Look: the three kids are <b>already different from each other</b>, because each one got its own random shuffle of X and Y. Some spots have <b>settled</b>: both copies are the same colour.</>
-          : <>Keep going. Once a spot settles it stays that way. After about six seasons a kid is fully settled, and then something useful happens: <b>every plant grown from its seed is the same</b>. That's what a line is. Each kid ends up as its own line, with its own mix of X and Y. These are the C1.7.1, C1.7.2 and so on in the rest of this page.</>}
+          : <>Keep going. Once a spot settles it stays that way. After about six seasons a kid is fully settled, and then something useful happens: <b>every plant grown from its seed is the same</b>. That's what a line is. Each kid ends up as its own line, with its own mix of X and Y. These are the C1.7.1, C1.7.2 and so on in the rest of this page. In practice breeders don't wait for 100%: they often start testing around season 3 or 4, drop the bad families early, and keep settling the good ones. They also grow two or three seasons a year (winter nurseries in Hawaii or Chile), so this takes a couple of years, not six.</>}
       </p>
     </div>
   )

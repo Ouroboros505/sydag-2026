@@ -204,7 +204,7 @@ export function ReadsToNumbers() {
           'The sequencer reads many short pieces of DNA that cover this spot. Each little box is one read, showing which letter it saw.',
           'A plant has two copies of every chromosome, one from each parent. All reads T means both copies are T. Half and half means one of each. "AT" and "TA" are the same thing: nobody knows or needs to know which copy is which.',
           'Your counting table: at this spot only T and A exist, so counting one letter says everything. 0 A\'s = TT, 1 = TA, 2 = AA.',
-          'Subtract one and you have the numbers in the data file: −1, 0, +1. That\'s all they are. Every line with TT here gets −1, in every row of the table, so the letter is never lost, just renamed.',
+          'Subtract one and you have the numbers in the data file: −1, 0, +1. A 0 is a spot that hasn\'t settled yet: lines are often tested before they\'re fully settled. That\'s all they are. Every line with TT here gets −1, in every row of the table, so the letter is never lost, just renamed.',
         ][stage]}
       </p>
     </div>
