@@ -144,6 +144,7 @@ export const GLOSSARY: [string, string][] = [
   ['Tester', 'One fixed, proven line from the other pool. Every candidate is crossed with it so they can be compared fairly.'],
   ['Testcross', 'Candidate × tester. The hybrid that actually gets planted to score a candidate.'],
   ['Test hybrid', 'The seed from crossing a kid with the tester. Planted once, measured, then discarded, like a blood sample. The results are filed under the kid.'],
+  ['Combining ability (GCA)', 'How good a line is as a parent: how well its hybrids do, on average. It is what the field test really measures, and what the model predicts. Bayer\'s brief calls this stage a "GCA assessment".'],
   ['Plot', 'A small strip of field for one testcross at one location. The scarce, expensive resource.'],
   ['Advance', 'Keep testing a line next season. Lines not advanced are dropped.'],
   ['Marker (SNP), the M in M1', 'One position in the genome where lines differ by a single letter. Datasets like this one have a few thousand.'],
