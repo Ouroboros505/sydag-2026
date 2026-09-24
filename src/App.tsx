@@ -78,6 +78,14 @@ export default function App() {
               <b>{Math.round(data.validation.top20_recovery * 100)}%</b> of the true top 20% (chance is 20%).
               Intervals in the table are 90% bands from that same forward error, not from a random split.
             </p>
+            {data.validation.traits && (
+              <p>
+                The ranking also leans on predicted moisture and lodging. Same forward test:{' '}
+                {Object.entries(data.validation.traits).map(([k, v], i) => (
+                  <span key={k}>{i ? ' · ' : ''}{k} <b>r = {v.toFixed(2)}</b></span>
+                ))}
+              </p>
+            )}
             <ul>
               {data.baselines.map((b) => (
                 <li key={b.name}>{b.name}: <b>{b.metric} = {b.value.toFixed(2)}</b></li>

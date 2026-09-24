@@ -98,6 +98,7 @@ def synthetic(n: int = 2000, seed: int = 7) -> dict:
             "r": 0.15,
             "top20_recovery": 0.29,
             "n_test": len(out),
+            "traits": {"yield": 0.15, "moisture": 0.30, "lodging": 0.10},
         },
     }
 
@@ -105,16 +106,28 @@ def synthetic(n: int = 2000, seed: int = 7) -> dict:
 def real() -> dict:
     """G2F pipeline. Swap `g2f` for the challenge adapter on Friday; nothing else changes."""
     import numpy as np
-    from analysis import g2f as src, model
+    from analysis import data, g2f as src, model
+
+    if not (data.RAW / "g2f/Training_data").exists():
+        raise SystemExit(
+            "No data under data/raw/g2f/. Either\n"
+            "  bash scripts/get_g2f.sh          # public stand-in, ~80 MB\n"
+            "  python scripts/build_data.py --synthetic   # placeholder with the same shape"
+        )
 
     h = src.hybrids()
     M = src.markers()
     h = h[h.index.isin(M.index)]
     M = M.loc[M.index.intersection(h.index).union(src.candidates_2024().index.intersection(M.index))]
 
-    # honest validation on the trait we rank by, on lines never seen in training
+    # honest validation, on lines never seen in training, for every trait the ranking uses
     alpha = model.pick_alpha(M.loc[h.index], h["yield_adj"])
-    val = model.year_forward(h, M, "yield_adj", test_year=int(h.first_year.max()), alpha=alpha)
+    test_year = int(h.first_year.max())
+    val = model.year_forward(h, M, "yield_adj", test_year=test_year, alpha=alpha)
+    per_trait = {
+        label: model.year_forward(h, M, trait, test_year=test_year, alpha=alpha)
+        for label, trait in (("moisture", "mst_adj"), ("lodging", "lodging"))
+    }
 
     # final models on everything with a record
     fits = {t: model.fit(M.loc[h.index], h[t], alpha) for t in ("yield_adj", "mst_adj", "lodging")}
@@ -165,7 +178,10 @@ def real() -> dict:
             {"name": "ridge on markers (GBLUP-equivalent)", "metric": "r", "value": round(val.r, 3)},
             {"name": "same model, random k-fold (leaky)", "metric": "r", "value": round(val.leaky_r, 3)},
         ],
-        "validation": {"scheme": val.scheme, "r": round(val.r, 3), "top20_recovery": round(val.top20, 3), "n_test": val.n_test},
+        "validation": {
+            "scheme": val.scheme, "r": round(val.r, 3), "top20_recovery": round(val.top20, 3), "n_test": val.n_test,
+            "traits": {"yield": round(val.r, 3), **{k: round(v.r, 3) for k, v in per_trait.items()}},
+        },
     }
 
 

@@ -44,6 +44,7 @@ export interface Validation {
   r: number
   top20_recovery: number   // fraction of true top-20% recovered, chance = 0.20
   n_test: number
+  traits?: Record<string, number>   // forward-validation r per trait the ranking uses
 }
 
 export interface Recommendations {

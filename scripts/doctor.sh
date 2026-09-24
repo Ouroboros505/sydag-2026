@@ -58,6 +58,7 @@ else bad "npm run build" "npm install first"; fi
 
 head_ "Demo"
 [ -s public/recommendations.json ] && ok "public/recommendations.json present" || bad "recommendations.json" "npm run data:synthetic"
+[ -d data/raw/g2f/Training_data ] && ok "stand-in data (G2F) present" || bad "stand-in data (G2F)" "bash scripts/get_g2f.sh"
 if [ -x .venv/bin/python ]; then
   .venv/bin/python -c "import sys; sys.path.insert(0,'.'); from analysis import model, g2f, bayer" 2>/dev/null && ok "analysis modules import" || bad "analysis modules" "uv pip install -r requirements.txt"
 fi
