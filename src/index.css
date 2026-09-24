@@ -122,3 +122,12 @@ button.theme {
 
 td.id { max-width: 220px; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 th, td { padding: 6px 7px; }
+
+button.link {
+  font: inherit; color: var(--accent); background: none; border: none; padding: 0; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+
+td.fam { max-width: 120px; }
+td.id { max-width: 165px; }
+td.fam { max-width: 110px; }

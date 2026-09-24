@@ -1,18 +1,13 @@
 import type { Summary } from '../lib/econ'
-import { fmtNum, fmtUSD } from '../lib/econ'
+import { fmtNum, fmtPct, fmtUSD } from '../lib/econ'
 
 interface Props extends Summary {
-  budget: number
+  capped: boolean
 }
 
-export default function StatTiles({ budget, gainByMargin, gainByYield, gap, swapCount }: Props) {
+export default function StatTiles({ gainByMargin, gainByYield, gap, swapCount, diversity, capCost, capped }: Props) {
   return (
     <div className="tiles">
-      <div className="tile">
-        <div className="k">Lines advanced</div>
-        <div className="v">{fmtNum(budget)}</div>
-        <div className="d">this season's plot budget</div>
-      </div>
       <div className="tile">
         <div className="k">Gain per acre, ranking by $</div>
         <div className="v">{fmtUSD(gainByMargin)}</div>
@@ -32,6 +27,14 @@ export default function StatTiles({ budget, gainByMargin, gainByYield, gap, swap
         <div className="k">Lines that change hands</div>
         <div className="v">{fmtNum(swapCount)}</div>
         <div className="d">advanced on $, cut on bushels</div>
+      </div>
+      <div className="tile">
+        <div className="k">Genetic breadth</div>
+        <div className="v">{fmtNum(diversity.effective, 1)}</div>
+        <div className="d">
+          effective families · {diversity.families} present · largest {fmtPct(diversity.largestShare)}
+          {capped && <> · cap costs {fmtUSD(capCost)}/ac</>}
+        </div>
       </div>
     </div>
   )

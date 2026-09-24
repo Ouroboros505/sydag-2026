@@ -31,6 +31,8 @@ export interface Candidate {
   pred_mst: number      // % grain moisture at harvest
   pred_lodging: number  // % plants lodged (stalk + root)
   confidence: 'high' | 'medium' | 'low'
+  pc1?: number          // genomic map coordinates (top two marker PCs)
+  pc2?: number
 }
 
 export interface Baseline {

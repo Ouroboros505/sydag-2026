@@ -69,6 +69,8 @@ def synthetic(n: int = 2000, seed: int = 7) -> dict:
             "pred_mst": round(float(np.clip(mst, 12, 26)), 2),
             "pred_lodging": round(lodging, 2),
             "confidence": str(conf),
+            "pc1": round(float(fmean / 3 + rng.normal(0, 1)), 3),
+            "pc2": round(float(fmst * 2 + rng.normal(0, 1)), 3),
         })
     # de-duplicate ids
     seen, out = set(), []
@@ -103,84 +105,112 @@ def synthetic(n: int = 2000, seed: int = 7) -> dict:
     }
 
 
-def real() -> dict:
-    """G2F pipeline. Swap `g2f` for the challenge adapter on Friday; nothing else changes."""
+def real(source: str = "g2f") -> dict:
+    """Run the pipeline on a dataset adapter. Every adapter provides hybrids() and markers();
+    adapters for family-structured data (parents genotyped) also enable the two-stage model."""
     import numpy as np
-    from analysis import data, g2f as src, model
+    import pandas as pd
+    from analysis import data, model
 
-    if not (data.RAW / "g2f/Training_data").exists():
-        raise SystemExit(
-            "No data under data/raw/g2f/. Either\n"
-            "  bash scripts/get_g2f.sh          # public stand-in, ~80 MB\n"
-            "  python scripts/build_data.py --synthetic   # placeholder with the same shape"
-        )
+    if source == "g2f":
+        from analysis import g2f as src
+        if not (data.RAW / "g2f/Training_data").exists():
+            raise SystemExit(
+                "No data under data/raw/g2f/. Either\n"
+                "  bash scripts/get_g2f.sh                     # public stand-in, ~80 MB\n"
+                "  python scripts/build_data.py --synthetic   # placeholder with the same shape"
+            )
+        h = src.hybrids()
+        cand = src.candidates_2024()
+        M = src.markers()
+        parents = None
+    elif source == "bayer":
+        from analysis import bayer as src
+        h = src.hybrids()
+        cand = src.candidates(h)
+        M = src.markers(keep=h.index.union(cand.index))
+        parents = src._parents()
+    else:
+        raise SystemExit(f"unknown source {source!r}")
 
-    h = src.hybrids()
-    M = src.markers()
     h = h[h.index.isin(M.index)]
-    M = M.loc[M.index.intersection(h.index).union(src.candidates_2024().index.intersection(M.index))]
-
-    # honest validation, on lines never seen in training, for every trait the ranking uses
-    alpha = model.pick_alpha(M.loc[h.index], h["yield_adj"])
-    test_year = int(h.first_year.max())
-    val = model.year_forward(h, M, "yield_adj", test_year=test_year, alpha=alpha)
-    per_trait = {
-        label: model.year_forward(h, M, trait, test_year=test_year, alpha=alpha)
-        for label, trait in (("moisture", "mst_adj"), ("lodging", "lodging"))
-    }
-
-    # final models on everything with a record
-    fits = {t: model.fit(M.loc[h.index], h[t], alpha) for t in ("yield_adj", "mst_adj", "lodging")}
-
-    # the cohort to rank: never field-tested
-    cand = src.candidates_2024()
     cand = cand[cand.index.isin(M.index)]
+    test_year = int(h.first_year.max())
+    alpha = model.pick_alpha(M.loc[h.index], h["yield_adj"])
+
+    # forward validation: single-stage always; two-stage too when parents are genotyped
+    val = model.year_forward(h, M, "yield_adj", test_year=test_year, alpha=alpha)
+    per_trait = {lab: model.year_forward(h, M, t, test_year=test_year, alpha=alpha).r
+                 for lab, t in (("moisture", "mst_adj"), ("lodging", "lodging"))}
+    two_stage_r = None
+    if parents is not None and "population" in h.columns:
+        Mp = src.parent_markers(M.columns)
+        tr, te = h[h.first_year < test_year], h[h.first_year == test_year]
+        f = model.fit(M.loc[tr.index], tr["yield_adj"], alpha)
+        pred = model.two_stage(f, M.loc[te.index], te["population"], Mp, parents)
+        two_stage_r = float(np.corrcoef(pred, te["yield_adj"])[0, 1]) if len(te) > 5 else None
+
+    fits = {t: model.fit(M.loc[h.index], h[t], alpha) for t in ("yield_adj", "mst_adj", "lodging")}
     Mc = M.loc[cand.index]
-    tier = model.relatedness_tier(M.loc[h.index], Mc)
-    yld = fits["yield_adj"].predict(Mc) + h.attrs["mean_yield_bu"]
+    fam = cand["population"] if "population" in cand.columns else pd.Series(cand.index, index=cand.index)
+    if parents is not None:
+        Mp = src.parent_markers(M.columns)
+        yld = model.two_stage(fits["yield_adj"], Mc, fam, Mp, parents)
+    else:
+        yld = fits["yield_adj"].predict(Mc)
+    yld = yld + h.attrs["mean_yield_bu"]
     mst = fits["mst_adj"].predict(Mc) + h.attrs["mean_mst"]
     lodg = np.clip(fits["lodging"].predict(Mc), 0, None)
-    half = 1.645 * val.rmse   # 90% interval from the forward-validation error
+    tier = model.relatedness_tier(M.loc[h.index], Mc)
+    pcs = model.genomic_pcs(M.loc[h.index.union(cand.index)], cand.index)
+    half = 1.645 * val.rmse
 
     rows = []
-    for i, hid in enumerate(cand.index):
-        fam = f"{cand.parent1[hid]}/{cand.parent2[hid]}"
+    for i, cid in enumerate(cand.index):
         rows.append({
-            "id": hid, "group": str(cand.parent2[hid]), "family": fam,
+            "id": str(cid), "group": str(cand.parent2.get(cid, "")), "family": str(fam[cid]),
             "pred_yield": round(float(yld[i]), 2),
             "lo": round(float(yld[i] - half), 1), "hi": round(float(yld[i] + half), 1),
             "pred_mst": round(float(mst[i]), 2), "pred_lodging": round(float(lodg[i]), 2),
-            "confidence": str(tier[hid]),
+            "confidence": str(tier[cid]),
+            "pc1": round(float(pcs.pc1[cid]), 3), "pc2": round(float(pcs.pc2[cid]), 3),
         })
 
-    # baselines on the same forward split, for the validation panel
-    train = h[h.first_year < h.first_year.max()]; test = h[h.first_year == h.first_year.max()]
-    def parent_mean(row):
-        rel = train[(train.parent1.isin([row.parent1, row.parent2])) | (train.parent2.isin([row.parent1, row.parent2]))]
+    # relatives baseline on the same forward split
+    tr, te = h[h.first_year < test_year], h[h.first_year == test_year]
+    pcols = [c for c in ("parent1", "parent2") if c in h.columns]
+    def rel_mean(row):
+        ps = [row[c] for c in pcols]
+        rel = tr[tr[pcols].isin(ps).any(axis=1)] if pcols else tr.iloc[:0]
         return rel.yield_adj.mean() if len(rel) else np.nan
-    pm = test.apply(parent_mean, axis=1)
-    ok = pm.notna()
-    r_parent = float(np.corrcoef(pm[ok], test.yield_adj[ok])[0, 1]) if ok.sum() > 10 else float("nan")
+    pm = te.apply(rel_mean, axis=1); ok = pm.notna()
+    r_rel = float(np.corrcoef(pm[ok], te.yield_adj[ok])[0, 1]) if ok.sum() > 10 else float("nan")
+
+    baselines = [
+        {"name": "environmental mean (no genetics)", "metric": "r", "value": 0.0},
+        {"name": "mean of relatives sharing a parent", "metric": "r", "value": round(r_rel, 3)},
+        {"name": "ridge on markers (GBLUP-equivalent)", "metric": "r", "value": round(val.r, 3)},
+    ]
+    if two_stage_r is not None:
+        baselines.append({"name": "two-stage: parents -> family, markers -> line", "metric": "r", "value": round(two_stage_r, 3)})
+    baselines.append({"name": "same model, random k-fold (leaky)", "metric": "r", "value": round(val.leaky_r, 3)})
+    baselines = [b for b in baselines if np.isfinite(b["value"])]   # NaN is not valid JSON
 
     return {
         "meta": {
             "synthetic": False, "target": "yield (bu/ac, environment-adjusted)", "unit": "bu/ac",
             "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "n_candidates": len(rows),
-            "notes": f"Genomes to Fields 2014-2023 training; {len(h):,} lines with records, "
-                     f"{M.shape[1]:,} markers; ridge alpha={alpha}. Candidates are the 2024 cohort.",
+            "notes": f"Source: {source}. {len(h):,} lines with field records, {M.shape[1]:,} markers, "
+                     f"ridge alpha={alpha}; {fam.nunique()} families among the candidates.",
         },
         "price_defaults": PRICE_DEFAULTS,
         "candidates": rows,
-        "baselines": [
-            {"name": "environmental mean (no genetics)", "metric": "r", "value": 0.0},
-            {"name": "mean of relatives sharing a parent", "metric": "r", "value": round(r_parent, 3)},
-            {"name": "ridge on markers (GBLUP-equivalent)", "metric": "r", "value": round(val.r, 3)},
-            {"name": "same model, random k-fold (leaky)", "metric": "r", "value": round(val.leaky_r, 3)},
-        ],
+        "baselines": baselines,
         "validation": {
-            "scheme": val.scheme, "r": round(val.r, 3), "top20_recovery": round(val.top20, 3), "n_test": val.n_test,
-            "traits": {"yield": round(val.r, 3), **{k: round(v.r, 3) for k, v in per_trait.items()}},
+            "scheme": val.scheme, "r": round(val.r, 3), "top20_recovery": round(val.top20, 3),
+            "n_test": val.n_test,
+            "traits": {"yield": round(val.r, 3), **{k: round(v, 3) for k, v in per_trait.items()}},
         },
     }
 
@@ -188,7 +218,7 @@ def real() -> dict:
 def write(payload: dict, name: str = "recommendations.json") -> Path:
     PUBLIC.mkdir(parents=True, exist_ok=True)
     out = PUBLIC / name
-    out.write_text(json.dumps(payload, separators=(",", ":")))
+    out.write_text(json.dumps(payload, separators=(",", ":"), allow_nan=False))
     print(f"{out.relative_to(ROOT)}  {out.stat().st_size / 1024:.0f} KB  "
           f"{payload['meta']['n_candidates']:,} candidates  synthetic={payload['meta']['synthetic']}")
     return out
@@ -197,9 +227,10 @@ def write(payload: dict, name: str = "recommendations.json") -> Path:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--synthetic", action="store_true", help="emit placeholder data")
+    ap.add_argument("--source", default="g2f", choices=["g2f", "bayer"], help="dataset adapter")
     ap.add_argument("--n", type=int, default=2000)
     args = ap.parse_args()
-    write(synthetic(args.n) if args.synthetic else real())
+    write(synthetic(args.n) if args.synthetic else real(args.source))
 
 
 if __name__ == "__main__":

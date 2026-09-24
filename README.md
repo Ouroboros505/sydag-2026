@@ -29,10 +29,13 @@ When that prints **Ready**, your machine costs the team zero setup time at the e
 
 A budget allocator for line advancement. It ranks candidate lines that have never been
 field-tested by **dollars per acre** — predicted yield after drying cost and lodging loss at
-prices the user sets — and shows what a bushel ranking would leave on the table.
+prices the user sets — shows what a bushel ranking would leave on the table, and prices the
+genetic breadth of the advanced set with a per-family limit. The advancement list exports
+as CSV.
 
 ```
-npm run data          # analysis -> public/recommendations.json  (real pipeline)
+npm run data          # analysis -> public/recommendations.json  (G2F stand-in)
+python scripts/build_data.py --source bayer   # family-structured data under data/raw/bayer/
 npm run data:synthetic  # placeholder with the same shape, clearly flagged in the UI
 npm run dev           # http://localhost:5173
 ```

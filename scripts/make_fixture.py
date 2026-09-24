@@ -38,7 +38,9 @@ def main() -> None:
             ids = parents + [f"{i:011d}" for i in range(1, n_prog + 1)]
             g = pd.DataFrame(np.vstack([P, prog]), index=ids, columns=markers)
             g.to_csv(gdir / f"{cluster}.{pop}_Imputed.csv", na_rep="NA")
-            tested_years = [2006, 2007] if pop <= 4 else []   # pops 5-6 are the untested 2008 cohort
+            # each family is tested once, in one year (one-shot, as in the real pipeline);
+            # pops 5-6 are the untested 2008 cohort
+            tested_years = {1: [2006], 2: [2006], 3: [2007], 4: [2007]}.get(pop, [])
             effect = np.nanmean(prog[:, :40], axis=1) * 6
             for yr in tested_years:
                 for loc in rng.choice(LOCS, 3, replace=False):

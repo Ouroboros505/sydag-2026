@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import CandidateTable from './components/CandidateTable'
 import Controls from './components/Controls'
+import Breadth from './components/Breadth'
 import Frontier from './components/Frontier'
+import GenomicMap from './components/GenomicMap'
 import Scenarios from './components/Scenarios'
 import StatTiles from './components/StatTiles'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
-import { frontier, score, summarize, type Prices } from './lib/econ'
+import { advanceOrder, byYieldOrder, frontier, score, summarize, type Prices } from './lib/econ'
 import type { Recommendations } from './lib/types'
 
 export default function App() {
@@ -14,6 +16,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [prices, setPrices] = useState<Prices | null>(null)
   const [budget, setBudget] = useState(300)
+  const [cap, setCap] = useState(Infinity)
 
   useEffect(() => {
     loadJson<Recommendations>('recommendations.json')
@@ -32,17 +35,29 @@ export default function App() {
           lodging_loss_fraction: num('lodging', p.lodging_loss_fraction),
         })
         setBudget(Math.min(num('budget', 300), d.candidates.length))
+        setCap(num('cap', Infinity))
       })
       .catch((e) => setError(String(e)))
   }, [])
 
   const scored = useMemo(() => (data && prices ? score(data.candidates, prices) : []), [data, prices])
-  const curve = useMemo(() => (scored.length ? frontier(scored, Math.max(1, Math.floor(scored.length / 200))) : []), [scored])
-
-  const summary = useMemo(
-    () => (scored.length ? summarize(scored, Math.min(budget, scored.length)) : null),
-    [scored, budget],
+  const maxFamily = useMemo(() => {
+    const n = new Map<string, number>()
+    for (const c of scored) n.set(c.family, (n.get(c.family) ?? 0) + 1)
+    return Math.max(1, ...n.values())
+  }, [scored])
+  const reachable = useMemo(() => advanceOrder(scored, cap).length, [scored, cap])
+  const k = Math.min(budget, reachable)
+  const curve = useMemo(
+    () => (scored.length ? frontier(scored, cap, Math.max(1, Math.floor(scored.length / 200))) : []),
+    [scored, cap],
   )
+  const summary = useMemo(() => (scored.length ? summarize(scored, k, cap) : null), [scored, k, cap])
+  const yieldSet = useMemo(
+    () => new Set(advanceOrder(byYieldOrder(scored), cap).slice(0, k).map((c) => c.id)),
+    [scored, cap, k],
+  )
+  const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
 
   if (error) return <main><p>Could not load recommendations.json — {error}</p></main>
   if (!data || !prices || !summary) return <main><p className="muted">Loading…</p></main>
@@ -58,18 +73,28 @@ export default function App() {
         </span>
       </header>
       <p className="lede">
-        {data.meta.n_candidates.toLocaleString()} candidate lines, none of them field-tested yet. Predictions come from
-        markers and parentage; the ranking is by <b>dollars per acre</b>, not bushels — yield after drying cost and
-        lodging loss at the prices you set on the left.
+        {data.meta.n_candidates.toLocaleString()} candidate lines, none of them field-tested yet, and plots for{' '}
+        {k.toLocaleString()}. Predictions come from markers and parentage; the ranking is by <b>dollars per acre</b>,
+        not bushels — yield after drying cost and lodging loss at the prices you set on the left.
       </p>
 
       <div className="layout">
-        <Controls n={scored.length} budget={budget} prices={prices} onBudget={setBudget} onPrices={setPrices} />
+        <Controls
+          n={scored.length} budget={budget} cap={cap} maxFamily={maxFamily} prices={prices}
+          onBudget={setBudget} onCap={setCap} onPrices={setPrices}
+        />
         <div className="stack">
-          <StatTiles budget={Math.min(budget, scored.length)} {...summary} />
-          <Frontier points={curve} budget={budget} onBudget={setBudget} />
-          <Scenarios candidates={data.candidates} prices={prices} budget={budget} />
-          <CandidateTable rows={scored} budget={budget} prices={prices} />
+          {k < budget && (
+            <p className="muted" style={{ margin: 0 }}>
+              The family limit leaves only {k.toLocaleString()} eligible lines — loosen it or lower the budget.
+            </p>
+          )}
+          <StatTiles {...summary} capped={Number.isFinite(cap)} />
+          <Frontier points={curve} budget={k} onBudget={setBudget} />
+          <Scenarios candidates={data.candidates} prices={prices} budget={k} cap={cap} />
+          <Breadth scored={scored} budget={k} cap={cap} onCap={setCap} />
+          <GenomicMap all={scored} advanced={advancedIds} />
+          <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={prices} />
           <div className="panel validation">
             <h2>How much to trust this</h2>
             <p>
@@ -81,8 +106,8 @@ export default function App() {
             {data.validation.traits && (
               <p>
                 The ranking also leans on predicted moisture and lodging. Same forward test:{' '}
-                {Object.entries(data.validation.traits).map(([k, v], i) => (
-                  <span key={k}>{i ? ' · ' : ''}{k} <b>r = {v.toFixed(2)}</b></span>
+                {Object.entries(data.validation.traits).map(([key, v], i) => (
+                  <span key={key}>{i ? ' · ' : ''}{key} <b>r = {v.toFixed(2)}</b></span>
                 ))}
               </p>
             )}

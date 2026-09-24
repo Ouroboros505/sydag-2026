@@ -72,6 +72,9 @@ def year_forward(h: pd.DataFrame, M: pd.DataFrame, trait: str, test_year: int, a
     test = h[h.first_year == test_year]
     train = train[train.index.isin(M.index)]
     test = test[test.index.isin(M.index)]
+    if train.empty or len(test) < 5:
+        raise ValueError(f"year-forward needs lines first seen before {test_year} and in it; "
+                         f"got {len(train)} train / {len(test)} test")
     f = fit(M.loc[train.index], train[trait], alpha)
     pred = f.predict(M.loc[test.index])
     true = test[trait].to_numpy()
@@ -101,3 +104,29 @@ def relatedness_tier(M_train: pd.DataFrame, M_new: pd.DataFrame) -> pd.Series:
     best = (B @ A.T).max(axis=1)
     q1, q2 = np.quantile(best, [1 / 3, 2 / 3])
     return pd.Series(np.where(best >= q2, "high", np.where(best >= q1, "medium", "low")), index=M_new.index)
+
+
+def genomic_pcs(M: pd.DataFrame, rows: pd.Index, k: int = 2) -> pd.DataFrame:
+    """Top-k principal components of standardized markers, for the given rows.
+    Used for the genomic map and nothing else - it is a picture, not a model input."""
+    Z = ((M - M.mean()) / M.std().replace(0, 1)).to_numpy(dtype=np.float32)
+    U, S, _ = np.linalg.svd(Z - Z.mean(axis=0), full_matrices=False)
+    pcs = pd.DataFrame(U[:, :k] * S[:k], index=M.index, columns=[f"pc{i + 1}" for i in range(k)])
+    return pcs.loc[rows]
+
+
+def two_stage(f: Fit, M_lines: pd.DataFrame, family: pd.Series, M_parents: pd.DataFrame,
+              parents: dict[str, tuple[str, str]]) -> np.ndarray:
+    """Predict lines from families never seen before.
+
+    Stage 1, between families: the marker model applied to each parent's own genotype;
+    the family baseline is the mean of its two parents (genomic mate prediction).
+    Stage 2, within family: each line's deviation from its family's mean prediction.
+    Plain ridge ranks well inside a family but generalizes poorly across new families;
+    this keeps the part it is good at and takes the between-family signal from parents."""
+    raw = pd.Series(f.predict(M_lines), index=M_lines.index)
+    fam_mean = raw.groupby(family).transform("mean")
+    par_bv = pd.Series(f.predict(M_parents), index=M_parents.index)
+    base = family.map(lambda p: np.nanmean([par_bv.get(x, np.nan) for x in parents.get(p, ("", ""))]))
+    base = base.fillna(fam_mean)
+    return (base + raw - fam_mean).to_numpy()

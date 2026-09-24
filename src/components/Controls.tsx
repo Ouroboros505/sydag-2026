@@ -3,14 +3,19 @@ import type { Prices } from '../lib/econ'
 interface Props {
   n: number
   budget: number
+  cap: number
+  maxFamily: number
   prices: Prices
   onBudget: (k: number) => void
+  onCap: (c: number) => void
   onPrices: (p: Prices) => void
 }
 
-export default function Controls({ n, budget, prices, onBudget, onPrices }: Props) {
+export default function Controls({ n, budget, cap, maxFamily, prices, onBudget, onCap, onPrices }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
+  const capTop = Math.min(maxFamily, 80)
+  const capValue = Number.isFinite(cap) ? cap : capTop + 1
 
   return (
     <div className="panel">
@@ -21,7 +26,18 @@ export default function Controls({ n, budget, prices, onBudget, onPrices }: Prop
           Lines you can field-test <b>{budget.toLocaleString()} of {n.toLocaleString()}</b>
         </label>
         <input type="range" min={10} max={n} step={10} value={budget} onChange={(e) => onBudget(Number(e.target.value))} />
-        <div className="hint">The plot budget. Everything below reorders as you move it.</div>
+        <div className="hint">The plot budget. Everything reorders as you move it.</div>
+      </div>
+
+      <div className="control">
+        <label>
+          Most lines from one family <b>{Number.isFinite(cap) ? cap : 'no limit'}</b>
+        </label>
+        <input
+          type="range" min={1} max={capTop + 1} step={1} value={capValue}
+          onChange={(e) => { const v = Number(e.target.value); onCap(v > capTop ? Infinity : v) }}
+        />
+        <div className="hint">Keeps the advanced set genetically broad. The tiles show what it costs.</div>
       </div>
 
       <h2 style={{ marginTop: 20 }}>Your economics</h2>

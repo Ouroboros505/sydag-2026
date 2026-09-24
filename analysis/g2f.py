@@ -60,4 +60,6 @@ def candidates_2024() -> pd.DataFrame:
     c = s[["Hybrid"]].drop_duplicates().set_index("Hybrid")
     parts = c.index.to_series().str.split("/", n=1, expand=True)
     c["parent1"], c["parent2"] = parts[0], parts[1]
+    # GEMS-0227_FBLL_0016 -> GEMS-0227_FBLL: lines from one source population share a family
+    c["population"] = c["parent1"].str.replace(r"_\d{3,4}$", "", regex=True)
     return c

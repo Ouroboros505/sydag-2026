@@ -88,7 +88,8 @@ export default function Frontier({ points, budget, onBudget }: Props) {
         <line x1={x(at.k)} x2={x(at.k)} y1={M.t} y2={H - M.b} stroke="var(--text-3)" strokeWidth={1} strokeDasharray="3 3" />
         <circle cx={x(at.k)} cy={y(at.byMargin)} r={5} fill="var(--series-1)" stroke="var(--surface)" strokeWidth={2} />
         <circle cx={x(at.k)} cy={y(at.byYield)} r={5} fill="var(--series-2)" stroke="var(--surface)" strokeWidth={2} />
-        <text x={x(at.k) + 6} y={H - M.b - 6} fontSize={11} fill="var(--text-2)">budget</text>
+        <text x={x(at.k) + (x(at.k) > W - M.r - 60 ? -6 : 6)} y={M.t + 10} fontSize={11} fill="var(--text-2)"
+          textAnchor={x(at.k) > W - M.r - 60 ? "end" : "start"}>budget</text>
 
         {hover && (
           <line x1={x(hover.k)} x2={x(hover.k)} y1={M.t} y2={H - M.b} stroke="var(--text-2)" strokeWidth={1} opacity={0.5} />

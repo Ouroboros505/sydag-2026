@@ -156,3 +156,15 @@ def candidates(h: pd.DataFrame) -> pd.DataFrame:
     c["parent2"] = pop.map(lambda p: parents.get(p, ("", ""))[1])
     c["population"] = pop
     return c
+
+
+def parent_markers(columns: pd.Index) -> pd.DataFrame:
+    """Genotypes of every population's two parents, aligned to the progeny marker columns."""
+    rows = {}
+    for pop, f in _genotype_files():
+        g = pd.read_csv(f, index_col=0, nrows=2, na_values=["NA", "NaN", ""], low_memory=False)
+        g = g.apply(pd.to_numeric, errors="coerce")
+        for pid, vals in g.iterrows():
+            rows[str(pid)] = vals
+    P = pd.DataFrame(rows).T.reindex(columns=columns)
+    return P.fillna(P.mean()).fillna(0.0)
