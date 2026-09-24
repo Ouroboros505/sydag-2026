@@ -80,7 +80,7 @@ export function MarkerExplorer() {
           <button key={m.id} className={'step' + (k === j ? ' active' : '')} onClick={() => setJ(k)}><b>{m.id}</b></button>
         ))}
       </div>
-      <p className="muted small">Pick a marker. The past lines get sorted into two groups by which version they carry there.</p>
+      <p className="muted small">Pick a marker. The <b>same 8 past lines</b> (earlier years, with field results) get sorted into two groups by which version they carry at that marker. Each bar is one line's yield.</p>
       <div className="groups">
         {[{ name: `version 1 (${MARKERS[j].v1}${MARKERS[j].v1}) · −1`, cls: 'v1', ls: lo, avg: s.lo },
           { name: `version 2 (${MARKERS[j].v2}${MARKERS[j].v2}) · +1`, cls: 'v2', ls: hi, avg: s.hi }].map((g) => (
@@ -96,6 +96,12 @@ export function MarkerExplorer() {
             <div className="avg">average <b>{fmt(g.avg)}</b> bu/ac</div>
           </div>
         ))}
+      </div>
+      <div className="linkmath">
+        Average of all 8 lines: <b>{fmt(BASE)}</b>.{' '}
+        <b className="t-v1">{MARKERS[j].v1}{MARKERS[j].v1}</b> group: {fmt(s.lo)} − {fmt(BASE)} = <b>{sign(s.lo - BASE)}</b> ·{' '}
+        <b className="t-v2">{MARKERS[j].v2}{MARKERS[j].v2}</b> group: {fmt(s.hi)} − {fmt(BASE)} = <b>{sign(s.hi - BASE)}</b>
+        <span className="muted"> → that's {MARKERS[j].id}'s row in the chart below (highlighted).</span>
       </div>
       <div className={'verdict' + (Math.abs(s.gap) > 5 ? ' strong' : '')}>
         Gap for {MARKERS[j].id}: <b>{sign(s.gap)} bu/ac</b>.{' '}
@@ -118,7 +124,8 @@ export function MarkerExplorer() {
           const w = g / 2
           const pct = (Math.abs(w) / 10) * 100
           return (
-            <div key={m.id} className="effrow">
+            <div key={m.id} className={'effrow' + (m.id === MARKERS[j].id ? ' sel' : '')}
+              onClick={() => setJ(MARKERS.findIndex((x) => x.id === m.id))} role="button" title={`show ${m.id} above`}>
               <span className="mono">{m.id}</span>
               <div className="effside left">
                 <span className="small"><b className="t-v1">{m.v1}{m.v1}</b> {sign(-w)}</span>
