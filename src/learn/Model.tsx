@@ -104,14 +104,20 @@ export function MarkerExplorer() {
           : 'Tiny: which version a line has here makes no difference. Noise.'}
       </div>
       <div className="weights">
-        <div className="small muted">What the model learns, every marker at once (weight = half the gap):</div>
-        {ranked.map(({ m, g }) => (
-          <div key={m.id} className="wrow">
-            <span className="mono">{m.id}</span>
-            <div className="wbar"><div className="wfill" style={{ width: `${(Math.abs(g) / 20) * 100}%` }} /></div>
-            <span className="small">{sign(g / 2, 2)} per step</span>
-          </div>
-        ))}
+        <div className="small muted">
+          What the model learns: <b>one weight per marker</b> (half the gap). The sign says which version wins:
+          positive = version 2 is better, negative = version 1 is better. "Per step" = one move along −1 → 0 → +1.
+        </div>
+        {ranked.map(({ m, g }) => {
+          const v2wins = g >= 0
+          return (
+            <div key={m.id} className="wrow">
+              <span className="mono">{m.id}</span>
+              <div className="wbar"><div className={'wfill ' + (v2wins ? 'v2' : 'v1')} style={{ width: `${(Math.abs(g) / 20) * 100}%` }} /></div>
+              <span className="small">{sign(g / 2, 2)} per step · <b className={v2wins ? 't-v2' : 't-v1'}>{v2wins ? m.v2 + m.v2 : m.v1 + m.v1}</b> better</span>
+            </div>
+          )
+        })}
       </div>
       <div className="nextyear">
         <b>This toy is easy on purpose. The real thing is harder:</b>
