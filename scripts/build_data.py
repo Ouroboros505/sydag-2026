@@ -482,8 +482,9 @@ def strategy_backtest(fd, fwd, eval_years, means, model, budgets=(0.3, 0.5), cap
     keys = sorted({(r["budget"], r["strategy"]) for r in out}, key=lambda x: (x[0], x[1] != "random", x[1]))
     for b, name in keys:
         rs = [r for r in out if r["budget"] == b and r["strategy"] == name]
+        vals = {m: [r[m] for r in rs if np.isfinite(r[m])] for m in ("gain", "top10_kept", "eff_families", "maturity_shift")}
         rows.append({"year": "mean", "budget": b, "strategy": name,
-                     **{m: float(np.nanmean([r[m] for r in rs])) for m in ("gain", "top10_kept", "eff_families", "maturity_shift")}})
+                     **{m: float(np.mean(v)) if v else float("nan") for m, v in vals.items()}})
     return [{k: (round(v, 3) if isinstance(v, float) else v) for k, v in r.items()} for r in rows + out]
 
 

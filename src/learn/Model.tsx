@@ -223,12 +223,12 @@ export function LeakageTrap() {
       <div className="legend-inline"><i className="sw train" />train on it <i className="sw test" />test on it</div>
       <div className={'verdict ' + (mode === 'random' ? 'warn' : 'strong')}>
         {mode === 'random'
-          ? <>Score looks great: <b>r ≈ 0.55</b>. But it's fake. Every tested kid has a brother or sister in training, with nearly the same DNA. The model is recognising family members, not predicting.</>
-          : <>Honest score: <b>r ≈ 0.15</b> on the real Bayer data. Low, and true: it's what happens when you predict a family nobody has ever grown. This is the real job in January.</>}
+          ? <>Score looks great: <b>r ≈ 0.56</b> on the real 2008 lines. But it's fake. Every tested kid has a brother or sister in training, with nearly the same DNA. The model is recognising family members, not predicting.</>
+          : <>Honest score: <b>r ≈ 0.13</b> for the real 2008 cohort (0.13 to 0.31 across six years). Low, and true: it's what happens when you predict a family nobody has ever grown. This is the real job in January.</>}
       </div>
       <p className="explain">
-        <b>r</b> is a correlation: 1 = perfect ranking, 0 = no better than a coin flip. The same model scores 0.55 or
-        0.15 depending only on how you test it. Judges from Bayer will ask which one you're showing. ProMaize always
+        <b>r</b> is a correlation: 1 = perfect ranking, 0 = no better than a coin flip. The same data scores 0.56 or
+        0.13 depending only on how you test it. Judges from Bayer will ask which one you're showing. ProMaize always
         shows the honest one first, and the leaky one next to it so nobody confuses them.
       </p>
     </div>

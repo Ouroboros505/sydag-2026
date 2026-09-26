@@ -161,6 +161,6 @@ export const GLOSSARY: [string, string][] = [
   ['Lodging', 'Plants falling over, at the stalk or the root. Fallen corn is partly lost at harvest.'],
   ['Genomic prediction', 'Predicting how a line will perform from its DNA, using past lines where both DNA and results are known.'],
   ['Ridge regression / GBLUP', 'The standard model for that: one small weight per marker, kept small on purpose so thousands of markers don\'t overfit. The two names are the same maths.'],
-  ['r (correlation)', 'How well predictions rank the truth. 1 = perfect, 0 = coin flip. Honest values here are ~0.15.'],
+  ['r (correlation)', 'How well predictions rank the truth. 1 = perfect, 0 = coin flip. Honest values on this data are 0.13 to 0.31, depending on the year.'],
   ['Leakage', 'Accidentally testing on relatives of training lines. Makes a model look far better than it is.'],
 ]

@@ -33,11 +33,15 @@ def rgb(hex_: str) -> RGBColor:
     return RGBColor.from_string(hex_.lstrip("#"))
 
 
+SLIDE_W, SLIDE_H = Inches(13.333), Inches(7.5)
+TEXT = RGBColor(0x22, 0x22, 0x22)
+
+
 def body(slide, title_ph) -> tuple[Emu, Emu, Emu, Emu]:
-    """The free area under a slide's title."""
+    """The free area under a slide's title, full slide width."""
     left = title_ph.left
-    top = title_ph.top + title_ph.height + Inches(0.15)
-    return left, top, title_ph.width, Inches(7.5) - top - Inches(0.5)
+    top = title_ph.top + title_ph.height + Inches(0.2)
+    return left, top, SLIDE_W - 2 * left, SLIDE_H - top - Inches(0.45)
 
 
 def bullets(slide, box, lines: list[str | tuple[str, int]], size: int = 20) -> None:
@@ -51,6 +55,7 @@ def bullets(slide, box, lines: list[str | tuple[str, int]], size: int = 20) -> N
         p.text = ("    " * level + ("- " if level else "")) + text.strip("*")
         p.font.size = Pt(size - 3 * level)
         p.font.bold = bold
+        p.font.color.rgb = TEXT if (bold or not level) else GREY   # the template's default text is white
         p.space_after = Pt(8)
 
 
@@ -73,7 +78,7 @@ def main() -> None:
     # opening banner: our name on the organizers' art
     for sh in slides[0].shapes:
         if sh.has_text_frame and sh.text_frame.text.strip() == "SURVIVAL GUIDE":
-            sh.text_frame.text = "ProMaize: which lines get the ground"
+            sh.text_frame.text = "ProMaize"
     s = title["Team Intro/Logo"]
     bullets(s, body(s, s.shapes.title), ["**Team ProMaize, Bayer Genomic Prediction track"] + TEAM +
             ["", f"Live demo: {DEMO_URL}"], 24)
@@ -129,28 +134,56 @@ def main() -> None:
         ch.legend.include_in_layout = False
         ch.has_title = True
         ch.chart_title.text_frame.text = "Forward accuracy (r), each year's new families"
+        ch.font.size = Pt(14)
+        ch.font.color.rgb = TEXT
         for i, ser in enumerate(ch.series):
             ser.format.fill.solid()
             ser.format.fill.fore_color.rgb = rgb((PALETTE[0], PALETTE[5], PALETTE[1])[i])
 
     s = title["Demo/Prototype"]
     left, top, width, height = body(s, s.shapes.title)
-    shot = ROOT / "docs" / "screens" / "demo.png"
+    shot = ROOT / "docs" / "screens" / "1-default.png"
     if shot.exists():
-        s.shapes.add_picture(str(shot), left, top, height=height - Inches(0.4))
+        s.shapes.add_picture(str(shot), left, top, height=height - Inches(0.5))
     bullets(s, (left, top + height - Inches(0.4), width, Inches(0.4)), [f"Live: {DEMO_URL}"], 16)
 
     s = title["Business Value"]
     left, top, width, height = body(s, s.shapes.title)
-    lines = [f"**Scored on what the field did, every year {by_year[0]['year']}-{by_year[-1]['year']} (plant 30% of lines):"] if by_year else []
-    for r in strat:
-        lines.append((f"{r['strategy']}: ${r['gain']:.1f}/acre over random, keeps {r['top10_kept']:.0%} of the real top 10%", 1))
-    lines += [
+    bullets(s, (left, top, width, Inches(0.5)), [
+        f"**Same plots (30% of lines), six ways, scored on what the field paid, {by_year[0]['year']}-{by_year[-1]['year']}"
+        if by_year else "**Same plots, six ways, scored on what the field paid"], 18)
+    y08 = {r["strategy"]: r for r in v.get("strategies", []) if r["year"] == year and r["budget"] == 0.3}
+    rows_ = sorted(strat, key=lambda r: -r["gain"])
+    tbl = s.shapes.add_table(len(rows_) + 1, 4, left, top + Inches(0.6), int(width * 0.78), Inches(0.42) * (len(rows_) + 1)).table
+    heads = ["Rule", "Realised $/acre over random (6-year mean)", f"in {year}", "Real top 10% kept"]
+    for j, t_ in enumerate(heads):
+        tbl.cell(0, j).text = t_
+    for i, r in enumerate(rows_, start=1):
+        vals = [r["strategy"], f"${r['gain']:.1f}", f"${y08.get(r['strategy'], {}).get('gain', 0):.1f}", f"{r['top10_kept']:.0%}"]
+        for j, t_ in enumerate(vals):
+            tbl.cell(i, j).text = t_
+    tbl.columns[0].width = int(width * 0.34)
+    for j in range(1, 4):
+        tbl.columns[j].width = int(width * 0.148)
+    tbl.rows[0].height = Inches(0.75)
+    for i in range(1, len(rows_) + 1):
+        tbl.rows[i].height = Inches(0.42)
+    for i in range(len(rows_) + 1):
+        ours = i > 0 and rows_[i - 1]["strategy"] == "ProMaize, rank by $/acre"
+        for j in range(4):
+            cell = tbl.cell(i, j)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = rgb(PALETTE[0]) if i == 0 else (RGBColor(0xDD, 0xEE, 0xE5) if ours else RGBColor(0xF6, 0xF6, 0xF4))
+            for p in cell.text_frame.paragraphs:
+                p.font.size = Pt(14)
+                p.font.bold = i == 0 or ours
+                p.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF) if i == 0 else TEXT
+    table_bottom = top + Inches(0.6) + Inches(0.75) + Inches(0.42) * len(rows_)
+    bullets(s, (left, table_bottom + Inches(0.25), width, Inches(1.2)), [
         f"**Honest error bars: the 90% bands held {v.get('coverage90', 0):.0%} of real {year} results.",
-        f"**{year} was the hardest year on record for new families, and ProMaize still doubled standard GBLUP"
-        f" (r {fmt(head['r'] if head else None)} vs {fmt(head['r_gblup'] if head else None)}).",
-    ]
-    bullets(s, (left, top, width, height), lines, 18)
+        f"**{year} was the hardest year to call families (lowest between-family r of the six), and ProMaize still"
+        f" doubled standard GBLUP (r {fmt(head['r'] if head else None)} vs {fmt(head['r_gblup'] if head else None)}).",
+    ], 16)
 
     s = title["Future Development"]
     bullets(s, body(s, s.shapes.title), [

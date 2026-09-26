@@ -44,7 +44,7 @@ def main() -> None:
     rng = np.random.default_rng(args.seed)
     markers = [f"M{m:011d}" for m in sorted(rng.choice(10**9, N_MARK, replace=False))]
     chrom = np.repeat(np.arange(N_CHROM), N_MARK // N_CHROM)
-    qtl_yield = np.where(rng.random(N_MARK) < 0.15, rng.normal(0, 1.2, N_MARK), 0.0)
+    qtl_yield = np.where(rng.random(N_MARK) < 0.15, rng.normal(0, 0.9, N_MARK), 0.0)
     qtl_mat = np.where(rng.random(N_MARK) < 0.08, rng.normal(0, 0.6, N_MARK), 0.0)
     env_yield = {(y, l): rng.normal(0, 18) for y in YEARS for l in LOCS}
     env_mst = {(y, l): rng.normal(0, 2) for y in YEARS for l in LOCS}
@@ -99,7 +99,7 @@ def main() -> None:
                             "LINE": i + 1, "ERM": 110 + 2 * mat[i] + rng.normal(0, 2),
                             "MST": round(mst, 1), "TWT": round(57 - 0.1 * mat[i] + rng.normal(0, 1), 1),
                             "YLD_BE": round(195 + env_yield[(year, loc)] + testers[tester] + gv[i]
-                                            + 0.8 * mat[i] + rng.normal(0, 14), 2),
+                                            + 0.8 * mat[i] + rng.normal(0, 19), 2),
                             "RTLP": round(max(0.0, env_lodg[(year, loc)] + rng.normal(0, 3)), 1) if scored else np.nan,
                             "STLP": round(max(0.0, rng.gamma(1.1, 3)), 1) if scored else np.nan,
                             "CLUSTER": int(cluster[1]),
