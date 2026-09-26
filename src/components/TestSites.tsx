@@ -226,7 +226,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
                 {hr.gain != null
                   ? <>your lines here: <b style={{ color: hr.gain > 0 ? 'var(--good)' : LOST }}>{hr.gain > 0 ? '+' : ''}{fmtUSD(hr.gain, 1)}/ac</b> against the rest<br /></>
                   : <>too few of your lines here to compare<br /></>}
-                {hr.chosen.toLocaleString()} of your plots, {hr.others.toLocaleString()} others<br />
+                {hr.chosen.toLocaleString('en-US')} of your plots, {hr.others.toLocaleString('en-US')} others<br />
                 {hs.rain != null && <>summer rain {hs.rain} mm · July {hs.heat} °C<br /></>}
                 {hs.clay != null && <>topsoil {hs.clay}% clay, {hs.sand}% sand</>}
               </div>

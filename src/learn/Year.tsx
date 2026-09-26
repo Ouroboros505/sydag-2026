@@ -245,10 +245,10 @@ export function YearFlow() {
     target === 2001
       ? <>Nothing before 2001 to learn from, so <b>2001 can't be predicted</b>. The first year is only ever used as examples for the years after it.</>
       : target === 2008
-      ? <><b>This is the hackathon task.</b> Learn from all of 2001–2007 ({nLearn.toLocaleString()} kids with results), then predict the 2008 kids from their DNA. Their real 2008 results exist, but they're kept aside and only used at the very end to check.</>
+      ? <><b>This is the hackathon task.</b> Learn from all of 2001–2007 ({nLearn.toLocaleString('en-US')} kids with results), then predict the 2008 kids from their DNA. Their real 2008 results exist, but they're kept aside and only used at the very end to check.</>
       : target >= 2006
       ? <><b>This is how we check honestly.</b> Pretend it's January {target}: learn only from {learn[0]}–{learn[learn.length - 1]}, predict the {target} kids, then compare with their real {target} results, which we do have. If the model does well here, we trust it for 2008.</>
-      : <>Learn from {learn.length === 1 ? learn[0] : `${learn[0]}–${learn[learn.length - 1]}`} ({nLearn.toLocaleString()} kids with results), predict {target}. Possible, but early years have little history, so these predictions are weak.</>
+      : <>Learn from {learn.length === 1 ? learn[0] : `${learn[0]}–${learn[learn.length - 1]}`} ({nLearn.toLocaleString('en-US')} kids with results), predict {target}. Possible, but early years have little history, so these predictions are weak.</>
   return (
     <div className="yflow">
       <div className="yhead">

@@ -7,10 +7,10 @@ interface Props { rows: StrategyRow[]; heldOut: number | null; match?: PlotsToMa
 
 // the organizers' framing: the tradeoff between aggressive and conservative selection under limited plots
 const LABEL: Record<string, string> = {
-  'ProMaize, rank by $/acre': 'Aggressive: family engine, every line ranked by $/acre',
-  'ProMaize, same share of every family': 'Conservative: family engine, same share of every family',
-  'ProMaize, $/acre, max 50 per family': 'Family engine, $/acre, at most 50 lines per family',
-  'ProMaize, rank by bushels': 'Family engine, ranked by bushels',
+  'ProMaize, rank by $/acre': 'Aggressive: Crossline, every line ranked by $/acre',
+  'ProMaize, same share of every family': 'Conservative: Crossline, same share of every family',
+  'ProMaize, $/acre, max 50 per family': 'Crossline, $/acre, at most 50 lines per family',
+  'ProMaize, rank by bushels': 'Crossline, ranked by bushels',
   'standard GBLUP, rank by $/acre': 'Standard engine (GBLUP), ranked by $/acre',
   'standard GBLUP, rank by bushels': 'Usual practice: standard engine (GBLUP), ranked by bushels',
   random: 'Random pick (the zero line)',

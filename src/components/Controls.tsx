@@ -22,18 +22,18 @@ interface Props {
   dataset?: string
 }
 
-const SHORT: Record<EngineId, string> = { family: 'Family', gblup: 'Standard', environment: 'Environment' }
+const SHORT: Record<EngineId, string> = { family: 'Crossline', gblup: 'Standard', environment: 'Environment' }
 // what each engine runs on, for the hover
 const BEHIND: Record<EngineId, string> = {
-  family: "ProMaize's family engine: two GBLUP-style marker models, one for each family's average (from its parents' DNA), one for the brothers and sisters inside it",
+  family: "Crossline, ProMaize's own engine: rates each cross from its parents' DNA, then each line against its brothers and sisters (two GBLUP-type marker models)",
   gblup: 'The standard method in plant breeding: GBLUP, one marker model over every line tested before, no family step',
-  environment: 'Family engine plus weather and soil',
+  environment: 'Crossline plus weather and soil',
 }
 // when each engine is the right tool, in the breeder's terms
 const WHEN: Record<EngineId, string> = {
-  family: "ProMaize's default, built for seasons full of new families: it judges each family by what its parents passed on, then ranks the brothers and sisters inside it.",
+  family: "ProMaize's own engine, built for seasons full of new families: it rates each cross by what its parents passed on, then ranks the lines inside it against each other.",
   gblup: "The standard method in plant breeding: one model over every line tested before. It needs no family records, and it lets you check ProMaize against the method your team already trusts.",
-  environment: 'The family engine plus each test site\'s weather and soil.',
+  environment: 'Crossline plus each test site\'s weather and soil.',
 }
 
 export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, seasons, dataset }: Props) {
@@ -52,7 +52,7 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
       </Info></h2>
       <div className="control">
         <div className="small" style={{ marginBottom: 8 }}>
-          <b>{dataset ?? `Bayer maize trials, 2000 to ${heldOut ?? 'now'}`}</b>: {n.toLocaleString()} new lines to rank.{' '}
+          <b>{dataset ?? `Bayer maize trials, 2000 to ${heldOut ?? 'now'}`}</b>: {n.toLocaleString('en-US')} new lines to rank.{' '}
           <a href="/cleaning/">How it was cleaned →</a>
         </div>
         <DataCheck compact />
@@ -63,7 +63,7 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
           <h2 style={{ marginTop: 20 }}>Prediction engine<Info wide>
             Every engine predicts the same things for each new line, from its DNA: yield, grain moisture and lodging.
             They differ in how they learn from earlier seasons.<br /><br />
-            <b>Family</b>: first predicts each family's average from its two parents' DNA, then ranks the
+            <b>Crossline</b>, ProMaize's own engine: first predicts each family's average from its two parents' DNA, then ranks the
             brothers and sisters inside the family.<br />
             <b>Standard</b>: GBLUP, the method most breeding programs use; one model over all earlier lines.<br /><br />
             <b>Accuracy</b> is how well the predicted ranking matched the real one, in seasons the engine never saw:
@@ -93,7 +93,7 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
 
       <div className="control">
         <label>
-          Lines you can field-test <b>{budget.toLocaleString()} of {n.toLocaleString()}</b>
+          Lines you can field-test <b>{budget.toLocaleString('en-US')} of {n.toLocaleString('en-US')}</b>
         </label>
         <input type="range" min={10} max={n} step={10} value={budget} onChange={(e) => onBudget(Number(e.target.value))} />
         <div className="hint">The plot budget. Everything reorders as you move it.</div>

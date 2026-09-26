@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { checkText, NAMES, type Report } from '../lib/datacheck'
 
-const n0 = (x: number) => x.toLocaleString()
+const n0 = (x: number) => x.toLocaleString('en-US')
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`
 
 /** Drop a season's field results; ProMaize cleans them in the browser the way the pipeline does,

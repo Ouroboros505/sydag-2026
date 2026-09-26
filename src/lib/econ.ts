@@ -31,7 +31,7 @@ export interface Scored extends Candidate {
 }
 
 /** Sorted by margin, descending, with both ranks attached. */
-/** The same candidates as another engine sees them. The family engine's numbers are the defaults;
+/** The same candidates as another engine sees them. Crossline's numbers are the defaults;
  *  the benchmark engine swaps in its own yield, moisture and lodging, and its one 90% band. */
 export function withEngine(cands: Candidate[], engine: EngineId, half90 = 0): Candidate[] {
   if (engine !== 'gblup') return cands

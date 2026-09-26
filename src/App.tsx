@@ -129,8 +129,8 @@ export default function App() {
       <div className="lede">
         <p>
           <b>{heldOut ? `January ${heldOut}. ` : ''}The field budget has been cut.</b>{' '}
-          {data.meta.n_candidates.toLocaleString()} new lines{nFamilies > 1 ? <>, from {nFamilies} families never grown in a field,</> : null}{' '}
-          are waiting, and there are plots for {k.toLocaleString()}. A line that gets no plot is dropped for good.
+          {data.meta.n_candidates.toLocaleString('en-US')} new lines{nFamilies > 1 ? <>, from {nFamilies} families never grown in a field,</> : null}{' '}
+          are waiting, and there are plots for {k.toLocaleString('en-US')}. A line that gets no plot is dropped for good.
         </p>
         <p>
           <b>ProMaize chooses which lines get the plots.</b> It predicts each line's value from its DNA, in dollars per
@@ -153,7 +153,7 @@ export default function App() {
         <div className="stack" style={{ opacity: stale ? 0.72 : 1, transition: 'opacity 120ms' }}>
           {k < dBudget && (
             <p className="muted" style={{ margin: 0 }}>
-              The family limit leaves only {k.toLocaleString()} eligible lines. Loosen it or lower the budget.
+              The family limit leaves only {k.toLocaleString('en-US')} eligible lines. Loosen it or lower the budget.
             </p>
           )}
           <StatTiles {...summary} capped={dEven || Number.isFinite(dCap)} />
