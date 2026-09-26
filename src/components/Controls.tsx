@@ -140,8 +140,9 @@ export default function Controls({ n, budget, prices, onBudget, onPrices, engine
       </Info></h2>
 
       <div className="control">
-        <label>
-          Available plots to test <b>{budget.toLocaleString('en-US')} of {n.toLocaleString('en-US')} ({Math.round((budget / Math.max(1, n)) * 100)}%) lines</b>
+        <label style={{ display: 'block' }}>
+          Available plots to test
+          <b style={{ display: 'block', marginTop: 2 }}>{budget.toLocaleString('en-US')} of {n.toLocaleString('en-US')} ({Math.round((budget / Math.max(1, n)) * 100)}%) lines</b>
         </label>
         <input type="range" min={10} max={n} step={10} value={budget} onChange={(e) => onBudget(Number(e.target.value))} />
         {plotsPerLine && (
