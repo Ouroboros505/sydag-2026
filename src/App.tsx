@@ -147,7 +147,7 @@ export default function App() {
         <Controls
           n={scored.length} budget={budget} cap={cap} maxFamily={maxFamily} prices={prices} even={even}
           onBudget={setBudget} onCap={onCap} onPrices={setPrices} onEven={setEven}
-          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length}
+          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} climateR={data.validation.environment?.climate_r}
         />
         <div className="stack" style={{ opacity: stale ? 0.72 : 1, transition: 'opacity 120ms' }}>
           {k < dBudget && (
@@ -162,7 +162,8 @@ export default function App() {
           )}
           {data.validation.by_year && <Pedigree years={data.validation.by_year} heldOut={heldOut} />}
           {data.locations && data.locations.length > 0 && (
-            <TestSites sites={data.locations} year={heldOut} persistence={data.validation.site_persistence} />
+            <TestSites sites={data.locations} year={heldOut} persistence={data.validation.site_persistence}
+              familySites={data.family_sites} all={scored} advanced={summary.advanced} env={data.validation.environment} />
           )}
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={dPrices} />
           <Validation v={data.validation} baselines={data.baselines} notes={data.meta.notes} heldOut={heldOut} />

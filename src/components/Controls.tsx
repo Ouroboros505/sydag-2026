@@ -18,6 +18,7 @@ interface Props {
   onEngine: (e: EngineId) => void
   heldOut: number | null
   seasons?: number
+  climateR?: number
 }
 
 const SHORT: Record<EngineId, string> = { family: 'Family engine', gblup: 'Standard (GBLUP)', environment: 'Environment' }
@@ -28,7 +29,7 @@ const WHEN: Record<EngineId, string> = {
   environment: 'The family engine plus each test site\'s weather and soil.',
 }
 
-export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, seasons }: Props) {
+export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, seasons, climateR }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
   const capTop = Math.min(maxFamily, 80)
@@ -62,6 +63,12 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
               {heldOut ? <>, <b>{cur.r_last.toFixed(2)}</b> in {heldOut}, when <b>{Math.round(cur.coverage90 * 100)}%</b> of
               real results fell inside its ranges</> : null}.
             </div>
+            {climateR != null && (
+              <div className="hint">
+                Also tested: a weather and soil engine. It could not tell which lines do better where (r = {climateR.toFixed(2)} on
+                past seasons), so it is not offered. The map below shows the test.
+              </div>
+            )}
           </div>
         </>
       )}

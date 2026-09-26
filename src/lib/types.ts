@@ -76,6 +76,7 @@ export interface Validation {
   seasons?: number
   engines?: EngineInfo[]           // the prediction engines the app can switch between, with track records
   site_persistence?: number        // does a test site's reliability carry over to the next season?
+  environment?: EnvironmentCheck   // what weather, soil and a joint trial fit were tested for
   location_specific?: {             // can a line's response across locations be predicted?
     r_oracle: number                // even knowing each trial's productivity
     r_history: number               // from each location's history, as known in January
@@ -130,6 +131,21 @@ export interface EngineInfo {
 
 export type EngineId = EngineInfo['id']
 
+/** Forward checks of the environment data (see analysis/model.py). */
+export interface EnvironmentCheck {
+  climate_r: number                 // parent DNA x usual weather and soil: which family does better where
+  climate_r_real_weather: number    // the same, given the season's real weather (an upper bound)
+  climate_by_year: number[]
+  cells: number                     // family x trial combinations tested
+  joint_vs_fieldmates: number       // agreement of the joint trial fit with field-mate comparison
+  joint_follows_latitude: number
+  fieldmates_follow_latitude: number
+  dna_predicts_test_latitude: number
+  family_call_fieldmates: number    // forward r of the family call from DNA, each way of scoring families
+  family_call_joint: number
+  family_call_joint_minus_location: number
+}
+
 export interface TestSite {
   loc: string
   lat: number
@@ -149,6 +165,7 @@ export interface Recommendations {
   price_defaults: PriceDefaults
   candidates: Candidate[]
   locations?: TestSite[]
+  family_sites?: Record<string, string[]>   // the sites testing each new family
   baselines: Baseline[]
   validation: Validation
 }

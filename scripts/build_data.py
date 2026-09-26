@@ -393,11 +393,23 @@ def real_bayer(synthetic: bool = False) -> dict:
                         "clay": round(float(clim.loc[loc, "clay"]) / 10, 1), "sand": round(float(clim.loc[loc, "sand"]) / 10, 1)})
         locations.append(row)
     say(f"test network: {len(locations)} locations, {len(used)} used in {cohort}; site reliability persists at r {persistence:.2f}")
+    family_sites = {str(f): sorted(map(str, g.dropna().unique())) for f, g in pl[pl["year"] == cohort].groupby("family")["location"]}
 
     # broad-acre or location-specific: is a line's response across locations predictable at all?
     loc = model.location_response_check(fd, src.plots(), cohort)
     say(f"location-specific response predicted at r {loc['oracle']:.3f} even knowing each trial's productivity, "
         f"{loc['history']:.3f} from locations' history ({loc['n_plots']:,} plots)")
+    # weather and soil: can parent DNA x a trial's weather and soil say which family does better where?
+    clim = model.family_climate_check(fd, src.plots(), src.environments(), eval_years)
+    say(f"weather and soil x parent DNA, which family does better where: forward r {clim['r_typical']:.3f} "
+        f"from locations' usual weather, {clim['r_actual']:.3f} even with the season's real weather; by year {clim['by_year_typical']}; "
+        f"the interaction itself repeats inside a season at r {clim['split_half']:.2f} (two halves of each family)")
+    # the textbook joint fit of trials and families, and why we compare families with their field-mates instead
+    jt = model.joint_trial_check(fd, src.plots(), eval_years)
+    say(f"joint trial fit: agrees with field-mate comparison at r {jt['r_near_joint']:.2f}; follows test-site latitude "
+        f"{jt['lat_corr_joint']:+.2f} (field-mates {jt['lat_corr_near']:+.2f}); DNA predicts a family's test latitude at r "
+        f"{np.mean(jt['dna_predicts_site']):.2f}; family call from DNA, forward: field-mates {np.mean(jt['fwd_near']):.3f}, "
+        f"joint {np.mean(jt['fwd_joint']):.3f}, joint with location removed {np.mean(jt['fwd_joint_site']):.3f}")
 
     # genomic map: top two components, fitted on a sample of past lines, applied to the cohort
     past = fd.rows(np.flatnonzero(fd.year < cohort))
@@ -475,6 +487,7 @@ def real_bayer(synthetic: bool = False) -> dict:
         "price_defaults": PRICE_DEFAULTS,
         "candidates": rows,
         "locations": locations,
+        "family_sites": family_sites,
         "baselines": baselines,
         "validation": {
             "scheme": f"year-forward: every {cohort} family predicted from {years[0]}-{cohort - 1} only, none of them seen before",
@@ -501,6 +514,16 @@ def real_bayer(synthetic: bool = False) -> dict:
                  "r_last": by_year[-1]["r_gblup"], "coverage90": round(g_cov, 3), "half90": round(g_half, 1)},
             ],
             "site_persistence": round(persistence, 3) if np.isfinite(persistence) else None,
+            "environment": {
+                "climate_r": round(clim["r_typical"], 3), "climate_r_real_weather": round(clim["r_actual"], 3),
+                "climate_by_year": clim["by_year_typical"], "cells": clim["cells"],
+                "joint_vs_fieldmates": round(jt["r_near_joint"], 2),
+                "joint_follows_latitude": round(jt["lat_corr_joint"], 2), "fieldmates_follow_latitude": round(jt["lat_corr_near"], 2),
+                "dna_predicts_test_latitude": round(float(np.mean(jt["dna_predicts_site"])), 2),
+                "family_call_fieldmates": round(float(np.mean(jt["fwd_near"])), 3),
+                "family_call_joint": round(float(np.mean(jt["fwd_joint"])), 3),
+                "family_call_joint_minus_location": round(float(np.mean(jt["fwd_joint_site"])), 3),
+            },
             "plots_to_match": match,
         },
     }

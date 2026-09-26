@@ -145,7 +145,9 @@ def main() -> None:
         "Tester effect removed as a BLUP: advance lines, not testers.",
         "**Baselines: environmental means, pedigree BLUP, standard GBLUP.",
     ] + ([f"**Broad-acre, tested: location response predicted at r = {fmt(v['location_specific']['r_history'])}"
-          f" ({v['location_specific']['n_plots']:,} held-out plots)."] if v.get("location_specific") else []), 18)
+          f" ({v['location_specific']['n_plots']:,} held-out plots)."] if v.get("location_specific") else [])
+      + ([f"Weather and soil, tested: which family does better where, r = {fmt(v['environment']['climate_r'])}. "
+          "Not offered; the demo switches between the family engine and standard GBLUP."] if v.get("environment") else []), 18)
     if by_year:
         cd = CategoryChartData()
         cd.categories = [str(y["year"]) for y in by_year]

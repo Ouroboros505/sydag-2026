@@ -93,6 +93,24 @@ function Validation({ v, baselines, notes, heldOut }: Props) {
           those swings in {v.location_specific.n_plots.toLocaleString()} held-out plots at <b>r = {f2(v.location_specific.r_history)}</b>,
           and at r = {f2(v.location_specific.r_oracle)} even when told each trial's real productivity. Every line is tested
           in one year only, so its location response is never seen twice: ProMaize predicts broad-acre performance.
+          {v.environment && (
+            <> Weather and soil did not change that: parent DNA combined with each trial's summer rain, heat and soil
+              predicted which family does better where at r = {f2(v.environment.climate_r)} on {v.environment.cells.toLocaleString()} family
+              and trial pairs, r = {f2(v.environment.climate_r_real_weather)} even given the season's real weather.</>
+          )}
+        </p>
+      )}
+      {v.environment && (
+        <p>
+          <b>Why each family is compared with its field-mates.</b> A trial here holds only a few families, so every plot is
+          scored against the trial it grew in. The textbook alternative, fitting all trials and families together, agrees
+          with it at r = {f2(v.environment.joint_vs_fieldmates)} and looked more predictable from DNA (r ={' '}
+          {f2(v.environment.family_call_joint)} against {f2(v.environment.family_call_fieldmates)}), but it follows where a family was
+          tested (r = {f2(v.environment.joint_follows_latitude)} with the sites' latitude, against{' '}
+          {f2(v.environment.fieldmates_follow_latitude)}), and DNA predicts where breeders test a family at
+          r = {f2(v.environment.dna_predicts_test_latitude)}. With location taken out it fell to r ={' '}
+          {f2(v.environment.family_call_joint_minus_location)}: the extra was geography, not genetics, so we kept the fair
+          side-by-side comparison.
         </p>
       )}
       <ul>

@@ -477,3 +477,128 @@ def trial_reliability(plots: pd.DataFrame, trait: str = "yield_bu", min_lines: i
     agg = agg.join(p.drop_duplicates("env").set_index("env")[["year", "location", "cluster"]])
     agg["trial_mean"] = plots[plots[trait].notna()].groupby("env")[trait].mean()
     return agg[agg["n"] >= min_lines]
+
+
+def _wr(a: np.ndarray, b: np.ndarray, w: np.ndarray) -> float:
+    a, b = a - np.average(a, weights=w), b - np.average(b, weights=w)
+    return float(np.sum(w * a * b) / np.sqrt(np.sum(w * a * a) * np.sum(w * b * b)))
+
+
+def _family_cells(fd: FamilyData, plots: pd.DataFrame) -> pd.DataFrame:
+    """One row per family x trial: the family's mean yield there, raw and relative to the trial."""
+    fams = set(fd.families)
+    p = plots[plots["yield_bu"].notna() & plots["family"].isin(fams)].copy()
+    p["ya"] = p["yield_bu"] - p.groupby("env")["yield_bu"].transform("mean")
+    return p.groupby(["family", "env"]).agg(y=("yield_bu", "mean"), c=("ya", "mean"), n=("ya", "size"),
+                                            year=("year", "first"), cluster=("cluster", "first"),
+                                            location=("location", "first"), lat=("lat", "mean"),
+                                            lon=("lon", "mean")).reset_index()
+
+
+def family_climate_check(fd: FamilyData, plots: pd.DataFrame, env: pd.DataFrame, years: list[int],
+                         n_pcs: int = 20, alpha: float = 1e4) -> dict:
+    """Can parent DNA x weather and soil say which family does better where? A family-level reaction
+    norm: each family's deviation at each trial from its own average, regressed on (family genotype
+    PCs) x (the trial's covariates), trained on earlier seasons and scored on each new one. The
+    covariates come two ways: the season's real weather (not known in January, an upper bound) and
+    each location's average of earlier seasons (what is known in January). Soil is the same in both."""
+    fi = {f: k for k, f in enumerate(fd.families)}
+    cell = _family_cells(fd, plots)
+    cell = cell[cell["n"] >= 5].copy()
+    tot = cell.assign(w=cell["c"] * cell["n"]).groupby("family")[["w", "n"]].sum()
+    cell["d"] = cell["c"] - cell["family"].map(tot["w"] / tot["n"])
+    # is the interaction real inside a season? the same deviations from two random halves of each family
+    p = plots[plots["yield_bu"].notna() & plots["family"].isin(fi.keys())].copy()
+    p["ya"] = p["yield_bu"] - p.groupby("env")["yield_bu"].transform("mean")
+    ids = p["id"].unique()
+    half = pd.Series(np.random.default_rng(0).integers(0, 2, len(ids)), index=ids)
+    hc = p.assign(h=p["id"].map(half)).groupby(["family", "env", "h"])["ya"].agg(["mean", "size"]).unstack("h")
+    hc = hc[(hc[("size", 0)] >= 3) & (hc[("size", 1)] >= 3)]
+    dev = [hc[("mean", k)] - hc[("mean", k)].groupby("family").transform("mean") for k in (0, 1)]
+    split_half = _r(dev[0].to_numpy(), dev[1].to_numpy())
+    Z = fd.Xbar - fd.Xbar.mean(0)
+    U, s, _ = np.linalg.svd(Z, full_matrices=False)
+    pcs = U[:, :n_pcs] * s[:n_pcs]
+    pcs = (pcs - pcs.mean(0)) / pcs.std(0)
+    e = env.copy()
+    e["rain_summer"] = e[["X06_PRCP", "X07_PRCP", "X08_PRCP"]].sum(axis=1)
+    e["rain_spring"] = e[["X04_PRCP", "X05_PRCP"]].sum(axis=1)
+    e["heat_summer"] = e[["X06_CLDD", "X07_CLDD", "X08_CLDD"]].sum(axis=1)
+    e["wet_days"] = e[["X06_DP10", "X07_DP10", "X08_DP10"]].sum(axis=1)
+    cols = ["rain_summer", "rain_spring", "heat_summer", "X07_TAVG", "wet_days",
+            "clay_0_5cm", "sand_0_5cm", "soc_0_5cm", "phh2o_0_5cm", "nitrogen_0_5cm"]
+    actual = e.set_index(["YEAR", "LOC"])[cols]
+    out: dict = {"actual": [], "typical": []}
+    for y in years:
+        for kind in ("actual", "typical"):
+            ec = actual if kind == "actual" else e[e["YEAR"] < y].groupby("LOC")[cols].mean()
+            def feats(c: pd.DataFrame) -> np.ndarray:
+                E = (c[["year", "location"]].join(ec, on=["year", "location"]) if kind == "actual"
+                     else c[["location"]].join(ec, on="location"))
+                return np.c_[E[cols].to_numpy(float), c[["lat", "lon"]].to_numpy(float)]
+            tr, te = cell[cell["year"] < y], cell[cell["year"] == y]
+            Etr, Ete = feats(tr), feats(te)
+            ktr, kte = np.isfinite(Etr).all(1), np.isfinite(Ete).all(1)
+            tr, Etr, te, Ete = tr[ktr], Etr[ktr], te[kte], Ete[kte]
+            mu, sd = Etr.mean(0), Etr.std(0) + 1e-9
+            Etr, Ete = (Etr - mu) / sd, (Ete - mu) / sd
+            Ptr, Pte = pcs[tr["family"].map(fi).to_numpy()], pcs[te["family"].map(fi).to_numpy()]
+            Ftr = (Ptr[:, :, None] * Etr[:, None, :]).reshape(len(tr), -1)
+            Fte = (Pte[:, :, None] * Ete[:, None, :]).reshape(len(te), -1)
+            w = np.minimum(tr["n"].to_numpy(float), 60.0)
+            b = np.linalg.solve(Ftr.T @ (Ftr * w[:, None]) + alpha * np.eye(Ftr.shape[1]), Ftr.T @ (w * tr["d"].to_numpy()))
+            out[kind].append(_wr(Fte @ b, te["d"].to_numpy(), np.minimum(te["n"].to_numpy(float), 60.0)))
+    return {"r_actual": float(np.mean(out["actual"])), "r_typical": float(np.mean(out["typical"])),
+            "by_year_typical": [round(v, 3) for v in out["typical"]], "cells": int(len(cell)), "split_half": split_half}
+
+
+def joint_trial_check(fd: FamilyData, plots: pd.DataFrame, years: list[int], alpha: float = 1e4) -> dict:
+    """Trials hold only a few families each, so each family is compared with the families grown
+    beside it. The textbook alternative fits every trial and family together, comparing families
+    across the whole season through shared locations. This asks whether that is better, and why
+    not: how much of a family's joint estimate is simply where it was tested (and DNA predicts where
+    breeders test a family, since placement follows adaptation)."""
+    from scipy import sparse
+    from scipy.sparse.linalg import lsqr
+    cell = _family_cells(fd, plots)
+    fam = cell.groupby("family").agg(year=("year", "first"), cluster=("cluster", "first"))
+    near = (cell.assign(w=cell["c"] * cell["n"]).groupby("family")["w"].sum() / cell.groupby("family")["n"].sum())
+    joint = pd.Series(np.nan, index=near.index)
+    for _, d in cell.groupby(["year", "cluster"]):
+        envs, fs = pd.factorize(d["env"])[0], pd.factorize(d["family"])
+        r = np.arange(len(d))
+        A = sparse.hstack([sparse.csr_matrix((np.ones(len(d)), (r, envs)), shape=(len(d), envs.max() + 1)),
+                           sparse.csr_matrix((np.ones(len(d)), (r, fs[0])), shape=(len(d), len(fs[1])))]).tocsr()
+        w = np.sqrt(d["n"].to_numpy(float))
+        sol = lsqr(sparse.diags(w) @ A, w * d["y"].to_numpy(), damp=1e-3, atol=1e-10, btol=1e-10, iter_lim=20000)[0]
+        fe = sol[envs.max() + 1:]
+        joint.loc[list(fs[1])] = fe - fe.mean()
+    key = fam["year"].astype(str) + fam["cluster"].astype(str)
+    near = near - near.groupby(key).transform("mean")
+    site = cell.assign(wl=cell["lat"] * cell["n"], wo=cell["lon"] * cell["n"]).groupby("family")[["wl", "wo", "n"]].sum()
+    lat = (site["wl"] / site["n"]); lon = (site["wo"] / site["n"])
+    lat, lon = lat - lat.groupby(key).transform("mean"), lon - lon.groupby(key).transform("mean")
+    L = np.c_[np.ones(len(lat)), lat.to_numpy(), lon.to_numpy()]
+    ok = np.isfinite(L).all(1)
+    beta = np.linalg.lstsq(L[ok], joint.to_numpy()[ok], rcond=None)[0]
+    joint_site = joint.copy()
+    joint_site[ok] = joint.to_numpy()[ok] - L[ok] @ beta
+    joint_site[~ok] = np.nan
+    fi = {f: k for k, f in enumerate(fd.families)}
+    Zs = (fd.Xbar - fd.Xbar.mean(0)) / (fd.Xbar.std(0) + 1e-6)
+    def forward(target: pd.Series) -> list[float]:
+        t = np.full(len(fd.families), np.nan)
+        idx = [fi[f] for f in target.index if f in fi]
+        t[idx] = target[[f for f in target.index if f in fi]].to_numpy()
+        res = []
+        for y in years:
+            tr = np.flatnonzero((fd.year < y) & np.isfinite(t)); te = np.flatnonzero((fd.year == y) & np.isfinite(t))
+            a = np.linalg.solve(Zs[tr] @ Zs[tr].T + alpha * np.eye(len(tr)), t[tr] - t[tr].mean())
+            res.append(_r(Zs[te] @ (Zs[tr].T @ a), t[te]))
+        return res
+    both = near.index.intersection(joint.index)
+    return {"r_near_joint": _r(near[both].to_numpy(), joint[both].to_numpy()),
+            "lat_corr_near": _r(lat[both].to_numpy(), near[both].to_numpy()),
+            "lat_corr_joint": _r(lat[both].to_numpy(), joint[both].to_numpy()),
+            "dna_predicts_site": forward(lat),
+            "fwd_near": forward(near), "fwd_joint": forward(joint), "fwd_joint_site": forward(joint_site)}

@@ -79,6 +79,20 @@ ProMaize: budget, allocation (rank all / same share per family), what 2008 paid,
 The analysis runs once (about five minutes on a laptop) and writes one JSON file the web app
 reads. The app computes only the user's own pricing on top, so it works offline, on a phone.
 
+**Two engines, one switch.** The demo runs on either prediction engine, each shown with its own
+forward record:
+
+- **Family engine** (the default): the two-part model above, built for seasons full of new
+  families. Mean r 0.22 over six seasons, 0.13 in 2008.
+- **Standard engine (GBLUP):** one ridge over every earlier line, the method most breeding programs
+  use. Mean r 0.15, 0.07 in 2008. A familiar second opinion, and the better fit when lines don't
+  come in families.
+
+Switching changes every prediction on the page, including what 2008 then paid for the chosen
+lines ($5 an acre over random with the family engine, $1 with the standard one, at a 30% budget).
+A third engine, weather and soil, was built and tested the same way and did not earn a place
+(section 6).
+
 ## 3. Technical approach
 
 ### Data integration and preprocessing (`analysis/bayer.py`)
@@ -205,6 +219,7 @@ drying on what the chosen lines really yielded. Plant 30% of lines:
 |---|---|---|---|---|
 | random | $0.0 | $0.0 | 30% | |
 | standard GBLUP, rank by bushels | $5.5 | $1.2 | 36% | 46 |
+| standard GBLUP, rank by $/acre | $5.4 | $1.1 | 35% | 46 |
 | ProMaize, rank by bushels | $8.5 | $4.6 | 41% | 72 |
 | **ProMaize, rank by $/acre** | **$8.8** | **$5.1** | **41%** | 67 |
 | ProMaize, same share of every family | $5.5 | $5.0 | 37% | 125 |
@@ -284,8 +299,29 @@ r = -0.003 even when told each 2008 trial's real productivity. Every line is tes
 year, so its location response is never seen twice and cannot be learned. Broad-acre GCA uses all
 ~7 locations as replicates of the one thing we can predict (`model.location_response_check`
 reproduces the test). Placement by location becomes worthwhile at the next stage, when advanced
-lines have multi-year records; the weather and soil covariates (`environmental_features.csv`,
-loaded by `bayer.environments()`) are the input for that.
+lines have multi-year records.
+
+**Weather and soil, tested as a third engine.** The environment file (`environmental_features.csv`:
+monthly rain, temperature, heat days and wet days, and soil texture, carbon, pH and nitrogen, per
+year and location) went into a family-level reaction norm: each family's deviation at each trial
+from its own average, regressed on its genotype (top 20 principal components of the family mean
+genotype) times the trial's summer rain, spring rain, summer heat, July temperature, wet days, soil
+and coordinates, trained on earlier seasons and scored on each new one (6,406 family x trial pairs).
+It predicted which family does better where at **r = 0.01** from each location's usual weather (what
+is known in January) and **r = 0.00** even with the season's real weather. The interaction is real
+inside a season (two random halves of each family agree at r = 0.97 on it), but it belongs to the
+field, not to anything DNA and weather can foresee. So the demo offers two engines, not three, and
+the map shows where the plan is tested rather than matching lines to places
+(`model.family_climate_check`).
+
+**Why families are compared with their field-mates.** A trial (year x location x cluster) holds a
+median of two families, so each plot is scored against the trial it grew in. The textbook
+alternative fits all trials and families of a season together, linking families through shared
+locations. It agrees with the field-mate comparison at r = 0.73 and looked more predictable from DNA
+(forward family call r = 0.42 against 0.30), but it follows where a family was tested (r = -0.26 with
+the sites' latitude, against -0.03), and DNA predicts where breeders test a family at r = 0.78,
+because placement follows adaptation. With location taken out, the joint fit's family call falls to
+0.28: the extra was geography, not genetics (`model.joint_trial_check`).
 
 ## 7. Limitations and failure modes
 
