@@ -32,10 +32,10 @@ export default function Strategies({ rows, heldOut }: Props) {
         <table>
           <thead>
             <tr>
-              <th className="l">Rule</th>
-              <th>Realised gain, mean of {years.length} years</th>
+              <th className="l wrap">Rule</th>
+              <th className="wrap">Realised gain, {years.length}-year mean</th>
               {heldOut != null && <th className="hide-sm">in {heldOut}</th>}
-              <th>Top 10% kept</th>
+              <th className="wrap">Top 10% kept</th>
               <th className="hide-sm">Families</th>
               <th className="hide-sm">Maturity</th>
             </tr>
@@ -43,7 +43,7 @@ export default function Strategies({ rows, heldOut }: Props) {
           <tbody>
             {mean.map((r) => (
               <tr key={r.strategy} className={r.gain === best ? 'swap' : undefined}>
-                <td className="l">{r.strategy}</td>
+                <td className="l wrap">{r.strategy}</td>
                 <td><b>{fmtUSD(r.gain, 1)}</b></td>
                 {heldOut != null && <td className="muted hide-sm">{fmtUSD(at(r.strategy, heldOut)?.gain ?? 0, 1)}</td>}
                 <td>{fmtPct(r.top10_kept)}</td>

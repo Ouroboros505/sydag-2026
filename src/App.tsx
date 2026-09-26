@@ -119,12 +119,12 @@ export default function App() {
           {data.validation.strategies && data.validation.strategies.length > 0 && (
             <Strategies rows={data.validation.strategies} heldOut={heldOut} />
           )}
-          <Frontier points={curve} budget={k} onBudget={setBudget} />
-          <Scenarios candidates={data.candidates} prices={prices} budget={k} cap={cap} />
-          <Breadth scored={scored} budget={k} cap={cap} onCap={setCap} />
-          <GenomicMap all={scored} advanced={advancedIds} />
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={prices} />
           <Validation v={data.validation} baselines={data.baselines} notes={data.meta.notes} heldOut={heldOut} />
+          <Breadth scored={scored} budget={k} cap={cap} onCap={setCap} />
+          <Frontier points={curve} budget={k} onBudget={setBudget} />
+          <Scenarios candidates={data.candidates} prices={prices} budget={k} cap={cap} />
+          <GenomicMap all={scored} advanced={advancedIds} />
         </div>
       </div>
     </main>

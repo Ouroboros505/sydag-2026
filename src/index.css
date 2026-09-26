@@ -196,3 +196,7 @@ a.pill:hover { color: var(--accent); border-color: var(--accent); }
 .toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .toggle button { font: inherit; font-size: 13px; border: none; background: var(--surface); color: var(--text-2); padding: 5px 12px; cursor: pointer; }
 .toggle button.on { background: var(--accent); color: #fff; }
+
+/* long labels may wrap so the numbers stay on screen on a phone */
+th.wrap, td.wrap { white-space: normal; }
+@media (max-width: 640px) { th.wrap, td.wrap { min-width: 110px; } }

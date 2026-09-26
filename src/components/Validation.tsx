@@ -38,18 +38,18 @@ export default function Validation({ v, baselines, notes, heldOut }: Props) {
           <table className="yeartable">
             <thead>
               <tr>
-                <th className="l">Predicted year</th>
+                <th className="l wrap">Predicted year</th>
                 <th>Families</th>
                 <th>ProMaize</th>
                 <th className="l hide-sm" style={{ width: '38%' }}>vs standard GBLUP and pedigree</th>
-                <th>Std. GBLUP</th>
+                <th className="wrap">Std. GBLUP</th>
                 <th className="hide-sm">Pedigree</th>
               </tr>
             </thead>
             <tbody>
               {years.map((y) => (
                 <tr key={y.year} className={y.year === heldOut ? 'swap' : undefined}>
-                  <td className="l">{y.year}{y.year === heldOut ? ' (the decision year)' : ''}</td>
+                  <td className="l wrap">{y.year}{y.year === heldOut ? ' (the decision year)' : ''}</td>
                   <td>{y.n_families}</td>
                   <td><b>{f2(y.r)}</b></td>
                   <td className="l hide-sm">

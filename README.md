@@ -163,8 +163,21 @@ keeps the pipeline's maturity from drifting later (+0.08 days vs +0.21).
 
 **For the 2008 season** (the demo at 30% of plots, exportable as CSV):
 
-1. **Advance by predicted $/acre, not bushels.** The advancement list in the demo is the
-   recommendation: 4,790 lines, with each line's 90% band, confidence tier and dollar breakdown.
+1. **Plant the list in [`docs/advance_2008.csv`](docs/advance_2008.csv):** 4,789 lines (30% of the
+   cohort) from 141 families, ranked by predicted $/acre with at most 50 lines from any family,
+   each with its 90% band and confidence tier. Regenerate with `scripts/export_list.py` for another
+   budget or family limit, or export from the demo at any setting. The top of each cluster:
+
+   | cluster | line | family | predicted $/acre | yield bu/ac (90% band) | moisture % | confidence |
+   |---|---|---|---|---|---|---|
+   | C1 | C1.401.18 | C1.401 | $856 | 204.8 (189-221) | 20.1 | high |
+   | C1 | C1.401.27 | C1.401 | $855 | 202.0 (186-218) | 19.3 | high |
+   | C1 | C1.379.88 | C1.379 | $851 | 204.0 (187-221) | 20.6 | medium |
+   | C2 | C2.442.165 | C2.442 | $844 | 202.9 (187-219) | 19.8 | low |
+   | C2 | C2.385.6 | C2.385 | $843 | 201.8 (185-219) | 19.9 | medium |
+
+   Family C2.442 ranks near the top with neither parent on record: its family mean is a pure
+   genomic estimate. That is exactly the bet the family limit caps.
 2. **Hedge the family bet this year.** 2008 has an unusual share of families with little pedigree
    on record, and the family-level prediction is weakest exactly then. Across 2003-2008, the more
    brand-new families a cohort has, the worse family means are predicted (correlation -0.51 over
