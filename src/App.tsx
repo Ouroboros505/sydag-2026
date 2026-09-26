@@ -7,8 +7,8 @@ import Scenarios from './components/Scenarios'
 import StatTiles from './components/StatTiles'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
-import { advanceOrder, backtest, backtestBase, byYieldOrder, captureCurve, evenShare, frontier, meanOf, pastValue, score, summarize, withEngine, type Prices } from './lib/econ'
-import type { EngineId, Recommendations } from './lib/types'
+import { advanceOrder, backtest, backtestBase, byYieldOrder, captureCurve, evenShare, forecastFrom, frontier, meanOf, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
+import type { EngineId, Recommendations, SeasonLines } from './lib/types'
 import Backtest from './components/Backtest'
 import Evidence from './components/Evidence'
 import TestSites from './components/TestSites'
@@ -24,6 +24,7 @@ export default function App() {
   const even = true
   const [engine, setEngine] = useState<EngineId>('family')
   const [revealed, setRevealed] = useState(false)   // January: the decision year's results are not known yet
+  const [lines, setLines] = useState<SeasonLines | null>(null)   // every graded line, for the forecast at any prices
 
   useEffect(() => {
     loadJson<Recommendations>('recommendations.json')
@@ -48,6 +49,8 @@ export default function App() {
         setRevealed(q.get('view') === 'harvest')
       })
       .catch((e) => setError(String(e)))
+    // the forecast works from the pipeline's fixed-price record until this arrives
+    loadJson<SeasonLines>('season_lines.json').then(setLines).catch(() => {})
   }, [])
 
   // The controls move with the immediate values; the heavy recalculation uses deferred copies, so a
@@ -63,11 +66,6 @@ export default function App() {
   const half90 = data?.validation.engines?.find((e) => e.id === dEngine)?.half90
   const cands = useMemo(() => (data ? withEngine(data.candidates, dEngine, half90) : []), [data, dEngine, half90])
   const nFamilies = useMemo(() => new Set(data?.candidates.map((c) => c.family)).size, [data])
-  // plots each tested line takes, from the held-out season's own plots (one per test site)
-  const plotsPerLine = useMemo(() => {
-    const sp = data?.season_plots
-    return sp && sp.line.length ? sp.line.length / new Set(sp.line).size : undefined
-  }, [data])
   // how the lines are organized decides the engine: families of siblings, or lines that stand alone
   const shape = useMemo(() => {
     if (!data) return undefined
@@ -81,13 +79,26 @@ export default function App() {
   const byYield = useMemo(() => byYieldOrder(scored), [scored])
   const reachable = useMemo(() => (dEven ? scored.length : advanceOrder(scored, dCap).length), [scored, dCap, dEven])
   const k = Math.min(dBudget, reachable)
-  // what each engine's picks really earned in past seasons, for the plan and plots on screen
+  // every season's forecast and real value, both engines, at the prices, plots and share on screen
+  const heldOutYear = data?.meta.held_out_year ?? null
+  const share = k / Math.max(1, data?.meta.n_candidates ?? 1)
+  const seasons = useMemo(() => {
+    if (!data || !dPrices) return null
+    const calc = (e: EngineId) => (lines ? seasonValues(lines, e, dPrices, share)
+      : data.validation.engine_value ? seasonsFromRows(data.validation.engine_value, e, share) : [])
+    return { family: calc('family'), gblup: calc('gblup') }
+  }, [data, lines, dPrices, share])
+  const forecast = useMemo(() => (seasons && heldOutYear ? forecastFrom(seasons[dEngine === 'gblup' ? 'gblup' : 'family'], heldOutYear) : null),
+    [seasons, dEngine, heldOutYear])
+  // what each engine's picks really earned in past seasons, for the engine card
   const real = useMemo(() => {
-    const ev = data?.validation.engine_value, h = data?.meta.held_out_year
-    if (!ev || !h) return undefined
-    const share = k / Math.max(1, data!.meta.n_candidates)
-    return { family: pastValue(ev, 'family', dEven, share, h), gblup: pastValue(ev, 'gblup', dEven, share, h) }
-  }, [data, dEven, k])
+    if (!seasons || !heldOutYear) return undefined
+    const avg = (xs: { year: number; real: number }[]) => {
+      const past = xs.filter((x) => x.year < heldOutYear)
+      return past.length ? past.reduce((a, x) => a + x.real, 0) / past.length : undefined
+    }
+    return { family: avg(seasons.family), gblup: avg(seasons.gblup) }
+  }, [seasons, heldOutYear])
   const curve = useMemo(
     () => (moreOpen && scored.length ? frontier(scored, dCap, Math.max(1, Math.floor(scored.length / 200)), byYield) : []),
     [moreOpen, scored, dCap, byYield],
@@ -98,7 +109,6 @@ export default function App() {
     [byYield, dCap, k, dEven],
   )
   const yieldSet = useMemo(() => new Set(yieldList.map((c) => c.id)), [yieldList])
-  const kept = useMemo(() => ({ families: new Set(summary?.advanced.map((c) => c.family)).size, of: nFamilies }), [summary, nFamilies])
   const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
   const btBase = useMemo(() => (dPrices ? backtestBase(scored, dPrices) : null), [scored, dPrices])
   const bt = useMemo(
@@ -161,14 +171,13 @@ export default function App() {
         </p>
       </div>
 
-      <Evidence v={data.validation} heldOut={heldOut} rows={data.validation.engine_value} engine={dEngine}
-        share={k / Math.max(1, data.meta.n_candidates)} revealed={revealed} kept={kept} />
+      <Evidence v={data.validation} heldOut={heldOut} f={forecast} revealed={revealed} />
 
       <div className="layout">
         <Controls
           n={scored.length} budget={budget} prices={prices}
           onBudget={setBudget} onPrices={setPrices}
-          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape} real={real} plotsPerLine={plotsPerLine} ceiling={data.validation.ceiling}
+          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape} real={real} ceiling={data.validation.ceiling}
         />
         <div className="stack" style={{ opacity: stale ? 0.72 : 1, transition: 'opacity 120ms' }}>
           {k < dBudget && (
@@ -177,8 +186,8 @@ export default function App() {
             </p>
           )}
           {heldOut && data.validation.engine_value && (
-            <SeasonForecast rows={data.validation.engine_value} heldOut={heldOut} engine={dEngine}
-              share={k / Math.max(1, data.meta.n_candidates)} revealed={revealed} onReveal={setRevealed} />
+            <SeasonForecast f={forecast} heldOut={heldOut} engine={dEngine} corn={dPrices.corn_price}
+              revealed={revealed} onReveal={setRevealed} />
           )}
           <StatTiles {...summary} capped={dEven || Number.isFinite(dCap)} />
           {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}

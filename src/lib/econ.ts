@@ -6,7 +6,7 @@
  *
  * Deliberately simple and fully visible. Every term is a number the user can move.
  */
-import type { Candidate, EngineId, EngineValueRow, PriceDefaults, SeasonPlots } from './types'
+import type { Candidate, EngineId, EngineValueRow, PriceDefaults, SeasonLines, SeasonPlots } from './types'
 
 export interface Prices extends PriceDefaults {}
 
@@ -409,38 +409,104 @@ export function valueAt(rows: EngineValueRow[], share: number): { predicted: num
   return { predicted: a.predicted + t * (b.predicted - a.predicted), real: a.real + t * (b.real - a.real) }
 }
 
-/** What an engine's picks really earned, averaged over the seasons before the decision year. */
-export function pastValue(rows: EngineValueRow[], engine: EngineId, even: boolean, share: number, heldOut: number): number | undefined {
-  const plan = even ? 'conservative' : 'aggressive'
-  const mine = rows.filter((r) => r.engine === engine && r.plan === plan && r.year < heldOut)
-  const years = [...new Set(mine.map((r) => r.year))]
-  const vals = years.map((y) => valueAt(mine.filter((r) => r.year === y), share)?.real).filter((v): v is number => v != null)
-  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : undefined
+
+export interface SeasonPoint { year: number; predicted: number; real: number }
+export interface SeasonValue extends SeasonPoint { forecast: number | null }
+export interface PlanForecast { past: SeasonValue[]; now: SeasonPoint; forecast: number; lo: number; hi: number; avgReal: number }
+
+// numpy and Python round halves to even: match them, so the app and the pipeline pick the same lines
+const roundHalfEven = (x: number) => {
+  const r = Math.round(x)
+  return Math.abs(x - Math.trunc(x)) === 0.5 && r % 2 !== 0 ? r - 1 : r
 }
 
-export interface SeasonValue { year: number; predicted: number; real: number; forecast: number | null }
-export interface PlanForecast { past: SeasonValue[]; now: { predicted: number; real: number }; forecast: number; lo: number; hi: number; avgReal: number }
+/** The fair share, every graded season, at these prices: each family plants its best share of lines by
+ *  the engine's predicted $/acre; the season's forecast is the predicted gain of those picks over the
+ *  average line, and the real gain is what they earned over it. */
+// each season's families (line numbers in file order), worked out once per file: a knob step then only
+// re-prices and re-sorts
+const seasonFamilies = new WeakMap<SeasonLines, [number, number[][]][]>()
+function familiesOf(sl: SeasonLines): [number, number[][]][] {
+  let out = seasonFamilies.get(sl)
+  if (!out) {
+    const seasons = new Map<number, Map<number, number[]>>()
+    for (let i = 0; i < sl.year.length; i++) {
+      let fams = seasons.get(sl.year[i])
+      if (!fams) seasons.set(sl.year[i], (fams = new Map()))
+      let m = fams.get(sl.fam[i])
+      if (!m) fams.set(sl.fam[i], (m = []))
+      m.push(i)
+    }
+    out = [...seasons].sort((a, b) => a[0] - b[0]).map(([year, fams]) => [year, [...fams.values()]])
+    seasonFamilies.set(sl, out)
+  }
+  return out
+}
 
-/** The fair-share plan's forecast for the decision year and its record before it. An engine's raw
- *  forecast is its own prediction for its own picks; each season's is corrected by how far the
- *  earlier seasons' forecasts missed, so a season's forecast uses only what was known before it. */
-export function planForecast(rows: EngineValueRow[], engine: EngineId, share: number, heldOut: number): PlanForecast | null {
+export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share: number): SeasonPoint[] {
+  const n = sl.year.length
+  const g = engine === 'gblup'
+  const [py, pm, pl] = g ? [sl.gy, sl.gm, sl.gl] : [sl.py, sl.pm, sl.pl]
+  const k = sl.scale
+  const [ky, km, kl] = g ? [k.gy, k.gm, k.gl] : [k.py, k.pm, k.pl]
+  const inc = (y: number, m: number, l: number) =>
+    y * p.corn_price - Math.max(0, m - p.target_moisture) * p.drying_cost_per_point * y - (l / 100) * p.lodging_loss_fraction * y * p.corn_price
+  const pred = new Float64Array(n), real = new Float64Array(n)
+  for (let i = 0; i < n; i++) {
+    pred[i] = inc(py[i] / ky, pm[i] / km, pl[i] / kl)
+    real[i] = inc(sl.ry[i] / k.ry, sl.rm[i] / k.rm, sl.rl[i] / k.rl)
+  }
+  const out: SeasonPoint[] = []
+  const buf = new Float64Array(n)
+  for (const [year, fams] of familiesOf(sl)) {
+    let sp = 0, sr = 0, picked = 0, ap = 0, ar = 0, all = 0
+    for (const members of fams) {
+      const size = members.length
+      const q = roundHalfEven(share * size)
+      // a family's best q lines are those above its q-th best prediction; lines tied with it go in file
+      // order, as in the pipeline. A plain number sort finds it, far faster than sorting the lines themselves
+      const v = buf.subarray(0, size)
+      for (let j = 0; j < size; j++) v[j] = pred[members[j]]
+      v.sort()
+      const cut = q > 0 ? v[size - q] : Infinity
+      let ties = q
+      for (let j = size - q; j < size; j++) if (v[j] > cut) ties--
+      for (let j = 0; j < size; j++) {
+        const i = members[j]
+        ap += pred[i]; ar += real[i]; all++
+        if (pred[i] > cut || (pred[i] === cut && ties-- > 0)) { sp += pred[i]; sr += real[i]; picked++ }
+      }
+    }
+    if (picked) out.push({ year, predicted: sp / picked - ap / all, real: sr / picked - ar / all })
+  }
+  return out
+}
+
+/** The same, read off the pipeline's record at its fixed prices (before the season lines have loaded). */
+export function seasonsFromRows(rows: EngineValueRow[], engine: EngineId, share: number): SeasonPoint[] {
   const mine = rows.filter((r) => r.engine === engine && r.plan === 'conservative')
-  const years = [...new Set(mine.map((r) => r.year))].sort((a, b) => a - b)
-  const seasons = years.map((y) => ({ year: y, ...valueAt(mine.filter((r) => r.year === y), share)! }))
+  return [...new Set(mine.map((r) => r.year))].sort((a, b) => a - b)
+    .map((year) => ({ year, ...valueAt(mine.filter((r) => r.year === year), share)! }))
+}
+
+/** The decision year's forecast and the record before it. An engine's raw forecast is its own
+ *  prediction for its own picks; each season's is corrected by how far the earlier seasons' forecasts
+ *  missed, so a season's forecast uses only what was known before it. */
+export function forecastFrom(seasons: SeasonPoint[], heldOut: number): PlanForecast | null {
   const pastRaw = seasons.filter((s) => s.year < heldOut)
   const now = seasons.find((s) => s.year === heldOut)
   if (pastRaw.length < 2 || !now) return null
-  const ratio = (s: { predicted: number; real: number }) => (s.predicted > 0 ? s.real / s.predicted : NaN)
+  const ratio = (s: SeasonPoint) => (s.predicted > 0 ? s.real / s.predicted : NaN)
   const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
   const ratios = pastRaw.map(ratio).filter(Number.isFinite)
+  if (!ratios.length) return null
   const past = pastRaw.map((s, i) => {
     const before = pastRaw.slice(0, i).map(ratio).filter(Number.isFinite)
     return { ...s, forecast: before.length ? s.predicted * mean(before) : null }
   })
   return {
-    past, now: { predicted: now.predicted, real: now.real },
-    forecast: now.predicted * mean(ratios), lo: now.predicted * Math.min(...ratios), hi: now.predicted * Math.max(...ratios),
+    past, now, forecast: now.predicted * mean(ratios),
+    lo: now.predicted * Math.min(...ratios), hi: now.predicted * Math.max(...ratios),
     avgReal: mean(pastRaw.map((s) => s.real)),
   }
 }

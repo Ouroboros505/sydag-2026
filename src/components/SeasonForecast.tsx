@@ -1,27 +1,25 @@
 import { memo } from 'react'
-import type { EngineId, EngineValueRow } from '../lib/types'
-import { planForecast } from '../lib/econ'
+import type { EngineId } from '../lib/types'
+import type { PlanForecast } from '../lib/econ'
 import Info from './Info'
 
 interface Props {
-  rows: EngineValueRow[]
+  f: PlanForecast | null
   heldOut: number
   engine: EngineId
-  share: number                 // the left panel's plots, as a share of the new lines
+  corn: number                  // the corn price the values are computed at
   revealed: boolean
   onReveal: (r: boolean) => void
 }
 
 const NAME: Record<EngineId, string> = { family: '2-Step', gblup: 'Standard', environment: 'Environment' }
-// the axis already says 'extra', so a plus sign would only add noise; a minus stays
 // every value sits above (or below) the 'random pick' line, so it carries its sign
 const usd = (v: number) => `${v < 0 ? '−' : '+'}$${Math.abs(v).toFixed(2)}`
 
 /** The opening chart: the money the chosen engine's picks are worth. Past seasons show what the
  *  picks really earned and what the engine forecast that January; the decision year is a forecast
  *  until the harvest is revealed. */
-function SeasonForecast({ rows, heldOut, engine, share, revealed, onReveal }: Props) {
-  const f = planForecast(rows, engine, share, heldOut)
+function SeasonForecast({ f, heldOut, engine, corn, revealed, onReveal }: Props) {
   if (!f) return null
   const { now, forecast, lo, hi } = f
   const past = f.past, tracked = f.past
@@ -48,7 +46,7 @@ function SeasonForecast({ rows, heldOut, engine, share, revealed, onReveal }: Pr
     <div className="panel forecast">
       <h2>Income per acre of tested hybrids<Info wide>
         <b>Bars</b>: the income per acre of the test hybrids of the lines {NAME[engine]} chose, measured in the real
-        field, above what a random pick of lines earns (the "random pick" line). Income is yield times price ($4.50 corn),
+        field, above what a random pick of lines earns (the "random pick" line). Income is yield times price (${corn.toFixed(2)} corn),
         minus drying cost and lodging loss, at an average test site: each trial's weather is taken out.<br /><br />
         <b>Ticks</b>: what {NAME[engine]} forecast in January of that season. The raw forecast is the engine's own
         prediction for the lines it picks, which runs high because the best predictions are partly luck, so each

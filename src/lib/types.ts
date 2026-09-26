@@ -133,6 +133,17 @@ export interface EngineInfo {
 
 export type EngineId = EngineInfo['id']
 
+/** Every graded line of every forward season (public/season_lines.json, loaded after the page): each
+ *  engine's predictions and the real results, as integers; divide each field by its `scale`. */
+export interface SeasonLines {
+  scale: Record<'py' | 'pm' | 'pl' | 'gy' | 'gm' | 'gl' | 'ry' | 'rm' | 'rl', number>
+  year: number[]
+  fam: number[]
+  py: number[]; pm: number[]; pl: number[]     // 2-Step predictions
+  gy: number[]; gm: number[]; gl: number[]     // Standard predictions
+  ry: number[]; rm: number[]; rl: number[]     // real, after harvest
+}
+
 /** One season, engine, plan and plot budget: what the engine forecast for its picks in January and
  *  what they really earned, both $/acre above the season's average line. */
 export interface EngineValueRow {

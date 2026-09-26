@@ -488,7 +488,16 @@ def real_bayer(synthetic: bool = False) -> dict:
     say(f"{cohort} plots for the site-by-site check: {len(q):,} at {q['location'].nunique()} sites")
 
     strategies, match = strategy_backtest(fd, fwd, eval_years, means, model)
-    value = engine_value(fd, fwd, eval_years, means, model)
+    lines: dict = {}
+    # the app opens at 30% of the lines, rounded to its slider's step of 10: score exactly that share too
+    k0 = min(round(len(rows) * 0.3 / 10) * 10, len(rows))
+    budgets = tuple(sorted({round(0.05 * i, 2) for i in range(1, 20)} | {k0 / len(rows)}))
+    value = engine_value(fd, fwd, eval_years, means, model, budgets=budgets, lines=lines)
+    # every graded line, so the opening chart can be redone at the user's prices (loaded after the page)
+    out_lines = PUBLIC / "season_lines.json"
+    scale = {"py": 1000, "pm": 1000, "pl": 1000, "gy": 1000, "gm": 1000, "gl": 1000, "ry": 100, "rm": 1000, "rl": 100}
+    out_lines.write_text(json.dumps({"scale": scale, **lines}, separators=(",", ":")))
+    say(f"season lines for the app: {len(lines.get('year', [])):,} lines, {out_lines.stat().st_size / 1024:.0f} KB")
     for m_ in match:
         say(f"{m_['year']}: ProMaize at 30% keeps {m_['ours_kept']:.0%} of the real top 10%; standard GBLUP needs "
             f"{m_['standard_needs']:.0%} of lines for that ({m_['lines_saved']:,} more lines)")
@@ -562,12 +571,15 @@ def real_bayer(synthetic: bool = False) -> dict:
     }
 
 
-def engine_value(fd, fwd, eval_years, means, model, budgets=tuple(round(0.05 * i, 2) for i in range(1, 20))) -> list[dict]:
+def engine_value(fd, fwd, eval_years, means, model, budgets=tuple(round(0.05 * i, 2) for i in range(1, 20)),
+                 lines: dict | None = None) -> list[dict]:
     """What each engine's picks were worth, season by season, at many plot budgets, for the chart
     that opens the demo. For every season, engine and plan: the value it forecast in January for its
     own picks (their predicted $/acre above the season's average line) and what they really earned
     above the average line. The app corrects each forecast by how far earlier seasons' forecasts
-    overshot, so a season's forecast uses only what was known before it."""
+    overshot, so a season's forecast uses only what was known before it. When `lines` is given, every
+    graded line's predictions and real results are collected into it, so the app can redo all of this at
+    the user's own prices."""
     import numpy as np
     out = []
     for y in eval_years:
@@ -576,26 +588,38 @@ def engine_value(fd, fwd, eval_years, means, model, budgets=tuple(round(0.05 * i
         idx = np.flatnonzero(np.isfinite(Y.truth) & np.isfinite(M.truth))
         pred_l = np.maximum(0, means["lodging_adj"] + L.pred)
         act_l = np.where(np.isfinite(L.truth), np.maximum(0, means["lodging_adj"] + L.truth), pred_l)
-        real = _margin(means["yield_adj"] + Y.truth, means["mst_adj"] + M.truth, act_l)
+        g_y = means["yield_adj"] + model.global_ridge_cohort(fd, "yield_adj", y)
+        g_m = means["mst_adj"] + model.global_ridge_cohort(fd, "mst_adj", y)
         g_l = np.maximum(0, means["lodging_adj"] + model.global_ridge_cohort(fd, "lodging_adj", y))
-        predicted = {
-            "family": _margin(means["yield_adj"] + Y.pred, means["mst_adj"] + M.pred, pred_l),
-            "gblup": _margin(means["yield_adj"] + model.global_ridge_cohort(fd, "yield_adj", y),
-                             means["mst_adj"] + model.global_ridge_cohort(fd, "mst_adj", y), g_l),
-        }
-        members = {f_: idx[fam[idx] == f_] for f_ in np.unique(fam[idx])}
+        # the graded lines, rounded to what the app is sent (predictions to 0.001, so near-ties inside a
+        # family stay apart); everything below works from these same values and breaks ties by line order,
+        # as the app does, so the app redoes these numbers to the cent at any prices
+        cols = {"py": (means["yield_adj"] + Y.pred, 1000), "pm": (means["mst_adj"] + M.pred, 1000), "pl": (pred_l, 1000),
+                "gy": (g_y, 1000), "gm": (g_m, 1000), "gl": (g_l, 1000),
+                "ry": (means["yield_adj"] + Y.truth, 100), "rm": (means["mst_adj"] + M.truth, 1000), "rl": (act_l, 100)}
+        ints = {key: np.rint(arr[idx] * scale).astype(np.int64) for key, (arr, scale) in cols.items()}
+        v = {key: ints[key] / cols[key][1] for key in cols}
+        f_i = fam[idx]
+        if lines is not None:
+            lines.setdefault("year", []).extend([int(y)] * len(idx))
+            lines.setdefault("fam", []).extend(f_i.astype(int).tolist())
+            for key, a in ints.items():
+                lines.setdefault(key, []).extend(a.tolist())
+        real = _margin(v["ry"], v["rm"], v["rl"])
+        predicted = {"family": _margin(v["py"], v["pm"], v["pl"]), "gblup": _margin(v["gy"], v["gm"], v["gl"])}
+        members = [np.flatnonzero(f_i == f_) for f_ in np.unique(f_i)]
         for engine, pm in predicted.items():
-            order = idx[np.argsort(-pm[idx])]
-            within = {f_: m[np.argsort(-pm[m])] for f_, m in members.items()}   # each family, best first
+            order = np.argsort(-pm, kind="stable")
+            within = [m[np.argsort(-pm[m], kind="stable")] for m in members]   # each family, best first
             for b in budgets:
                 aggressive = order[: int(round(b * len(idx)))]
-                even = np.concatenate([m[: int(round(b * len(m)))] for m in within.values()])
+                even = np.concatenate([m[: int(round(b * len(m)))] for m in within])
                 for plan, sel in (("aggressive", aggressive), ("conservative", even)):
                     if not len(sel):
                         continue
                     out.append({"year": int(y), "budget": b, "engine": engine, "plan": plan,
-                                "predicted": round(float(pm[sel].mean() - pm[idx].mean()), 3),
-                                "real": round(float(real[sel].mean() - real[idx].mean()), 3)})
+                                "predicted": round(float(pm[sel].mean() - pm.mean()), 3),
+                                "real": round(float(real[sel].mean() - real.mean()), 3)})
     return out
 
 

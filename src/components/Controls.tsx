@@ -20,7 +20,6 @@ interface Props {
   shape?: DataShape
   real?: Partial<Record<EngineId, number | undefined>>   // what each engine's picks really earned in past seasons, $/acre
   ceiling?: number                          // the best accuracy the field's own noise allows
-  plotsPerLine?: number
 }
 
 /** How the loaded lines are organized: the fact that decides which engine fits. */
@@ -28,6 +27,9 @@ export interface DataShape { lines: number; families: number; inFamilies: number
 export const hasFamilies = (s: DataShape) => s.families >= 3 && s.inFamilies / s.lines >= 0.5
 
 const SHORT: Record<EngineId, string> = { family: '2-Step', gblup: 'Standard', environment: 'Environment' }
+// dollars as cents: 0.045 -> 4.5¢, 0.2025 -> 20¢
+const fmtCents = (usd: number) => `${Number((usd * 100).toFixed(usd < 0.1 ? 1 : 0))}¢`
+const fmtNum1 = (x: number) => `${Number(x.toFixed(1))}`
 // what each engine runs on, for the hover
 const FOR: Record<EngineId, string> = { family: 'for data with families', gblup: 'for data without families', environment: '' }
 const HOW: Record<EngineId, string> = {
@@ -41,7 +43,7 @@ function Bar({ v, max, on }: { v: number; max: number; on: boolean }) {
   return <span className="minibar"><i style={{ width: `${Math.max(0, Math.min(1, v / (max || 1))) * 100}%`, opacity: on ? 1 : 0.45 }} /></span>
 }
 
-export default function Controls({ n, budget, prices, onBudget, onPrices, engines, engine, onEngine, heldOut, dataset, shape, real, plotsPerLine, ceiling }: Props) {
+export default function Controls({ n, budget, prices, onBudget, onPrices, engines, engine, onEngine, heldOut, dataset, shape, real, ceiling }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
 
@@ -132,8 +134,7 @@ export default function Controls({ n, budget, prices, onBudget, onPrices, engine
       )}
 
       <h2 style={engines && engines.length > 1 ? { marginTop: 20 } : undefined}>Your plots<Info>
-        <b>Available plots to test</b>: how many of the new lines get tested this season. Each one gets a plot at
-        each of its test sites, about five per line.<br />
+        <b>Available plots to test</b>: how many of the new lines get tested this season.<br />
         Every family gets a fair share of the plots, in proportion to its size, and the engine picks the best lines
         inside each. That keeps the forecast honest in a season like {heldOut ?? 'this one'}, when many new families
         have parents with no earlier results.
@@ -145,9 +146,6 @@ export default function Controls({ n, budget, prices, onBudget, onPrices, engine
           <b style={{ display: 'block', marginTop: 2 }}>{budget.toLocaleString('en-US')} of {n.toLocaleString('en-US')} ({Math.round((budget / Math.max(1, n)) * 100)}%) lines</b>
         </label>
         <input type="range" min={10} max={n} step={10} value={budget} onChange={(e) => onBudget(Number(e.target.value))} />
-        {plotsPerLine && (
-          <div className="hint">about {(Math.round((budget * plotsPerLine) / 100) * 100).toLocaleString('en-US')} plots, {plotsPerLine.toFixed(1)} per line</div>
-        )}
       </div>
 
       <h2 style={{ marginTop: 20 }}>Your economics<Info>
@@ -163,9 +161,13 @@ export default function Controls({ n, budget, prices, onBudget, onPrices, engine
       </div>
 
       <div className="control">
-        <label>Drying cost <b>${prices.drying_cost_per_point.toFixed(3)} / bu / pt</b></label>
+        <label>Drying cost <b>{fmtCents(prices.drying_cost_per_point)} per bushel per point</b></label>
         <input type="range" min={0} max={0.1} step={0.005} value={prices.drying_cost_per_point} onChange={set('drying_cost_per_point')} />
-        <div className="hint">Per bushel, per point of moisture removed.</div>
+        {/* a worked example that follows the knobs: 'point' is one percent of moisture */}
+        <div className="hint">
+          Wet corn is dried to the target moisture before it's sold. Harvested at 20%, that's{' '}
+          {fmtNum1(20 - prices.target_moisture)} points to remove: {fmtCents((20 - prices.target_moisture) * prices.drying_cost_per_point)} a bushel.
+        </div>
       </div>
 
       <div className="control">
