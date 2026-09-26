@@ -99,6 +99,17 @@ reads. The app computes only the user's own pricing on top, so it works offline,
 - **Scale.** Parsing ~1,000 genotype files once takes 2.5 minutes; everything is cached to
   `data/processed/` and later runs start in seconds.
 
+**Data quality, counted:**
+
+| | |
+|---|---|
+| field plots | 1,072,276, 2000-2008 |
+| yield / harvest moisture recorded | 95.9% / 97.3% of plots |
+| relative maturity (ERM) recorded | 59.5% of plots; 1,069 impossible values (e.g. -24, 383) set to missing |
+| lodging (root or stalk) recorded | 72.0% of plots; unscored is missing, never zero |
+| lines with genotypes | 143,726 of 154,330 (93.1%): 65-93% in 2000-2003, 99-100% from 2004 |
+| genotype cells unknown after imputation | 0.065%, set to the neutral code |
+
 ### Model (`analysis/model.py`, family-structured section)
 
 | part | predicts | from | why |
