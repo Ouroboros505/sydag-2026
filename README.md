@@ -114,6 +114,19 @@ not touched.
 The leaky number is reported next to the honest one: a random k-fold that lets siblings into
 training reads r = 0.56 on the same 2008 lines.
 
+### What we tried that did not make it in (all judged on 2005-2007 only)
+
+| idea | result on the development years | kept? |
+|---|---|---|
+| one ridge over all lines (standard GBLUP) | r 0.18; the family structure is the gain | baseline |
+| pedigree only: parents' earlier families, no markers | r 0.08 | baseline |
+| parents + tester one-hot, raw target | looked strong (0.22) because it predicts the tester, not the line | no |
+| local models from half-sib families only | r 0.18-0.24, worse than the global sibling model (0.25) | no |
+| Gaussian kernel on the midparent | r 0.25, no gain over ridge | no |
+| parents scored with the within-family allele effects, blended in | +0.004, within noise | no |
+| rescaling the yield model's two parts | hurt the ranking (0.234 vs 0.252) | no (kept for moisture, maturity) |
+| do parents appear as earlier tested lines? | 474 of 514 parents' closest genotype is their own child: no | no |
+
 ## 4. Results
 
 ### Forward accuracy, every year (GCA scale: trial- and tester-adjusted)
@@ -159,6 +172,10 @@ ProMaize's ranking realised **53% more value per acre** than standard GBLUP acro
 and 3.5x as much in 2008. Ranking by dollars instead of bushels adds a little (+$0.25/acre) and
 keeps the pipeline's maturity from drifting later (+0.08 days vs +0.21).
 
+**In plots:** to keep as many of the real top 10% as ProMaize keeps with 30% of the lines, the
+standard ranking had to plant 30-37% of them (33.5% on average): about 720 more lines a season,
+and 1,117 more in 2008. At about seven locations per line, that is roughly 7,800 plots in 2008.
+
 ## 5. Commercial recommendations
 
 **For the 2008 season** (the demo at 30% of plots, exportable as CSV):
@@ -200,14 +217,18 @@ as sufficient statistics; the output is a static page and a CSV.
 
 ## 6. Broad-acre or location-specific?
 
-**Broad-acre, and the data says why.** Within a line, plot-to-plot variation across its locations
-(SD 16.5 bu, after removing each trial's mean) is 2.3x the spread between lines (SD 7.1 bu). Every
-line is tested in exactly one year, so a line's location-specific response is never seen twice and
-cannot be learned, validated or trusted. Predicting broad-acre GCA uses all ~7 locations as
-replicates of the one thing we can predict. Location-specific placement becomes worthwhile at the
-next stage, when advanced lines have multi-year records. The weather and soil covariates
-(`environmental_features.csv`, per year x location) are the input for that; the adapter already
-loads them (`bayer.environments()`), the model does not use them yet.
+**Broad-acre, and we tested the alternative.** Within a line, plot-to-plot variation across its
+locations (SD 16.5 bu, after removing each trial's mean) is 2.3x the spread between lines (SD 7.1
+bu). Is any of that location-to-location response predictable? We fitted a genomic reaction norm
+(marker effects on a line's sensitivity to how productive a location is) on 2000-2007 plots and
+asked it for each 2008 line's deviation at each of its locations: **r = 0.025 on 82,790 held-out
+plots**, using each location's productivity in earlier years (what is known in January), and
+r = -0.003 even when told each 2008 trial's real productivity. Every line is tested in exactly one
+year, so its location response is never seen twice and cannot be learned. Broad-acre GCA uses all
+~7 locations as replicates of the one thing we can predict (`model.location_response_check`
+reproduces the test). Placement by location becomes worthwhile at the next stage, when advanced
+lines have multi-year records; the weather and soil covariates (`environmental_features.csv`,
+loaded by `bayer.environments()`) are the input for that.
 
 ## 7. Limitations and failure modes
 

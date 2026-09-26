@@ -120,7 +120,8 @@ def main() -> None:
         "Sibling differences <- which parental segments each line inherited (ridge on within-family deviations).",
         "Tester effect removed as a BLUP: advance lines, not testers.",
         "**Baselines: environmental means, pedigree BLUP, standard GBLUP.",
-    ], 18)
+    ] + ([f"**Broad-acre, tested: location response predicted at r = {fmt(v['location_specific']['r_history'])}"
+          f" ({v['location_specific']['n_plots']:,} held-out plots)."] if v.get("location_specific") else []), 18)
     if by_year:
         cd = CategoryChartData()
         cd.categories = [str(y["year"]) for y in by_year]
@@ -154,7 +155,7 @@ def main() -> None:
         if by_year else "**Same plots, six ways, scored on what the field paid"], 18)
     y08 = {r["strategy"]: r for r in v.get("strategies", []) if r["year"] == year and r["budget"] == 0.3}
     rows_ = sorted(strat, key=lambda r: -r["gain"])
-    tbl = s.shapes.add_table(len(rows_) + 1, 4, left, top + Inches(0.6), int(width * 0.78), Inches(0.42) * (len(rows_) + 1)).table
+    tbl = s.shapes.add_table(len(rows_) + 1, 4, left, top + Inches(0.55), int(width * 0.78), Inches(0.34) * (len(rows_) + 1)).table
     heads = ["Rule", "Realised $/acre over random (6-year mean)", f"in {year}", "Real top 10% kept"]
     for j, t_ in enumerate(heads):
         tbl.cell(0, j).text = t_
@@ -165,9 +166,9 @@ def main() -> None:
     tbl.columns[0].width = int(width * 0.34)
     for j in range(1, 4):
         tbl.columns[j].width = int(width * 0.148)
-    tbl.rows[0].height = Inches(0.75)
+    tbl.rows[0].height = Inches(0.6)
     for i in range(1, len(rows_) + 1):
-        tbl.rows[i].height = Inches(0.42)
+        tbl.rows[i].height = Inches(0.34)
     for i in range(len(rows_) + 1):
         ours = i > 0 and rows_[i - 1]["strategy"] == "ProMaize, rank by $/acre"
         for j in range(4):
@@ -175,11 +176,15 @@ def main() -> None:
             cell.fill.solid()
             cell.fill.fore_color.rgb = rgb(PALETTE[0]) if i == 0 else (RGBColor(0xDD, 0xEE, 0xE5) if ours else RGBColor(0xF6, 0xF6, 0xF4))
             for p in cell.text_frame.paragraphs:
-                p.font.size = Pt(14)
+                p.font.size = Pt(13)
                 p.font.bold = i == 0 or ours
                 p.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF) if i == 0 else TEXT
-    table_bottom = top + Inches(0.6) + Inches(0.75) + Inches(0.42) * len(rows_)
-    bullets(s, (left, table_bottom + Inches(0.25), width, Inches(1.2)), [
+    table_bottom = top + Inches(0.55) + Inches(0.6) + Inches(0.34) * len(rows_)
+    match = v.get("plots_to_match") or []
+    needs = sum(m["standard_needs"] for m in match) / len(match) if match else None
+    bullets(s, (left, table_bottom + Inches(0.15), width, Inches(1.4)), ([
+        f"**In plots: to keep the real winners ProMaize keeps with 30% of lines, standard GBLUP had to plant"
+        f" {needs:.0%} of them.", ] if needs else []) + [
         f"**Honest error bars: the 90% bands held {v.get('coverage90', 0):.0%} of real {year} results.",
         f"**{year} was the hardest year to call families (lowest between-family r of the six), and ProMaize still"
         f" doubled standard GBLUP (r {fmt(head['r'] if head else None)} vs {fmt(head['r_gblup'] if head else None)}).",

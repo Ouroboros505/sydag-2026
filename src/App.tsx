@@ -13,6 +13,7 @@ import type { Recommendations } from './lib/types'
 import Backtest from './components/Backtest'
 import Validation from './components/Validation'
 import Strategies from './components/Strategies'
+import Evidence from './components/Evidence'
 
 export default function App() {
   const [data, setData] = useState<Recommendations | null>(null)
@@ -103,6 +104,8 @@ export default function App() {
         <b>dollars per acre</b>, not bushels: yield after drying cost and lodging loss at the prices you set.
       </p>
 
+      <Evidence v={data.validation} heldOut={heldOut} />
+
       <div className="layout">
         <Controls
           n={scored.length} budget={budget} cap={cap} maxFamily={maxFamily} prices={prices}
@@ -117,7 +120,7 @@ export default function App() {
           <StatTiles {...summary} capped={Number.isFinite(cap)} />
           {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}
           {data.validation.strategies && data.validation.strategies.length > 0 && (
-            <Strategies rows={data.validation.strategies} heldOut={heldOut} />
+            <Strategies rows={data.validation.strategies} heldOut={heldOut} match={data.validation.plots_to_match} />
           )}
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={prices} />
           <Validation v={data.validation} baselines={data.baselines} notes={data.meta.notes} heldOut={heldOut} />

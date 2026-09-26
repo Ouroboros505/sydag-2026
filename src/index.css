@@ -200,3 +200,9 @@ a.pill:hover { color: var(--accent); border-color: var(--accent); }
 /* long labels may wrap so the numbers stay on screen on a phone */
 th.wrap, td.wrap { white-space: normal; }
 @media (max-width: 640px) { th.wrap, td.wrap { min-width: 110px; } }
+
+/* the case in one line, under the lede */
+.evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 0 0 18px; }
+.evidence .ev { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--surface); display: flex; gap: 10px; align-items: baseline; }
+.evidence .ev b { font-size: 20px; color: var(--good); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.evidence .ev span { font-size: 12px; color: var(--text-2); line-height: 1.35; }

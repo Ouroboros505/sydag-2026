@@ -406,3 +406,50 @@ def known_parents(fd: FamilyData, year: int) -> np.ndarray:
     The honest confidence signal: with no parent on record the family mean is a genomic guess."""
     seen = {x for k in np.flatnonzero(fd.year < year) for x in fd.parents[k] if x}
     return np.array([sum(x in seen for x in pr if x) for pr in fd.parents])
+
+
+def location_response_check(fd: FamilyData, plots: pd.DataFrame, year: int, alpha: float = 1e5) -> dict:
+    """Can a line's location-to-location response be predicted? A genomic reaction norm: marker
+    effects on a line's sensitivity to how productive a location is, fitted on plots before
+    `year`, asked to predict each `year` line's deviation from its own mean at each location.
+
+    The environment index is either the trial's actual mean ('oracle', not known in January: an
+    upper bound) or the location's mean in earlier years ('history', what is known in January).
+    Reduces to a weighted line-level ridge: sum over plots of w^2 x x' = sum over lines of
+    (sum of that line's w^2) x x'."""
+    row = {i: k for k, i in enumerate(fd.ids)}
+    p = plots[plots["yield_bu"].notna() & plots["id"].isin(row.keys())].copy()
+    p["envmean"] = p.groupby("env")["yield_bu"].transform("mean")
+    p["ya"] = p["yield_bu"] - p["envmean"]
+    p["d"] = p["ya"] - p.groupby("id")["ya"].transform("mean")
+    r_ = p["id"].map(row).to_numpy(int)
+    d = p["d"].to_numpy(float)
+    train = (p["year"] < year).to_numpy()
+    test = (p["year"] == year).to_numpy()
+    out = {}
+    for kind in ("oracle", "history"):
+        if kind == "oracle":
+            w = p["envmean"].to_numpy(float)
+        else:
+            past = p[train].groupby("location")["envmean"].mean()
+            w = p["location"].map(past).to_numpy(float)
+            w = np.where(np.isfinite(w), w, np.nanmean(past.to_numpy()))
+        w = (w - w[train].mean()) / w[train].std()
+        s = np.bincount(r_[train], weights=w[train] ** 2, minlength=len(fd.ids))
+        t = np.bincount(r_[train], weights=(w * d)[train], minlength=len(fd.ids))
+        rows = np.flatnonzero(s > 0)
+        G = np.zeros((fd.X.shape[1], fd.X.shape[1]))
+        c = np.zeros(fd.X.shape[1])
+        for i0 in range(0, len(rows), 8000):          # chunks keep the temporaries small
+            rr = rows[i0:i0 + 8000]
+            Xc = fd.X[rr]
+            G += (Xc.T * s[rr]) @ Xc
+            c += Xc.T @ t[rr]
+        beta = np.linalg.solve(G + alpha * np.eye(G.shape[0]), c)
+        lines = np.unique(r_[test])
+        slope = np.zeros(len(fd.ids))
+        slope[lines] = fd.X[lines] @ beta           # one sensitivity per line, then per plot
+        out[kind] = _r(w[test] * slope[r_[test]], d[test])
+    out["n_plots"] = int(test.sum())
+    out["sd_within_line"] = float(np.nanstd(d[test]))
+    return out

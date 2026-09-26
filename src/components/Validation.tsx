@@ -77,6 +77,16 @@ export default function Validation({ v, baselines, notes, heldOut }: Props) {
           than pretend.
         </p>
       )}
+      {v.location_specific && (
+        <p>
+          <b>Broad-acre, and we tested the alternative.</b> A line's yield swings across its own locations
+          (sd {v.location_specific.sd_within_line} bu) more than lines differ from each other
+          (sd {v.location_specific.sd_between_lines} bu). A genomic reaction-norm model, fitted on earlier years, predicted
+          those swings in {v.location_specific.n_plots.toLocaleString()} held-out plots at <b>r = {f2(v.location_specific.r_history)}</b>,
+          and at r = {f2(v.location_specific.r_oracle)} even when told each trial's real productivity. Every line is tested
+          in one year only, so its location response is never seen twice: ProMaize predicts broad-acre performance.
+        </p>
+      )}
       <ul>
         {baselines.map((b) => (
           <li key={b.name}>{b.name}: <b>{b.metric} = {b.value.toFixed(2)}</b></li>

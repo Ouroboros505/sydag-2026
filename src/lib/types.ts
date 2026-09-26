@@ -64,7 +64,22 @@ export interface Validation {
   by_confidence?: Record<string, number | null>
   families_by_parents_on_record?: Record<string, number>
   strategies?: StrategyRow[]        // ways to spend the same plots, scored on what the field did
+  plots_to_match?: PlotsToMatch[]   // what the standard ranking needs to keep as many real winners
   tuned_on?: number[]               // cohorts the settings were chosen on
+  location_specific?: {             // can a line's response across locations be predicted?
+    r_oracle: number                // even knowing each trial's productivity
+    r_history: number               // from each location's history, as known in January
+    n_plots: number
+    sd_within_line: number          // a line's spread across its locations, bu
+    sd_between_lines: number        // spread of line means, bu
+  }
+}
+
+export interface PlotsToMatch {
+  year: number
+  ours_kept: number        // share of the real top 10% ProMaize keeps with 30% of lines
+  standard_needs: number   // share of lines standard GBLUP must plant to keep as many
+  lines_saved: number
 }
 
 export interface StrategyRow {

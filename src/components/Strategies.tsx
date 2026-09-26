@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import type { StrategyRow } from '../lib/types'
+import type { PlotsToMatch, StrategyRow } from '../lib/types'
 import { fmtNum, fmtPct, fmtUSD } from '../lib/econ'
 import Info from './Info'
 
-interface Props { rows: StrategyRow[]; heldOut: number | null }
+interface Props { rows: StrategyRow[]; heldOut: number | null; match?: PlotsToMatch[] }
 
 /** The resource-allocation question answered with the record: the same plots spent different
  *  ways, every forward year, scored on what the field then paid. */
-export default function Strategies({ rows, heldOut }: Props) {
+export default function Strategies({ rows, heldOut, match }: Props) {
   const budgets = [...new Set(rows.map((r) => r.budget))].sort()
   const [budget, setBudget] = useState(budgets[0] ?? 0.3)
   const years = [...new Set(rows.filter((r) => r.year !== 'mean').map((r) => r.year as number))].sort()
@@ -54,6 +54,19 @@ export default function Strategies({ rows, heldOut }: Props) {
           </tbody>
         </table>
       </div>
+      {match && match.length > 0 && (() => {
+        const needs = match.reduce((a, m) => a + m.standard_needs, 0) / match.length
+        const saved = match.reduce((a, m) => a + m.lines_saved, 0) / match.length
+        const last = match.find((m) => m.year === heldOut)
+        return (
+          <p style={{ margin: '10px 0 0' }}>
+            <b>In plots:</b> to keep as many of the real top 10% as ProMaize keeps with 30% of the lines, the standard
+            ranking had to plant <b>{fmtPct(needs)}</b> of them on average over the {match.length} seasons
+            {last && <> ({fmtPct(last.standard_needs)} in {heldOut})</>}: about <b>{fmtNum(saved)}</b> more lines a
+            season, each tested at about seven locations.
+          </p>
+        )
+      })()}
       <p className="muted small" style={{ margin: '8px 0 0' }}>
         Per acre of every line advanced, relative to planting at random; corn at $4.50 and drying at $0.045/bu/pt. Lodging
         counts where it was scored, trial-adjusted.

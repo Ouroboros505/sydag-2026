@@ -336,6 +336,11 @@ def real_bayer(synthetic: bool = False) -> dict:
     H = max(0.0, (s2m - s2e * float((1 / n_i[n_i > 1]).mean())) / s2m)
     say(f"line-mean repeatability {H:.2f} -> ceiling r ~ {np.sqrt(H):.2f}; plot noise sd {np.sqrt(s2e):.1f} vs line sd {np.sqrt(max(s2m - s2e / n_i.mean(), 0)):.1f} bu")
 
+    # broad-acre or location-specific: is a line's response across locations predictable at all?
+    loc = model.location_response_check(fd, src.plots(), cohort)
+    say(f"location-specific response predicted at r {loc['oracle']:.3f} even knowing each trial's productivity, "
+        f"{loc['history']:.3f} from locations' history ({loc['n_plots']:,} plots)")
+
     # genomic map: top two components, fitted on a sample of past lines, applied to the cohort
     past = fd.rows(np.flatnonzero(fd.year < cohort))
     samp = rng.choice(past, min(20000, len(past)), replace=False)
@@ -371,7 +376,10 @@ def real_bayer(synthetic: bool = False) -> dict:
                 row[key] = round(float(max(0.0, means[t] + v) if t == "lodging_adj" else means[t] + v), 1 if t != "mst_adj" else 2)
         rows.append(row)
 
-    strategies = strategy_backtest(fd, fwd, eval_years, means, model)
+    strategies, match = strategy_backtest(fd, fwd, eval_years, means, model)
+    for m_ in match:
+        say(f"{m_['year']}: ProMaize at 30% keeps {m_['ours_kept']:.0%} of the real top 10%; standard GBLUP needs "
+            f"{m_['standard_needs']:.0%} of lines for that ({m_['lines_saved']:,} more lines)")
     for row in strategies:
         if row["year"] == "mean":
             say(f"strategy @{row['budget']:.0%}: {row['strategy']:<34s} gain ${row['gain']:6.2f}/ac  "
@@ -406,10 +414,14 @@ def real_bayer(synthetic: bool = False) -> dict:
             "r_as_planted": round(head["r_as_planted"], 3),
             "by_year": by_year, "coverage90": round(coverage, 3), "ceiling": round(float(np.sqrt(H)), 3),
             "tuned_on": TUNED_ON,
+            "location_specific": {"r_oracle": round(loc["oracle"], 3), "r_history": round(loc["history"], 3),
+                                  "n_plots": loc["n_plots"], "sd_within_line": round(loc["sd_within_line"], 1),
+                                  "sd_between_lines": round(float(np.sqrt(max(s2m - s2e / n_i.mean(), 0))), 1)},
             "leaky_r": round(leaky_r, 3),
             "by_confidence": {k: (round(v, 3) if np.isfinite(v) else None) for k, v in zip(("low", "medium", "high"), by_conf.values())},
             "families_by_parents_on_record": {k: int((kp[cohort][np.unique(cp.fam_index)] == c).sum()) for k, c in (("none", 0), ("one", 1), ("both", 2))},
             "strategies": strategies,
+            "plots_to_match": match,
         },
     }
 
@@ -477,6 +489,28 @@ def strategy_backtest(fd, fwd, eval_years, means, model, budgets=(0.3, 0.5), cap
                     "eff_families": float(1 / (share[share > 0] ** 2).sum()),
                     "maturity_shift": float(np.nanmean(erm[sel]) - np.nanmean(erm[idx])),
                 })
+    # the same question in plots: how much of the cohort would the standard ranking have to plant
+    # to keep as many of the real top 10% as ProMaize keeps with 30%?
+    match = []
+    for y in eval_years:
+        Y, M, L = (fwd[t][y] for t in ("yield_adj", "mst_adj", "lodging_adj"))
+        ok = np.isfinite(Y.truth) & np.isfinite(M.truth)
+        idx = np.flatnonzero(ok)
+        pred_l = np.maximum(0, means["lodging_adj"] + L.pred)
+        act_l = np.where(np.isfinite(L.truth), np.maximum(0, means["lodging_adj"] + L.truth), pred_l)
+        real = _margin(means["yield_adj"] + Y.truth, means["mst_adj"] + M.truth, act_l)
+        top10 = np.zeros(len(real), bool)
+        top10[idx[np.argsort(-real[idx])[: max(1, len(idx) // 10)]]] = True
+        ours = _margin(means["yield_adj"] + Y.pred, means["mst_adj"] + M.pred, pred_l)
+        std = model.global_ridge_cohort(fd, "yield_adj", y)
+        def kept_curve(score):
+            hits = np.cumsum(top10[idx[np.argsort(-score[idx])]]) / top10.sum()
+            return lambda share: hits[max(0, int(round(share * len(idx))) - 1)]
+        target = kept_curve(ours)(0.3)
+        std_kept = kept_curve(std)
+        need = next((b / 100 for b in range(30, 101) if std_kept(b / 100) >= target), 1.0)
+        match.append({"year": int(y), "ours_kept": round(float(target), 3), "standard_needs": need,
+                      "lines_saved": int(round((need - 0.3) * len(idx)))})
     # averages over the forward years, next to each year
     rows = []
     keys = sorted({(r["budget"], r["strategy"]) for r in out}, key=lambda x: (x[0], x[1] != "random", x[1]))
@@ -485,7 +519,8 @@ def strategy_backtest(fd, fwd, eval_years, means, model, budgets=(0.3, 0.5), cap
         vals = {m: [r[m] for r in rs if np.isfinite(r[m])] for m in ("gain", "top10_kept", "eff_families", "maturity_shift")}
         rows.append({"year": "mean", "budget": b, "strategy": name,
                      **{m: float(np.mean(v)) if v else float("nan") for m, v in vals.items()}})
-    return [{k: (round(v, 3) if isinstance(v, float) else v) for k, v in r.items()} for r in rows + out]
+    return ([{k: (round(v, 3) if isinstance(v, float) else v) for k, v in r.items()} for r in rows + out],
+            match)
 
 
 def _finite(v):
