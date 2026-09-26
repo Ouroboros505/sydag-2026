@@ -22,11 +22,12 @@ function Pedigree({ years, heldOut }: { years: YearResult[]; heldOut: number | n
   ]
   return (
     <div className="panel">
-      <h2>Why the recommendation depends on the pedigree<Info wide>
+      <h2>When a family's parents are unknown<Info wide>
         Bars: each season's new families, by how many of their two parents already had a family tested in earlier
         years. Dots: how well ProMaize ranked those families before they were planted (forward r of the family means).
         When more parents are new, the family call is weaker, so betting the plots on the top-predicted families pays
-        less and spreading them evenly costs less. That is why the conservative plan is the {heldOut ?? ''} recommendation.
+        less and spreading them evenly costs less. That is why ProMaize gives every family a fair share in a season
+        like {heldOut ?? 'this one'}.
       </Info></h2>
       <div className="chartbox">
         <svg className="chart" viewBox={`0 0 ${W} ${H}`} width="100%" role="img"

@@ -1,13 +1,12 @@
 import { memo } from 'react'
 import type { EngineId, EngineValueRow } from '../lib/types'
-import { valueAt as at } from '../lib/econ'
+import { planForecast } from '../lib/econ'
 import Info from './Info'
 
 interface Props {
   rows: EngineValueRow[]
   heldOut: number
   engine: EngineId
-  even: boolean                 // the left panel's plan: same share of every family
   share: number                 // the left panel's plots, as a share of the new lines
   revealed: boolean
   onReveal: (r: boolean) => void
@@ -20,29 +19,13 @@ const usd = (v: number) => `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(2)}`
 /** The opening chart: the money the chosen engine's picks are worth. Past seasons show what the
  *  picks really earned and what the engine forecast that January; the decision year is a forecast
  *  until the harvest is revealed. */
-function SeasonForecast({ rows, heldOut, engine, even, share, revealed, onReveal }: Props) {
-  const plan = even ? 'conservative' : 'aggressive'
-  const mine = rows.filter((r) => r.engine === engine && r.plan === plan)
-  const years = [...new Set(mine.map((r) => r.year))].sort((a, b) => a - b)
-  const seasons = years.map((y) => ({ year: y, ...at(mine.filter((r) => r.year === y), share)! }))
-  const past = seasons.filter((s) => s.year < heldOut)
-  const now = seasons.find((s) => s.year === heldOut)
-  if (past.length < 2 || !now) return null
-
-  // an engine's raw forecast is its own prediction for its own picks, which runs high (the best
-  // predictions are partly luck); each season's forecast is corrected by how far earlier ones overshot
-  const ratio = (s: { predicted: number; real: number }) => (s.predicted > 0 ? s.real / s.predicted : NaN)
-  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
-  const ratios = past.map(ratio).filter(Number.isFinite)
-  const tracked = past.map((s, i) => {
-    const before = past.slice(0, i).map(ratio).filter(Number.isFinite)
-    return { ...s, forecast: before.length ? s.predicted * mean(before) : null }
-  })
-  const forecast = now.predicted * mean(ratios)
-  const lo = now.predicted * Math.min(...ratios), hi = now.predicted * Math.max(...ratios)
+function SeasonForecast({ rows, heldOut, engine, share, revealed, onReveal }: Props) {
+  const f = planForecast(rows, engine, share, heldOut)
+  if (!f) return null
+  const { now, forecast, lo, hi, avgReal } = f
+  const past = f.past, tracked = f.past
   const show = revealed
   const where = now.real > hi ? 'above' : now.real < lo ? 'below' : 'inside'
-  const avgReal = mean(past.map((s) => s.real))
 
   // geometry
   const W = 720, H = 270, L = 48, R = 16, T = 34, B = 34
@@ -91,8 +74,8 @@ function SeasonForecast({ rows, heldOut, engine, even, share, revealed, onReveal
           <button className={!revealed ? 'on' : ''} onClick={() => onReveal(false)}>January {heldOut}</button>
           <button className={revealed ? 'on' : ''} onClick={() => onReveal(true)}>After harvest</button>
         </div>
-        <span className="small muted">{NAME[engine]} · {even ? 'same share of every family' : 'best lines, anywhere'} ·
-          plots for {Math.round(share * 100)}% of the lines</span>
+        <span className="small muted">{NAME[engine]} · a fair share of plots for every family · plots for{' '}
+          {Math.round(share * 100)}% of the lines</span>
       </div>
 
       <div className="chartbox">

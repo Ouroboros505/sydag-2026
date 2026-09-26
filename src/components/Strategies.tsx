@@ -1,14 +1,14 @@
 import { memo, useState } from 'react'
-import type { PlotsToMatch, StrategyRow } from '../lib/types'
+import type { StrategyRow } from '../lib/types'
 import { fmtNum, fmtPct, fmtUSD } from '../lib/econ'
 import Info from './Info'
 
-interface Props { rows: StrategyRow[]; heldOut: number | null; match?: PlotsToMatch[] }
+interface Props { rows: StrategyRow[]; heldOut: number | null }
 
-// the organizers' framing: the tradeoff between aggressive and conservative selection under limited plots
+// the organizers' question: bet the plots on the best-looking families, or spread them, under limited plots
 const LABEL: Record<string, string> = {
-  'ProMaize, rank by $/acre': 'Aggressive: 2-Step, every line ranked by $/acre',
-  'ProMaize, same share of every family': 'Conservative: 2-Step, same share of every family',
+  'ProMaize, rank by $/acre': 'Bet on the best families: 2-Step, every line ranked by $/acre',
+  'ProMaize, same share of every family': 'Fair share per family: 2-Step (what ProMaize does)',
   'ProMaize, $/acre, max 50 per family': '2-Step, $/acre, at most 50 lines per family',
   'ProMaize, rank by bushels': '2-Step, ranked by bushels',
   'standard GBLUP, rank by $/acre': 'Standard engine (GBLUP), ranked by $/acre',
@@ -18,7 +18,7 @@ const LABEL: Record<string, string> = {
 
 /** The resource-allocation question answered with the record: the same plots spent different
  *  ways, every forward year, scored on what the field then paid. */
-function Strategies({ rows, heldOut, match }: Props) {
+function Strategies({ rows, heldOut }: Props) {
   const budgets = [...new Set(rows.map((r) => r.budget))].sort()
   const [budget, setBudget] = useState(budgets[0] ?? 0.3)
   const years = [...new Set(rows.filter((r) => r.year !== 'mean').map((r) => r.year as number))].sort()
@@ -65,19 +65,6 @@ function Strategies({ rows, heldOut, match }: Props) {
           </tbody>
         </table>
       </div>
-      {match && match.length > 0 && (() => {
-        const needs = match.reduce((a, m) => a + m.standard_needs, 0) / match.length
-        const saved = match.reduce((a, m) => a + m.lines_saved, 0) / match.length
-        const last = match.find((m) => m.year === heldOut)
-        return (
-          <p style={{ margin: '10px 0 0' }}>
-            <b>In plots:</b> to keep as many of the real top 10% as ProMaize keeps with 30% of the lines, the usual
-            practice (GBLUP, ranked by bushels) had to plant <b>{fmtPct(needs)}</b> of them on average over the {match.length} seasons
-            {last && <> ({fmtPct(last.standard_needs)} in {heldOut})</>}: about <b>{fmtNum(saved)}</b> more lines a
-            season, each tested at about seven locations.
-          </p>
-        )
-      })()}
       {heldOut != null && (() => {
         const cost = (y: number) => {
           const r = at('ProMaize, rank by $/acre', y), e = at('ProMaize, same share of every family', y)
@@ -87,11 +74,12 @@ function Strategies({ rows, heldOut, match }: Props) {
         if (!now || !before) return null
         return (
           <p style={{ margin: '10px 0 0' }}>
-            <b>Our {heldOut} recommendation is the conservative plan.</b> Ranking all lines earns more on average, but the family call
-            is only as good as the pedigree on record, and {heldOut}'s is thin. In {heldOut - 1}, the last season like it,
-            the even split gave up {fmtUSD(before.usd, 2)}/acre for {fmtNum(before.fe)} effective families instead
-            of {fmtNum(before.fr)}; in {heldOut} it gave up {fmtUSD(now.usd, 2)} for {fmtNum(now.fe)} instead
-            of {fmtNum(now.fr)}. Switch it on in the left panel; the chart below shows why the pedigree decides it.
+            <b>Why ProMaize gives every family a fair share.</b> Betting the plots on the best-looking families earns
+            more when their parents are well known, but the family call is only as good as the pedigree on record, and
+            {heldOut}'s is thin. In {heldOut - 1}, the last season like it, the fair share gave up {fmtUSD(before.usd, 2)}/acre
+            for {fmtNum(before.fe)} effective families instead of {fmtNum(before.fr)}; in {heldOut} it gave up{' '}
+            {fmtUSD(now.usd, 2)} for {fmtNum(now.fe)} instead of {fmtNum(now.fr)}, and its forecast held while the bet's
+            did not.
           </p>
         )
       })()}

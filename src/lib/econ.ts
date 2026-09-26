@@ -417,3 +417,30 @@ export function pastValue(rows: EngineValueRow[], engine: EngineId, even: boolea
   const vals = years.map((y) => valueAt(mine.filter((r) => r.year === y), share)?.real).filter((v): v is number => v != null)
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : undefined
 }
+
+export interface SeasonValue { year: number; predicted: number; real: number; forecast: number | null }
+export interface PlanForecast { past: SeasonValue[]; now: { predicted: number; real: number }; forecast: number; lo: number; hi: number; avgReal: number }
+
+/** The fair-share plan's forecast for the decision year and its record before it. An engine's raw
+ *  forecast is its own prediction for its own picks; each season's is corrected by how far the
+ *  earlier seasons' forecasts missed, so a season's forecast uses only what was known before it. */
+export function planForecast(rows: EngineValueRow[], engine: EngineId, share: number, heldOut: number): PlanForecast | null {
+  const mine = rows.filter((r) => r.engine === engine && r.plan === 'conservative')
+  const years = [...new Set(mine.map((r) => r.year))].sort((a, b) => a - b)
+  const seasons = years.map((y) => ({ year: y, ...valueAt(mine.filter((r) => r.year === y), share)! }))
+  const pastRaw = seasons.filter((s) => s.year < heldOut)
+  const now = seasons.find((s) => s.year === heldOut)
+  if (pastRaw.length < 2 || !now) return null
+  const ratio = (s: { predicted: number; real: number }) => (s.predicted > 0 ? s.real / s.predicted : NaN)
+  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
+  const ratios = pastRaw.map(ratio).filter(Number.isFinite)
+  const past = pastRaw.map((s, i) => {
+    const before = pastRaw.slice(0, i).map(ratio).filter(Number.isFinite)
+    return { ...s, forecast: before.length ? s.predicted * mean(before) : null }
+  })
+  return {
+    past, now: { predicted: now.predicted, real: now.real },
+    forecast: now.predicted * mean(ratios), lo: now.predicted * Math.min(...ratios), hi: now.predicted * Math.max(...ratios),
+    avgReal: mean(pastRaw.map((s) => s.real)),
+  }
+}

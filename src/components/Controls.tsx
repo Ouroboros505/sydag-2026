@@ -8,14 +8,9 @@ import DataCheck from './DataCheck'
 interface Props {
   n: number
   budget: number
-  cap: number
-  even: boolean
-  maxFamily: number
   prices: Prices
   onBudget: (k: number) => void
-  onCap: (c: number) => void
   onPrices: (p: Prices) => void
-  onEven: (e: boolean) => void
   engines?: EngineInfo[]
   engine: EngineId
   onEngine: (e: EngineId) => void
@@ -46,11 +41,9 @@ function Bar({ v, max, on }: { v: number; max: number; on: boolean }) {
   return <span className="minibar"><i style={{ width: `${Math.max(0, Math.min(1, v / (max || 1))) * 100}%`, opacity: on ? 1 : 0.45 }} /></span>
 }
 
-export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, dataset, shape, real, plotsPerLine, ceiling }: Props) {
+export default function Controls({ n, budget, prices, onBudget, onPrices, engines, engine, onEngine, heldOut, dataset, shape, real, plotsPerLine, ceiling }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
-  const capTop = Math.min(maxFamily, 80)
-  const capValue = Number.isFinite(cap) ? cap : capTop + 1
 
   const cur = engines?.find((e) => e.id === engine)
   const [peek, setPeek] = useState<EngineId | null>(null)
@@ -141,9 +134,9 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
       <h2 style={engines && engines.length > 1 ? { marginTop: 20 } : undefined}>Your plots<Info>
         <b>Available plots to test</b>: how many of the new lines get tested this season. Each one gets a plot at
         each of its test sites, about five per line.<br />
-        <b>How plots are spread</b>: aggressive gives them to the best-predicted lines, wherever they come from;
-        conservative gives every family the same share.<br />
-        <b>Most lines from one family</b>: a cap, so a few families can't take all the plots.
+        Every family gets a fair share of the plots, in proportion to its size, and the engine picks the best lines
+        inside each. That keeps the forecast honest in a season like {heldOut ?? 'this one'}, when many new families
+        have parents with no earlier results.
       </Info></h2>
 
       <div className="control">
@@ -154,29 +147,6 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
         {plotsPerLine && (
           <div className="hint">about {(Math.round((budget * plotsPerLine) / 100) * 100).toLocaleString('en-US')} plots, {plotsPerLine.toFixed(1)} per line</div>
         )}
-      </div>
-
-      <div className="control">
-        <label>How plots are spread</label>
-        <div className="toggle" style={{ marginTop: 4 }}>
-          <button className={!even ? 'on' : ''} onClick={() => onEven(false)}>aggressive: rank all</button>
-          <button className={even ? 'on' : ''} onClick={() => onEven(true)}>conservative: same share</button>
-        </div>
-        <div className="hint">
-          Aggressive bets the plots on the best-predicted families. Conservative gives every family its fair share and
-          lets markers pick the siblings: nearly free in 2008, when the family call was weak.
-        </div>
-      </div>
-
-      <div className="control" style={even ? { opacity: 0.45 } : undefined}>
-        <label>
-          Most lines from one family <b>{even ? 'n/a' : Number.isFinite(cap) ? cap : 'no limit'}</b>
-        </label>
-        <input
-          type="range" min={1} max={capTop + 1} step={1} value={capValue}
-          onChange={(e) => { const v = Number(e.target.value); onCap(v > capTop ? Infinity : v) }}
-        />
-        <div className="hint">Keeps the advanced set genetically broad. The tiles show what it costs.</div>
       </div>
 
       <h2 style={{ marginTop: 20 }}>Your economics<Info>

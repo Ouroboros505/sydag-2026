@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
 import Validation from '../components/Validation'
+import Strategies from '../components/Strategies'
+import Pedigree from '../components/Pedigree'
 import { loadJson } from '../lib/data'
 import type { Recommendations } from '../lib/types'
 
@@ -301,6 +303,7 @@ export default function MethodPage() {
             <div className="small muted">Steps</div>
             <ol>
               {steps.map((s) => <li key={s.id}><a href={`#${s.id}`}>{s.title}</a></li>)}
+              <li><a href="#fair">Why every family gets a fair share</a></li>
               <li><a href="#numbers">All the numbers</a></li>
             </ol>
           </nav>
@@ -313,6 +316,10 @@ export default function MethodPage() {
                 {s.body}
               </section>
             ))}
+            <section id="fair" className="lsec">
+              {v.strategies && v.strategies.length > 0 && <Strategies rows={v.strategies} heldOut={year} />}
+              {v.by_year && <div style={{ marginTop: 16 }}><Pedigree years={v.by_year} heldOut={year} /></div>}
+            </section>
             <section id="numbers" className="lsec">
               <Validation v={v} baselines={data.baselines} notes={data.meta.notes} heldOut={year} />
             </section>

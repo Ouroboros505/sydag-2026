@@ -1,7 +1,6 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import CandidateTable from './components/CandidateTable'
 import Controls from './components/Controls'
-import Breadth from './components/Breadth'
 import Frontier from './components/Frontier'
 import GenomicMap from './components/GenomicMap'
 import Scenarios from './components/Scenarios'
@@ -11,9 +10,7 @@ import { loadJson } from './lib/data'
 import { advanceOrder, backtest, backtestBase, byYieldOrder, captureCurve, evenShare, frontier, meanOf, pastValue, score, summarize, withEngine, type Prices } from './lib/econ'
 import type { EngineId, Recommendations } from './lib/types'
 import Backtest from './components/Backtest'
-import Strategies from './components/Strategies'
 import Evidence from './components/Evidence'
-import Pedigree from './components/Pedigree'
 import TestSites from './components/TestSites'
 import SeasonForecast from './components/SeasonForecast'
 
@@ -22,8 +19,9 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [prices, setPrices] = useState<Prices | null>(null)
   const [budget, setBudget] = useState(300)
-  const [cap, setCap] = useState(Infinity)
-  const [even, setEven] = useState(false)   // same share of every family, instead of a ranking across them
+  // every family gets a fair share of the plots: no ranking across families, no cap
+  const cap = Infinity
+  const even = true
   const [engine, setEngine] = useState<EngineId>('family')
   const [revealed, setRevealed] = useState(false)   // January: the decision year's results are not known yet
 
@@ -45,8 +43,6 @@ export default function App() {
         })
         // default: a 30% plot budget, the scenario's 'significantly reduced' season
         setBudget(Math.min(num('budget', Math.round(d.candidates.length * 0.3 / 10) * 10), d.candidates.length))
-        setCap(num('cap', Infinity))
-        setEven(q.get('even') === '1')
         const e = q.get('engine')
         if (d.validation.engines?.some((x) => x.id === e)) setEngine(e as EngineId)
         setRevealed(q.get('view') === 'harvest')
@@ -63,8 +59,6 @@ export default function App() {
   const dEngine = useDeferredValue(engine)
   const stale = dPrices !== prices || dBudget !== budget || dCap !== cap || dEven !== even || dEngine !== engine
   const [moreOpen, setMoreOpen] = useState(false)
-  const onCap = useCallback((c: number) => { setCap(c); setEven(false) }, [])
-  const onEvenOn = useCallback(() => setEven(true), [])
 
   const half90 = data?.validation.engines?.find((e) => e.id === dEngine)?.half90
   const cands = useMemo(() => (data ? withEngine(data.candidates, dEngine, half90) : []), [data, dEngine, half90])
@@ -85,11 +79,6 @@ export default function App() {
   }, [data])
   const scored = useMemo(() => (dPrices ? score(cands, dPrices) : []), [cands, dPrices])
   const byYield = useMemo(() => byYieldOrder(scored), [scored])
-  const maxFamily = useMemo(() => {
-    const n = new Map<string, number>()
-    for (const c of scored) n.set(c.family, (n.get(c.family) ?? 0) + 1)
-    return Math.max(1, ...n.values())
-  }, [scored])
   const reachable = useMemo(() => (dEven ? scored.length : advanceOrder(scored, dCap).length), [scored, dCap, dEven])
   const k = Math.min(dBudget, reachable)
   // what each engine's picks really earned in past seasons, for the plan and plots on screen
@@ -109,6 +98,7 @@ export default function App() {
     [byYield, dCap, k, dEven],
   )
   const yieldSet = useMemo(() => new Set(yieldList.map((c) => c.id)), [yieldList])
+  const kept = useMemo(() => ({ families: new Set(summary?.advanced.map((c) => c.family)).size, of: nFamilies }), [summary, nFamilies])
   const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
   const btBase = useMemo(() => (dPrices ? backtestBase(scored, dPrices) : null), [scored, dPrices])
   const bt = useMemo(
@@ -171,12 +161,13 @@ export default function App() {
         </p>
       </div>
 
-      <Evidence v={data.validation} heldOut={heldOut} />
+      <Evidence v={data.validation} heldOut={heldOut} rows={data.validation.engine_value} engine={dEngine}
+        share={k / Math.max(1, data.meta.n_candidates)} revealed={revealed} kept={kept} />
 
       <div className="layout">
         <Controls
-          n={scored.length} budget={budget} cap={cap} maxFamily={maxFamily} prices={prices} even={even}
-          onBudget={setBudget} onCap={onCap} onPrices={setPrices} onEven={setEven}
+          n={scored.length} budget={budget} prices={prices}
+          onBudget={setBudget} onPrices={setPrices}
           engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape} real={real} plotsPerLine={plotsPerLine} ceiling={data.validation.ceiling}
         />
         <div className="stack" style={{ opacity: stale ? 0.72 : 1, transition: 'opacity 120ms' }}>
@@ -186,21 +177,16 @@ export default function App() {
             </p>
           )}
           {heldOut && data.validation.engine_value && (
-            <SeasonForecast rows={data.validation.engine_value} heldOut={heldOut} engine={dEngine} even={dEven}
+            <SeasonForecast rows={data.validation.engine_value} heldOut={heldOut} engine={dEngine}
               share={k / Math.max(1, data.meta.n_candidates)} revealed={revealed} onReveal={setRevealed} />
           )}
           <StatTiles {...summary} capped={dEven || Number.isFinite(dCap)} />
           {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}
-          {data.validation.strategies && data.validation.strategies.length > 0 && (
-            <Strategies rows={data.validation.strategies} heldOut={heldOut} match={data.validation.plots_to_match} />
-          )}
-          {data.validation.by_year && <Pedigree years={data.validation.by_year} heldOut={heldOut} />}
           {data.locations && data.locations.length > 0 && data.season_plots && (
             <TestSites sites={data.locations} year={heldOut} candidates={data.candidates} plots={data.season_plots}
               prices={dPrices} advanced={summary.advanced} />
           )}
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={dPrices} />
-          <Breadth scored={scored} budget={k} cap={dCap} even={dEven} onCap={onCap} onEven={onEvenOn} />
           <details className="more" onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
             <summary>More tools: the budget curve, price scenarios, the genomic map</summary>
             {moreOpen && (

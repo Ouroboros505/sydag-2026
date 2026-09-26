@@ -214,7 +214,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
               <p className="small" style={{ margin: '10px 0 0' }}>
                 {tilt && Math.abs(tilt.gap) >= 0.05
                   ? <><b>Your plan tilts {tilt.gap > 0 ? 'toward' : 'away from'} {LABEL[tilt.c]} summers:</b> {pct(share(tilt.c, 'tests'))} of
-                    its tests, against {pct(share(tilt.c, 'all'))} for all new lines. The conservative plan keeps the full mix.</>
+                    its tests, against {pct(share(tilt.c, 'all'))} for all new lines.</>
                   : <><b>Your plan keeps the full mix of summers</b>, within five points of all new lines everywhere.</>}
               </p>
             </>
