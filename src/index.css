@@ -183,6 +183,12 @@ table.mini th { color: var(--text-3); }
 table.mini .hi { color: var(--text); font-weight: 700; background: var(--highlight); }
 .minibar { display: block; height: 4px; margin-top: 3px; border-radius: 2px; background: var(--grid); }
 .minibar i { display: block; height: 4px; border-radius: 2px; background: var(--accent); }
+/* the opening chart */
+.forecast-head { margin: 0 0 10px; font-size: 15px; line-height: 1.5; color: var(--text-2); max-width: 78ch; }
+.forecast-head b { color: var(--text); }
+.forecast-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.forecast .reveal { transition: opacity 400ms ease; }
+.forecast .reveal rect { transition: transform 700ms cubic-bezier(.2, .8, .2, 1); }
 .fitnote { margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--row-alt); color: var(--text-2); line-height: 1.45; }
 
 /* phones */

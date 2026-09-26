@@ -24,6 +24,7 @@ interface Props {
   dataset?: string
   shape?: DataShape
   real?: Partial<Record<EngineId, number>>   // what each engine's picks really earned in the held-out season, $/acre
+  plotsPerLine?: number
 }
 
 /** How the loaded lines are organized: the fact that decides which engine fits. */
@@ -44,7 +45,7 @@ function Bar({ v, max, on }: { v: number; max: number; on: boolean }) {
   return <span className="minibar"><i style={{ width: `${Math.max(0, Math.min(1, v / (max || 1))) * 100}%`, opacity: on ? 1 : 0.45 }} /></span>
 }
 
-export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, dataset, shape, real }: Props) {
+export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, dataset, shape, real, plotsPerLine }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
   const capTop = Math.min(maxFamily, 80)
@@ -137,7 +138,7 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
       )}
 
       <h2 style={engines && engines.length > 1 ? { marginTop: 20 } : undefined}>Your plots<Info>
-        <b>Lines you can field-test</b>: how many of the new lines get tested this season. Each one gets a plot at
+        <b>Available plots to test</b>: how many of the new lines get tested this season. Each one gets a plot at
         each of its test sites, about five per line.<br />
         <b>How plots are spread</b>: aggressive gives them to the best-predicted lines, wherever they come from;
         conservative gives every family the same share.<br />
@@ -146,9 +147,12 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
 
       <div className="control">
         <label>
-          Lines you can field-test <b>{budget.toLocaleString('en-US')} of {n.toLocaleString('en-US')}</b>
+          Available plots to test <b>{budget.toLocaleString('en-US')} of {n.toLocaleString('en-US')} lines</b>
         </label>
         <input type="range" min={10} max={n} step={10} value={budget} onChange={(e) => onBudget(Number(e.target.value))} />
+        {plotsPerLine && (
+          <div className="hint">about {(Math.round((budget * plotsPerLine) / 100) * 100).toLocaleString('en-US')} plots, {plotsPerLine.toFixed(1)} per line</div>
+        )}
       </div>
 
       <div className="control">

@@ -15,6 +15,7 @@ import Strategies from './components/Strategies'
 import Evidence from './components/Evidence'
 import Pedigree from './components/Pedigree'
 import TestSites from './components/TestSites'
+import SeasonForecast from './components/SeasonForecast'
 
 export default function App() {
   const [data, setData] = useState<Recommendations | null>(null)
@@ -24,6 +25,7 @@ export default function App() {
   const [cap, setCap] = useState(Infinity)
   const [even, setEven] = useState(false)   // same share of every family, instead of a ranking across them
   const [engine, setEngine] = useState<EngineId>('family')
+  const [revealed, setRevealed] = useState(false)   // January: the decision year's results are not known yet
 
   useEffect(() => {
     loadJson<Recommendations>('recommendations.json')
@@ -47,6 +49,7 @@ export default function App() {
         setEven(q.get('even') === '1')
         const e = q.get('engine')
         if (d.validation.engines?.some((x) => x.id === e)) setEngine(e as EngineId)
+        setRevealed(q.get('view') === 'harvest')
       })
       .catch((e) => setError(String(e)))
   }, [])
@@ -66,6 +69,11 @@ export default function App() {
   const half90 = data?.validation.engines?.find((e) => e.id === dEngine)?.half90
   const cands = useMemo(() => (data ? withEngine(data.candidates, dEngine, half90) : []), [data, dEngine, half90])
   const nFamilies = useMemo(() => new Set(data?.candidates.map((c) => c.family)).size, [data])
+  // plots each tested line takes, from the held-out season's own plots (one per test site)
+  const plotsPerLine = useMemo(() => {
+    const sp = data?.season_plots
+    return sp && sp.line.length ? sp.line.length / new Set(sp.line).size : undefined
+  }, [data])
   // how the lines are organized decides the engine: families of siblings, or lines that stand alone
   const shape = useMemo(() => {
     if (!data) return undefined
@@ -167,13 +175,17 @@ export default function App() {
         <Controls
           n={scored.length} budget={budget} cap={cap} maxFamily={maxFamily} prices={prices} even={even}
           onBudget={setBudget} onCap={onCap} onPrices={setPrices} onEven={setEven}
-          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape} real={real}
+          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape} real={real} plotsPerLine={plotsPerLine}
         />
         <div className="stack" style={{ opacity: stale ? 0.72 : 1, transition: 'opacity 120ms' }}>
           {k < dBudget && (
             <p className="muted" style={{ margin: 0 }}>
               The family limit leaves only {k.toLocaleString('en-US')} eligible lines. Loosen it or lower the budget.
             </p>
+          )}
+          {heldOut && data.validation.strategies && data.validation.by_year && (
+            <SeasonForecast rows={data.validation.strategies} years={data.validation.by_year} heldOut={heldOut}
+              even={dEven} revealed={revealed} onReveal={setRevealed} />
           )}
           <StatTiles {...summary} capped={dEven || Number.isFinite(dCap)} />
           {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}
