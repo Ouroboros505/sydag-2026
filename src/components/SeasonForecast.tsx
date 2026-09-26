@@ -14,7 +14,8 @@ interface Props {
 
 const NAME: Record<EngineId, string> = { family: '2-Step', gblup: 'Standard', environment: 'Environment' }
 // the axis already says 'extra', so a plus sign would only add noise; a minus stays
-const usd = (v: number) => `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(2)}`
+// every value sits above (or below) the 'random pick' line, so it carries its sign
+const usd = (v: number) => `${v < 0 ? '−' : '+'}$${Math.abs(v).toFixed(2)}`
 
 /** The opening chart: the money the chosen engine's picks are worth. Past seasons show what the
  *  picks really earned and what the engine forecast that January; the decision year is a forecast
@@ -22,13 +23,12 @@ const usd = (v: number) => `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(2)}`
 function SeasonForecast({ rows, heldOut, engine, share, revealed, onReveal }: Props) {
   const f = planForecast(rows, engine, share, heldOut)
   if (!f) return null
-  const { now, forecast, lo, hi, avgReal } = f
+  const { now, forecast, lo, hi } = f
   const past = f.past, tracked = f.past
   const show = revealed
-  const where = now.real > hi ? 'above' : now.real < lo ? 'below' : 'inside'
 
   // geometry
-  const W = 720, H = 270, L = 48, R = 16, T = 34, B = 34
+  const W = 720, H = 270, L = 84, R = 16, T = 34, B = 34
   const slots = [...past.map((s) => s.year), heldOut]
   const sw = (W - L - R) / slots.length
   const cx = (i: number) => L + i * sw + sw / 2
@@ -46,28 +46,15 @@ function SeasonForecast({ rows, heldOut, engine, share, revealed, onReveal }: Pr
 
   return (
     <div className="panel forecast">
-      <h2>What the plots are worth: forecast and real<Info wide>
-        <b>Bars</b>: what the lines {NAME[engine]} chose really earned each past season, per acre, above an average new
-        line of that season (which is what picking at random would give). Values use the real yield, harvest moisture
-        and lodging, at $4.50 corn: yield times price, minus drying cost and lodging loss.<br /><br />
+      <h2>Income per acre of tested hybrids<Info wide>
+        <b>Bars</b>: the income per acre of the test hybrids of the lines {NAME[engine]} chose, measured in the real
+        field, above what a random pick of lines earns (the "random pick" line). Income is yield times price ($4.50 corn),
+        minus drying cost and lodging loss, at an average test site: each trial's weather is taken out.<br /><br />
         <b>Ticks</b>: what {NAME[engine]} forecast in January of that season. The raw forecast is the engine's own
         prediction for the lines it picks, which runs high because the best predictions are partly luck, so each
         season's forecast is corrected by how far the earlier seasons' forecasts overshot.<br /><br />
         <b>The shaded band</b> is the forecast for {heldOut}, made the same way, from what was known in January.
       </Info></h2>
-
-      <p className="small muted" style={{ margin: '-6px 0 8px' }}>
-        Each bar: how much more an acre the lines the plan picked were worth than an average new line, in the real
-        field. Worth means the crop: yield times corn price, minus drying and lodging losses.
-      </p>
-      <p className="forecast-head">
-        {show
-          ? <><b>Real {heldOut}: {usd(now.real)} more an acre</b> than an average new line, {where} the forecast
-            ({usd(lo)} to {usd(hi)}).</>
-          : <>With {NAME[engine]}, the plan's lines are forecast to be worth <b>{usd(forecast)} more an acre</b> than an
-            average new line in {heldOut} (between {usd(lo)} and {usd(hi)}). In past seasons its picks were worth{' '}
-            {usd(avgReal)} more on average.</>}
-      </p>
 
       <div className="forecast-controls">
         <div className="toggle">
@@ -84,10 +71,10 @@ function SeasonForecast({ rows, heldOut, engine, share, revealed, onReveal }: Pr
           {ticks.map((t) => (
             <g key={t}>
               <line x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke={t === 0 ? 'var(--text-3)' : 'var(--grid)'} strokeWidth={t === 0 ? 1.2 : 1} />
-              <text x={L - 8} y={y(t) + 4} textAnchor="end" fontSize={11} fill="var(--text-3)">{t < 0 ? '−' : ''}${Math.abs(t)}</text>
+              <text x={L - 8} y={y(t) + 4} textAnchor="end" fontSize={11} fill={t === 0 ? 'var(--text-2)' : 'var(--text-3)'}
+                fontWeight={t === 0 ? 600 : 400}>{t === 0 ? 'random pick' : `${t < 0 ? '−' : '+'}$${Math.abs(t)}`}</text>
             </g>
           ))}
-          <text x={L} y={14} fontSize={11} fill="var(--text-3)">Extra $ per acre, compared with an average new line</text>
 
           {/* the past: what the picks really earned, and what was forecast that January */}
           {tracked.map((s, i) => {
@@ -96,7 +83,7 @@ function SeasonForecast({ rows, heldOut, engine, share, revealed, onReveal }: Pr
               <g key={s.year}>
                 <rect x={cx(i) - bw / 2} y={Math.min(y0, y1)} width={bw} height={Math.max(1, Math.abs(y1 - y0))} rx={4}
                   fill={s.real >= 0 ? 'var(--good)' : 'var(--text-3)'} opacity={0.8} />
-                <text x={cx(i)} y={Math.min(y1, s.forecast != null ? y(s.forecast) : y1) - 7} textAnchor="middle" fontSize={12}
+                <text x={cx(i)} y={(s.forecast != null && y(s.forecast) < y1 && y1 - y(s.forecast) < 16 ? y(s.forecast) : y1) - 7} textAnchor="middle" fontSize={12}
                   fontWeight={600} fill="var(--text-2)">{usd(s.real)}</text>
                 {s.forecast != null && (
                   <line x1={cx(i) - bw / 2 - 5} x2={cx(i) + bw / 2 + 5} y1={y(s.forecast)} y2={y(s.forecast)}
@@ -136,12 +123,9 @@ function SeasonForecast({ rows, heldOut, engine, share, revealed, onReveal }: Pr
         </svg>
       </div>
       <div className="legend" style={{ marginTop: 2 }}>
-        <span><i style={{ background: 'var(--good)', opacity: 0.8, height: 10, width: 14, borderRadius: 3 }} />real value of the picks</span>
-        <span><i style={{ background: 'var(--accent)', height: 3, width: 16 }} />forecast made that January</span>
+        <span><i style={{ background: 'var(--good)', opacity: 0.8, height: 10, width: 14, borderRadius: 3 }} />real, after harvest</span>
+        <span><i style={{ background: 'var(--accent)', height: 3, width: 16 }} />forecast, that January</span>
       </div>
-      <p className="small muted" style={{ margin: '4px 0 0' }}>
-        Starts in 2003: 2000 to 2002 had too few families (27 to 62 a season) to learn from and grade fairly.
-      </p>
     </div>
   )
 }
