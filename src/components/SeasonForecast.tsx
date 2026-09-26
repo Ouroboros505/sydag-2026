@@ -61,8 +61,6 @@ function SeasonForecast({ rows, heldOut, engine, share, revealed, onReveal }: Pr
           <button className={!revealed ? 'on' : ''} onClick={() => onReveal(false)}>January {heldOut}</button>
           <button className={revealed ? 'on' : ''} onClick={() => onReveal(true)}>After harvest</button>
         </div>
-        <span className="small muted">{NAME[engine]} · a fair share of plots for every family · plots for{' '}
-          {Math.round(share * 100)}% of the lines</span>
       </div>
 
       <div className="chartbox">
