@@ -38,6 +38,11 @@ const HOW: Record<EngineId, string> = {
   environment: '',
 }
 
+/** a tiny bar under a number in the engine card, so the difference reads at a glance */
+function Bar({ v, max, on }: { v: number; max: number; on: boolean }) {
+  return <span className="minibar"><i style={{ width: `${Math.max(0, Math.min(1, v / (max || 1))) * 100}%`, opacity: on ? 1 : 0.45 }} /></span>
+}
+
 export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, dataset, shape, real }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
@@ -91,11 +96,13 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
                   <thead><tr><th /> {engines.map((e) => <th key={e.id} className={e.id === peek ? 'hi' : ''}>{SHORT[e.id]}</th>)}</tr></thead>
                   <tbody>
                     <tr><td>accuracy, past seasons <span className="muted">(1 = perfect)</span></td>
-                      {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>{e.r_mean.toFixed(2)}</td>)}</tr>
+                      {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>{e.r_mean.toFixed(2)}
+                        <Bar v={e.r_mean} max={Math.max(...engines.map((x) => x.r_mean))} on={e.id === peek} /></td>)}</tr>
                     {heldOut && real && (
                       <tr><td>{heldOut}, real $/acre over random</td>
                         {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>
-                          {real[e.id] != null ? `+$${real[e.id]!.toFixed(0)}` : ''}</td>)}</tr>
+                          {real[e.id] != null ? `+$${real[e.id]!.toFixed(0)}` : ''}
+                          <Bar v={real[e.id] ?? 0} max={Math.max(...engines.map((x) => real[x.id] ?? 0))} on={e.id === peek} /></td>)}</tr>
                     )}
                   </tbody>
                 </table>

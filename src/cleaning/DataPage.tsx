@@ -173,6 +173,7 @@ export default function DataPage() {
         </div>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <a className="pill" href="/">Back to the demo</a>
+          <a className="pill" href="/method/">Next: how we analyzed it →</a>
           <ThemeToggle />
         </span>
       </header>

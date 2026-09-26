@@ -11,7 +11,6 @@ import { loadJson } from './lib/data'
 import { advanceOrder, backtest, backtestBase, byYieldOrder, captureCurve, evenShare, frontier, meanOf, score, summarize, withEngine, type Prices } from './lib/econ'
 import type { EngineId, Recommendations } from './lib/types'
 import Backtest from './components/Backtest'
-import Validation from './components/Validation'
 import Strategies from './components/Strategies'
 import Evidence from './components/Evidence'
 import Pedigree from './components/Pedigree'
@@ -134,6 +133,9 @@ export default function App() {
           <a className="pill" href="/cleaning/" title="What we did to the data before any model saw it">
             How we cleaned the data →
           </a>
+          <a className="pill" href="/method/" title="What happens after cleaning: the engines, the tests, how accuracy is measured">
+            How we analyzed it →
+          </a>
           <a className="pill" href="/learn/" title="The breeding problem, the data and the model, explained from zero">
             New to breeding? How this works →
           </a>
@@ -181,7 +183,6 @@ export default function App() {
               prices={dPrices} advanced={summary.advanced} />
           )}
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={dPrices} />
-          <Validation v={data.validation} baselines={data.baselines} notes={data.meta.notes} heldOut={heldOut} />
           <Breadth scored={scored} budget={k} cap={dCap} even={dEven} onCap={onCap} onEven={onEvenOn} />
           <details className="more" onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
             <summary>More tools: the budget curve, price scenarios, the genomic map</summary>

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>ProMaize | how we analyzed the data</title>
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get('theme');
+        try { t = t || localStorage.getItem('theme'); } catch (e) {}
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/method/main.tsx"></script>
+  </body>
+</html>

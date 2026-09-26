@@ -11,13 +11,15 @@ export default defineConfig({
   define: { __BUILD__: JSON.stringify(BUILD_STAMP), __VERSION__: JSON.stringify(VERSION) },
   // Binds every interface so a phone on the same network can reach it.
   server: { host: true },
-  // Three pages: the demo at /, the learning walkthrough at /learn/, the data cleaning at /cleaning/.
+  // Four pages: the demo at /, the learning walkthrough at /learn/, the data cleaning at /cleaning/,
+  // and how the data was analyzed at /method/.
   build: {
     rollupOptions: {
       input: {
         main: 'index.html',
         learn: 'learn/index.html',
         cleaning: 'cleaning/index.html',
+        method: 'method/index.html',
       },
     },
   },

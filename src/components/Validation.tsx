@@ -26,7 +26,7 @@ function Validation({ v, baselines, notes, heldOut }: Props) {
         {v.r_ci95 && <> (95% interval {f2(v.r_ci95[0])} to {f2(v.r_ci95[1])}, resampling families)</>}
         {v.ceiling != null && <>; plot noise caps any predictor near <b>{v.ceiling.toFixed(2)}</b></>}. Against standard
         GBLUP{v.vs_gblup_ci95 && <> the gain is {f2(v.vs_gblup_ci95[0])} to {f2(v.vs_gblup_ci95[1])} in r (95%), and</>}
-        {v.seasons_won != null && v.seasons != null && <> ProMaize won {v.seasons_won} of {v.seasons} seasons
+        {v.seasons_won != null && v.seasons != null && <> 2-Step won {v.seasons_won} of {v.seasons} seasons
           {v.seasons_won === v.seasons && <> (sign test p = {(0.5 ** v.seasons).toFixed(3)})</>}.</>} The top 20% by
         prediction holds <b>{Math.round(v.top20_recovery * 100)}%</b> of the real top 20% (chance is 20%).
         {v.r_between != null && v.r_within != null && (
@@ -45,9 +45,9 @@ function Validation({ v, baselines, notes, heldOut }: Props) {
               <tr>
                 <th className="l wrap">Predicted year</th>
                 <th>Families</th>
-                <th>ProMaize</th>
+                <th>2-Step</th>
                 <th className="l hide-sm" style={{ width: '38%' }}>vs standard GBLUP and pedigree</th>
-                <th className="wrap">Std. GBLUP</th>
+                <th className="wrap">Standard</th>
                 <th className="hide-sm">Pedigree</th>
               </tr>
             </thead>
@@ -70,7 +70,7 @@ function Validation({ v, baselines, notes, heldOut }: Props) {
           <p className="muted small" style={{ margin: '6px 0 0' }}>
             Each row is a separate forward test: that year's families predicted from the years before it.
             {v.tuned_on && <> Model settings were chosen on {v.tuned_on.join(', ')} only; {heldOut} was held out.</>}
-            {v.first_frozen_r != null && <> The first model, frozen before {heldOut} was scored, got r = {f2(v.first_frozen_r)}
+            {v.first_frozen_r != null && <> The first model, frozen before {heldOut} was scored, got r = {f2(v.first_frozen_r)}{' '}
               there; three later changes, each chosen on {v.tuned_on?.join(', ')} and applied to every year, are listed in
               the README.</>}
           </p>
