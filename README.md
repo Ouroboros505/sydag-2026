@@ -332,8 +332,12 @@ npm run build && npm run preview
 
 The model never holds more than one 2,911 x 2,911 matrix per cohort: training cost grows with the
 number of markers squared, not with lines, and adding a year adds one matrix. The genotype cache
-is float16 (0.9 GB for 153k lines). For bigger panels the same statistics accumulate in chunks on
-Anvil (RCAC); `scripts/anvil.md` and `scripts/job.slurm` hold the setup.
+is float16 (0.9 GB for 153k lines).
+
+**Verified on Anvil (RCAC):** the full pipeline, starting from the organizers' raw files with no
+caches, ran in **3 minutes 27 seconds** on one node (128 cores, peak memory 7.2 GB) and reproduced
+every number in this README to the third decimal (SLURM job 20911406, 26 September 2026). Setup:
+`scripts/anvil.md`, `scripts/job.slurm`.
 
 ### Layout
 

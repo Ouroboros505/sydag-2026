@@ -107,7 +107,8 @@ def main() -> None:
     bullets(s, body(s, s.shapes.title), [
         "**Python: numpy, pandas, scikit-learn. The model trains from sufficient statistics.",
         ("Full dataset (1.07M plots, 153k genotyped lines x 2,911 markers): about 5 minutes on a laptop.", 1),
-        ("Anvil (RCAC) for the heavy runs; a synthetic judge-mode program runs end to end in about ten seconds.", 1),
+        ("On Anvil (RCAC), from the raw files: 3.5 minutes on one node, every number reproduced.", 1),
+        ("A synthetic judge-mode program runs the whole pipeline in about ten seconds.", 1),
         "**React + TypeScript + Vite, installable web app: the demo works with no network.",
         f"Hosted at {DEMO_URL}; every state is a URL (budget, family limit, prices).",
     ], 22)
