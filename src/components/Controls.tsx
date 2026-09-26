@@ -20,7 +20,13 @@ interface Props {
   seasons?: number
 }
 
-const SHORT: Record<EngineId, string> = { family: 'Family engine', gblup: 'Standard (GBLUP)', environment: 'Environment' }
+const SHORT: Record<EngineId, string> = { family: 'Family', gblup: 'Standard', environment: 'Environment' }
+// what each engine runs on, for the hover
+const BEHIND: Record<EngineId, string> = {
+  family: "ProMaize's family engine: two GBLUP-style marker models, one for each family's average (from its parents' DNA), one for the brothers and sisters inside it",
+  gblup: 'The standard method in plant breeding: GBLUP, one marker model over every line tested before, no family step',
+  environment: 'Family engine plus weather and soil',
+}
 // when each engine is the right tool, in the breeder's terms
 const WHEN: Record<EngineId, string> = {
   family: "ProMaize's default, built for seasons full of new families: it judges each family by what its parents passed on, then ranks the brothers and sisters inside it.",
@@ -43,9 +49,9 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
           <h2>Prediction engine<Info wide>
             Every engine predicts the same things for each new line, from its DNA: yield, grain moisture and lodging.
             They differ in how they learn from earlier seasons.<br /><br />
-            <b>Family engine</b>: first predicts each family's average from its two parents' DNA, then ranks the
+            <b>Family</b>: first predicts each family's average from its two parents' DNA, then ranks the
             brothers and sisters inside the family.<br />
-            <b>Standard (GBLUP)</b>: the method most breeding programs use; one model over all earlier lines.<br /><br />
+            <b>Standard</b>: GBLUP, the method most breeding programs use; one model over all earlier lines.<br /><br />
             <b>Accuracy</b> is how well the predicted ranking matched the real one, in seasons the engine never saw:
             1 is perfect, 0 is no better than chance. Switch engines and every panel on the page updates, including
             what {heldOut ?? 'the field'} actually said.
@@ -53,7 +59,7 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
           <div className="control">
             <div className="toggle">
               {engines.map((e) => (
-                <button key={e.id} className={e.id === engine ? 'on' : ''} onClick={() => onEngine(e.id)}>{SHORT[e.id]}</button>
+                <button key={e.id} className={e.id === engine ? 'on' : ''} onClick={() => onEngine(e.id)} title={BEHIND[e.id]}>{SHORT[e.id]}</button>
               ))}
             </div>
             <div className="engine-note">
