@@ -8,7 +8,7 @@ import Scenarios from './components/Scenarios'
 import StatTiles from './components/StatTiles'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
-import { advanceOrder, backtest, byYieldOrder, captureCurve, frontier, meanOf, score, summarize, type Prices } from './lib/econ'
+import { advanceOrder, backtest, byYieldOrder, captureCurve, evenShare, frontier, meanOf, score, summarize, type Prices } from './lib/econ'
 import type { Recommendations } from './lib/types'
 import Backtest from './components/Backtest'
 import Validation from './components/Validation'
@@ -21,6 +21,7 @@ export default function App() {
   const [prices, setPrices] = useState<Prices | null>(null)
   const [budget, setBudget] = useState(300)
   const [cap, setCap] = useState(Infinity)
+  const [even, setEven] = useState(false)   // same share of every family, instead of a ranking across them
 
   useEffect(() => {
     loadJson<Recommendations>('recommendations.json')
@@ -41,6 +42,7 @@ export default function App() {
         // default: a 30% plot budget, the scenario's 'significantly reduced' season
         setBudget(Math.min(num('budget', Math.round(d.candidates.length * 0.3 / 10) * 10), d.candidates.length))
         setCap(num('cap', Infinity))
+        setEven(q.get('even') === '1')
       })
       .catch((e) => setError(String(e)))
   }, [])
@@ -51,14 +53,17 @@ export default function App() {
     for (const c of scored) n.set(c.family, (n.get(c.family) ?? 0) + 1)
     return Math.max(1, ...n.values())
   }, [scored])
-  const reachable = useMemo(() => advanceOrder(scored, cap).length, [scored, cap])
+  const reachable = useMemo(() => (even ? scored.length : advanceOrder(scored, cap).length), [scored, cap, even])
   const k = Math.min(budget, reachable)
   const curve = useMemo(
     () => (scored.length ? frontier(scored, cap, Math.max(1, Math.floor(scored.length / 200))) : []),
     [scored, cap],
   )
-  const summary = useMemo(() => (scored.length ? summarize(scored, k, cap) : null), [scored, k, cap])
-  const yieldList = useMemo(() => advanceOrder(byYieldOrder(scored), cap).slice(0, k), [scored, cap, k])
+  const summary = useMemo(() => (scored.length ? summarize(scored, k, cap, even) : null), [scored, k, cap, even])
+  const yieldList = useMemo(
+    () => (even ? evenShare(byYieldOrder(scored), k) : advanceOrder(byYieldOrder(scored), cap).slice(0, k)),
+    [scored, cap, k, even],
+  )
   const yieldSet = useMemo(() => new Set(yieldList.map((c) => c.id)), [yieldList])
   const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
   const bt = useMemo(
@@ -108,8 +113,8 @@ export default function App() {
 
       <div className="layout">
         <Controls
-          n={scored.length} budget={budget} cap={cap} maxFamily={maxFamily} prices={prices}
-          onBudget={setBudget} onCap={setCap} onPrices={setPrices}
+          n={scored.length} budget={budget} cap={cap} maxFamily={maxFamily} prices={prices} even={even}
+          onBudget={setBudget} onCap={(c) => { setCap(c); setEven(false) }} onPrices={setPrices} onEven={setEven}
         />
         <div className="stack">
           {k < budget && (
@@ -117,16 +122,16 @@ export default function App() {
               The family limit leaves only {k.toLocaleString()} eligible lines. Loosen it or lower the budget.
             </p>
           )}
-          <StatTiles {...summary} capped={Number.isFinite(cap)} />
+          <StatTiles {...summary} capped={even || Number.isFinite(cap)} />
           {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}
           {data.validation.strategies && data.validation.strategies.length > 0 && (
             <Strategies rows={data.validation.strategies} heldOut={heldOut} match={data.validation.plots_to_match} />
           )}
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={prices} />
           <Validation v={data.validation} baselines={data.baselines} notes={data.meta.notes} heldOut={heldOut} />
-          <Breadth scored={scored} budget={k} cap={cap} onCap={setCap} />
+          <Breadth scored={scored} budget={k} cap={cap} even={even} onCap={(c) => { setCap(c); setEven(false) }} onEven={() => setEven(true)} />
           <Frontier points={curve} budget={k} onBudget={setBudget} />
-          <Scenarios candidates={data.candidates} prices={prices} budget={k} cap={cap} />
+          <Scenarios candidates={data.candidates} prices={prices} budget={k} cap={cap} even={even} />
           <GenomicMap all={scored} advanced={advancedIds} />
         </div>
       </div>

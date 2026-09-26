@@ -52,12 +52,14 @@ export default function StatTiles({ gainByMargin, gainByYield, gap, swapCount, d
           take. Low means a few families dominate.<br />
           <b>Present</b>: families with at least one line advanced.<br />
           <b>Largest</b>: share of the plots taken by the single biggest family.<br />
-          <b>Cap costs</b>: $/acre given up by your family limit, compared with no limit.
+          <b>Breadth costs</b>: $/acre the model expects to give up for your family limit or even share, compared
+          with ranking all lines. What 2008 actually charged is in the panel below: in a year when the family call is
+          weak, much less.
         </Info></div>
         <div className="v">{fmtNum(diversity.effective, 1)}</div>
         <div className="d">
           effective families · {diversity.families} present · largest {fmtPct(diversity.largestShare)}
-          {capped && <> · cap costs {fmtUSD(capCost)}/ac</>}
+          {capped && <> · breadth costs {fmtUSD(capCost)}/ac, expected</>}
         </div>
       </div>
     </div>

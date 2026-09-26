@@ -8,16 +8,17 @@ interface Props {
   prices: Prices
   budget: number
   cap: number
+  even?: boolean
 }
 
-export default function Scenarios({ candidates, prices, budget, cap }: Props) {
+export default function Scenarios({ candidates, prices, budget, cap, even = false }: Props) {
   const rows = useMemo(
     () =>
       scenarios(prices).map((s) => {
         const sc = score(candidates, s.prices)
-        return { ...s, ...summarize(sc, Math.min(budget, sc.length), cap) }
+        return { ...s, ...summarize(sc, Math.min(budget, sc.length), cap, even) }
       }),
-    [candidates, prices, budget, cap],
+    [candidates, prices, budget, cap, even],
   )
   return (
     <div className="panel tablewrap">

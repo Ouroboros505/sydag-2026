@@ -53,6 +53,34 @@ export function advanceOrder(ranked: Scored[], cap: number): Scored[] {
   return out
 }
 
+/** Every family gets the same share of its lines advanced (largest-remainder rounding, so exactly
+ *  k in total); inside a family the best lines by the given order. Returned in that order. The
+ *  backtest's cheapest way to buy breadth in a year when the family call is weak. */
+export function evenShare(ranked: Scored[], k: number): Scored[] {
+  const n = ranked.length
+  if (!n) return []
+  const size = new Map<string, number>()
+  for (const c of ranked) size.set(c.family, (size.get(c.family) ?? 0) + 1)
+  const quota = new Map<string, number>()
+  const rest: [string, number][] = []
+  let used = 0
+  for (const [f, s] of size) {
+    const exact = (Math.min(k, n) * s) / n
+    quota.set(f, Math.floor(exact))
+    used += Math.floor(exact)
+    rest.push([f, exact - Math.floor(exact)])
+  }
+  rest.sort((a, b) => b[1] - a[1])
+  for (let i = 0; i < Math.min(k, n) - used && i < rest.length; i++) quota.set(rest[i][0], (quota.get(rest[i][0]) ?? 0) + 1)
+  const taken = new Map<string, number>()
+  const out: Scored[] = []
+  for (const c of ranked) {
+    const t = taken.get(c.family) ?? 0
+    if (t < (quota.get(c.family) ?? 0)) { out.push(c); taken.set(c.family, t + 1) }
+  }
+  return out
+}
+
 export function byYieldOrder(scored: Scored[]): Scored[] {
   return [...scored].sort((a, b) => b.pred_yield - a.pred_yield)
 }
@@ -112,11 +140,11 @@ export interface Summary {
   capCost: number             // $/acre given up by the family cap (0 when uncapped)
 }
 
-export function summarize(scored: Scored[], k: number, cap: number): Summary {
+export function summarize(scored: Scored[], k: number, cap: number, even = false): Summary {
   const mean = populationMean(scored)
   const avg = (xs: Scored[]) => xs.reduce((s, c) => s + c.margin, 0) / (xs.length || 1)
-  const advanced = advanceOrder(scored, cap).slice(0, k)
-  const yieldSet = advanceOrder(byYieldOrder(scored), cap).slice(0, k)
+  const advanced = even ? evenShare(scored, k) : advanceOrder(scored, cap).slice(0, k)
+  const yieldSet = even ? evenShare(byYieldOrder(scored), k) : advanceOrder(byYieldOrder(scored), cap).slice(0, k)
   const uncapped = scored.slice(0, k)
   const inYield = new Set(yieldSet.map((c) => c.id))
   const gainByMargin = avg(advanced) - mean
@@ -128,7 +156,7 @@ export function summarize(scored: Scored[], k: number, cap: number): Summary {
     swapCount: advanced.filter((c) => !inYield.has(c.id)).length,
     advanced,
     diversity: diversity(advanced),
-    capCost: Number.isFinite(cap) ? avg(uncapped) - avg(advanced) : 0,
+    capCost: even || Number.isFinite(cap) ? avg(uncapped) - avg(advanced) : 0,
   }
 }
 

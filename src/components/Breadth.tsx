@@ -7,7 +7,9 @@ interface Props {
   scored: Scored[]
   budget: number
   cap: number
+  even?: boolean
   onCap: (c: number) => void
+  onEven?: () => void
 }
 
 const CAPS = [Infinity, 60, 40, 30, 25, 20, 15, 10, 8, 5]
@@ -17,7 +19,7 @@ const M = { t: 16, r: 20, b: 40, l: 56 }
 
 /** The price of genetic breadth: each point is one family cap, placed by how broad the
  *  advanced set becomes and how much margin that costs. */
-export default function Breadth({ scored, budget, cap, onCap }: Props) {
+export default function Breadth({ scored, budget, cap, even = false, onCap, onEven }: Props) {
   const [hover, setHover] = useState<number | null>(null)
   const pts = useMemo(
     () =>
@@ -27,9 +29,13 @@ export default function Breadth({ scored, budget, cap, onCap }: Props) {
       }).filter((p) => p.n >= budget),
     [scored, budget],
   )
+  const evenPt = useMemo(() => {
+    const s = summarize(scored, budget, Infinity, true)
+    return { breadth: s.diversity.effective, gain: s.gainByMargin, largest: s.diversity.largestShare }
+  }, [scored, budget])
   if (pts.length < 2) return null
 
-  const xMax = Math.max(...pts.map((p) => p.breadth)) * 1.08
+  const xMax = Math.max(evenPt.breadth, ...pts.map((p) => p.breadth)) * 1.08
   const gMax = Math.max(...pts.map((p) => p.gain))
   const ticks = niceTicks(gMax * 1.1, 3)
   const top = ticks[ticks.length - 1]
@@ -45,7 +51,9 @@ export default function Breadth({ scored, budget, cap, onCap }: Props) {
         Each point is one family limit ("at most N lines from any single family"). Left to right: the advanced set gets
         more varied (more effective families). Top to bottom: it gets worth less per acre, because the limit forces you
         to skip some of the highest-ranked siblings. It prices diversity in dollars: a limit around 40 roughly doubles
-        the breadth for a couple of dollars an acre. Click a point to apply it.
+        the breadth for a couple of dollars an acre. The <b>diamond</b> gives every family the same share of plots and lets
+        markers choose the siblings: in the backtest the cheapest way to buy breadth when the family call is weak.
+        Click a point to apply it.
       </Info></h2>
       <div className="chartbox">
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img"
@@ -65,8 +73,13 @@ export default function Breadth({ scored, budget, cap, onCap }: Props) {
           effective number of families advanced →  broader
         </text>
         <path d={path} fill="none" stroke="var(--series-1)" strokeWidth={2} />
+        <g style={{ cursor: 'pointer' }} onClick={() => onEven?.()}>
+          <rect x={x(evenPt.breadth) - 6} y={y(evenPt.gain) - 6} width={12} height={12} transform={`rotate(45 ${x(evenPt.breadth)} ${y(evenPt.gain)})`}
+            fill={even ? 'var(--good)' : 'var(--surface)'} stroke="var(--good)" strokeWidth={2} />
+          <text x={x(evenPt.breadth)} y={y(evenPt.gain) + 22} fontSize={11} fill="var(--good)" textAnchor="middle">same share per family</text>
+        </g>
         {pts.map((p, i) => {
-          const on = p.cap === cap
+          const on = !even && p.cap === cap
           return (
             <g key={String(p.cap)} style={{ cursor: 'pointer' }}
               onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} onClick={() => onCap(p.cap)}>
@@ -83,7 +96,7 @@ export default function Breadth({ scored, budget, cap, onCap }: Props) {
       </svg>
       </div>
       <div className="legend">
-        <span className="muted">each point is a per-family limit · click one to apply it</span>
+        <span className="muted">each point is a per-family limit · the diamond gives every family the same share · click to apply</span>
       </div>
       {shown && (
         <div className="tip" style={{ right: 20, top: 44 }}>

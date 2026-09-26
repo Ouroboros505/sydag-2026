@@ -5,14 +5,16 @@ interface Props {
   n: number
   budget: number
   cap: number
+  even: boolean
   maxFamily: number
   prices: Prices
   onBudget: (k: number) => void
   onCap: (c: number) => void
   onPrices: (p: Prices) => void
+  onEven: (e: boolean) => void
 }
 
-export default function Controls({ n, budget, cap, maxFamily, prices, onBudget, onCap, onPrices }: Props) {
+export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
   const capTop = Math.min(maxFamily, 80)
@@ -34,8 +36,20 @@ export default function Controls({ n, budget, cap, maxFamily, prices, onBudget, 
       </div>
 
       <div className="control">
+        <label>How plots are spread</label>
+        <div className="toggle" style={{ marginTop: 4 }}>
+          <button className={!even ? 'on' : ''} onClick={() => onEven(false)}>rank all lines</button>
+          <button className={even ? 'on' : ''} onClick={() => onEven(true)}>same share per family</button>
+        </div>
+        <div className="hint">
+          Same share: every family gets its fair share of plots and markers pick the siblings. Nearly free in 2008,
+          when the family call was weak.
+        </div>
+      </div>
+
+      <div className="control" style={even ? { opacity: 0.45 } : undefined}>
         <label>
-          Most lines from one family <b>{Number.isFinite(cap) ? cap : 'no limit'}</b>
+          Most lines from one family <b>{even ? 'n/a' : Number.isFinite(cap) ? cap : 'no limit'}</b>
         </label>
         <input
           type="range" min={1} max={capTop + 1} step={1} value={capValue}
