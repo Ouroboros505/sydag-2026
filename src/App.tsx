@@ -125,7 +125,10 @@ export default function App() {
   return (
     <main>
       <header>
-        <h1>ProMaize</h1>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, alignSelf: 'center' }}>
+          <img src="/favicon.svg" alt="" width={28} height={28} />
+          <h1>ProMaize</h1>
+        </span>
         <span className="version" title={`ProMaize v${__VERSION__}, built ${__BUILD__} UTC`}>v{__VERSION__}</span>
         <span className="sub">trial planner · which lines get the ground this season</span>
         <span style={{ marginLeft: 'auto', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>

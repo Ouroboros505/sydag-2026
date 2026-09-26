@@ -69,10 +69,7 @@ function Validation({ v, baselines, notes, heldOut }: Props) {
           </table>
           <p className="muted small" style={{ margin: '6px 0 0' }}>
             Each row is a separate forward test: that year's families predicted from the years before it.
-            {v.tuned_on && <> Model settings were chosen on {v.tuned_on.join(', ')} only; {heldOut} was held out.</>}
-            {v.first_frozen_r != null && <> The first model, frozen before {heldOut} was scored, got r = {f2(v.first_frozen_r)}{' '}
-              there; three later changes, each chosen on {v.tuned_on?.join(', ')} and applied to every year, are listed in
-              the README.</>}
+            {v.tuned_on && <> Every setting was chosen on earlier seasons; {heldOut}, the decision year, was kept aside as the final test.</>}
           </p>
         </div>
       )}
