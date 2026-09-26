@@ -5,6 +5,7 @@ import { DecisionToy, GLOSSARY, MoneyLine } from './Decision'
 import { PoolCycle, WhatIsALine } from './Lines'
 import { LeakageTrap, MarkerExplorer, MatrixView, Predictor } from './Model'
 import { CandidateYear } from './Year'
+import { TwoQuestions } from './Families'
 
 interface Sec { id: string; title: string; oneLine: string; body: ReactNode }
 
@@ -19,6 +20,7 @@ const SECTIONS: Sec[] = [
   { id: 'learn', title: 'How the model learns', oneLine: 'For each DNA spot, compare lines with one version against lines with the other.', body: <MarkerExplorer /> },
   { id: 'predict', title: 'Predicting a line nobody has grown', oneLine: 'Prediction = starting point + (version count × weight) for every marker. Both were learned from the past lines.', body: <Predictor /> },
   { id: 'honest', title: 'The honesty trap', oneLine: 'Test on a family the model never saw, or the score is fake.', body: <LeakageTrap /> },
+  { id: 'two', title: 'Two questions: the family, then the kid', oneLine: 'Every family is new each year. So first: how good is this family, from its parents? Then: which of its kids beat their brothers and sisters?', body: <TwoQuestions /> },
   { id: 'money', title: 'From bushels to dollars', oneLine: 'Wet corn costs money to dry, fallen corn is lost: bushels are not the whole story.', body: <MoneyLine /> },
   { id: 'decide', title: 'The decision', oneLine: 'Pick which lines get plots: by dollars, and without putting every plot in one family.', body: <DecisionToy /> },
 ]
@@ -63,7 +65,7 @@ export default function Learn() {
               <li>A seed company makes thousands of new corn lines a year and can field-test only a few hundred.</li>
               <li>DNA is cheap, fields are expensive. So: learn from past lines which DNA versions go with high yield.</li>
               <li>Use that to predict new lines before planting. Accuracy is honestly low (0.13 to 0.31 depending on the year), and we say so.</li>
-              <li><b>ProMaize's twist:</b> rank by what an acre is worth in dollars, not just bushels, and keep the chosen lines genetically broad.</li>
+              <li><b>ProMaize's twist:</b> split the question (the family from its parents, the kid from its siblings), then rank by what an acre is worth in dollars and keep the chosen lines genetically broad.</li>
             </ol>
             <p className="muted small">
               Everything on this page uses a tiny made-up dataset so each idea is easy to see. The demo uses the real
