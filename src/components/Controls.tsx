@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { Prices } from '../lib/econ'
 import type { EngineId, EngineInfo } from '../lib/types'
 import Info from './Info'
@@ -51,6 +52,13 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
 
   const cur = engines?.find((e) => e.id === engine)
   const [peek, setPeek] = useState<EngineId | null>(null)
+  // where the hovered button sits on screen: the card is drawn at the top of the page, above every
+  // other element (native sliders can paint over anything nested in the panel)
+  const [at, setAt] = useState<{ left: number; top: number } | null>(null)
+  const show = (id: EngineId, el: HTMLElement) => {
+    const r = el.parentElement!.getBoundingClientRect()
+    setAt({ left: r.left, top: r.bottom + 6 }); setPeek(id)
+  }
   const [fit, setFit] = useState(false)
   const best: EngineId = shape && hasFamilies(shape) ? 'family' : 'gblup'
 
@@ -84,29 +92,29 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
             <div className="toggle">
               {engines.map((e) => (
                 <button key={e.id} className={e.id === engine ? 'on' : ''} onClick={() => onEngine(e.id)}
-                  onMouseEnter={() => setPeek(e.id)} onMouseLeave={() => setPeek(null)}
-                  onFocus={() => setPeek(e.id)} onBlur={() => setPeek(null)}>{SHORT[e.id]}</button>
+                  onMouseEnter={(ev) => show(e.id, ev.currentTarget)} onMouseLeave={() => setPeek(null)}
+                  onFocus={(ev) => show(e.id, ev.currentTarget)} onBlur={() => setPeek(null)}>{SHORT[e.id]}</button>
               ))}
             </div>
-            {peek && (
-              <div className="enginecard" role="tooltip">
+            {peek && at && createPortal(
+              <div className="enginecard" role="tooltip" style={{ left: at.left, top: at.top }}>
                 <div><b>{SHORT[peek]}</b> <span className="muted">{FOR[peek]}</span></div>
                 <div style={{ margin: '4px 0 8px' }}>{HOW[peek]}</div>
                 <table className="mini">
                   <thead><tr><th /> {engines.map((e) => <th key={e.id} className={e.id === peek ? 'hi' : ''}>{SHORT[e.id]}</th>)}</tr></thead>
                   <tbody>
-                    <tr><td>accuracy, past seasons <span className="muted">(1 = perfect)</span></td>
+                    <tr><td>accuracy <span className="muted">(1 = perfect)</span></td>
                       {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>{e.r_mean.toFixed(2)}
                         <Bar v={e.r_mean} max={Math.max(...engines.map((x) => x.r_mean))} on={e.id === peek} /></td>)}</tr>
                     {heldOut && real && (
-                      <tr><td>{heldOut}, real $/acre over random</td>
+                      <tr><td>real $/acre in {heldOut}</td>
                         {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>
                           {real[e.id] != null ? `+$${real[e.id]!.toFixed(0)}` : ''}
                           <Bar v={real[e.id] ?? 0} max={Math.max(...engines.map((x) => real[x.id] ?? 0))} on={e.id === peek} /></td>)}</tr>
                     )}
                   </tbody>
                 </table>
-              </div>
+              </div>, document.body,
             )}
             {shape && (
               <div style={{ marginTop: 8 }}>
