@@ -53,15 +53,15 @@ export default function DataCheck({ compact = false }: { compact?: boolean }) {
         <div className="small" style={{ marginTop: 8, lineHeight: 1.6 }}>
           <b>{rep.file}</b>: {n0(rep.rows)} plots, cleaned in {rep.seconds.toFixed(1)} s
           <ol style={{ margin: '6px 0 0', paddingLeft: 18 }}>
-            <li><b>{n0(rep.trials)}</b> trials ({rep.years[0]} to {rep.years[1]}, {n0(rep.locations)} locations, about{' '}
-              {n0(rep.plotsPerTrial)} plots each); every plot is compared with its own field. Field averages ran from{' '}
-              {rep.trialSpread[0].toFixed(0)} to {rep.trialSpread[1].toFixed(0)} bu/ac: that gap is the field, not the line.</li>
+            <li>{rep.idsFixed ? <>{n0(rep.idsFixed)} line names fixed (a stray ".0").</> : <>Line names clean.</>}{' '}
+              {n0(rep.lines)} lines{rep.families ? <> in {n0(rep.families)} families</> : null}.</li>
             <li>{imp.length
               ? <>Impossible values set to missing: {imp.map(([t, c]) => `${n0(c)} ${NAMES[t]}`).join(', ')}.</>
               : <>No impossible values.</>}</li>
             <li>Missing stays missing: {Object.entries(rep.recorded).map(([t, s]) => `${NAMES[t]} ${pct(s)}`).join(', ')} recorded.</li>
-            <li>{rep.idsFixed ? <>{n0(rep.idsFixed)} line names fixed (a stray ".0").</> : <>Line names clean.</>}{' '}
-              {n0(rep.lines)} lines{rep.families ? <> in {n0(rep.families)} families</> : null}.</li>
+            <li><b>{n0(rep.trials)}</b> trials ({rep.years[0]} to {rep.years[1]}, {n0(rep.locations)} locations, about{' '}
+              {n0(rep.plotsPerTrial)} plots each); every plot is compared with its own field. Field averages ran from{' '}
+              {rep.trialSpread[0].toFixed(0)} to {rep.trialSpread[1].toFixed(0)} bu/ac: that gap is the field, not the line.</li>
           </ol>
           <div style={{ marginTop: 6 }}>
             <b>Clean and ready for the model.</b> With the DNA files for these lines, the pipeline ranks them in about

@@ -382,6 +382,24 @@ npm run build && npm run preview
 .venv/bin/python scripts/make_deck.py                   # fills the organizers' slide template
 ```
 
+### Another program's data
+
+A different breeding program's files plug in through `analysis/custom.py`, with no code changes:
+put them under `data/raw/custom/` with a `layout.json` that names the columns (line, year,
+location and yield are required; moisture, lodging, parents, family and group are optional), the
+yield unit (bu/ac or t/ha) and the marker coding (-1/0/1 or 0/1/2). The same cleaning runs
+(names, impossible values, missing values, each plot against its own trial), then the standard
+engine, forward validation and the same JSON the demo reads.
+
+```bash
+python scripts/make_custom_example.py      # 160 Bayer families rewritten in another layout
+python scripts/build_data.py --source custom --out /tmp/custom.json
+```
+
+On that example (other column names, yield in t/ha, markers 0/1/2) the whole run takes about 75
+seconds: 2007 held out, 3,396 lines ranked blind, forward r = 0.15, and the demo opens the result
+as it is. It ranks next season's untested lines instead when `layout.json` says `"rank": "new"`.
+
 ### Scaling
 
 The model never holds more than one 2,911 x 2,911 matrix per cohort: training cost grows with the

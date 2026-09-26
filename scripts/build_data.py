@@ -128,6 +128,18 @@ def real(source: str = "g2f") -> dict:
         h = h[h.index.isin(M.index)]
         test_year = int(h.first_year.max())
         h_train = h
+        name = "Genomes to Fields"
+    elif source == "custom":
+        # any program's files, described by data/raw/custom/layout.json (see analysis/custom.py)
+        from analysis import custom as src
+        h = src.hybrids()
+        M = src.markers()
+        parents = None
+        h = h[h.index.isin(M.index)]
+        cand, held = src.candidates(h, M)
+        test_year = int(h.first_year.max())
+        h_train = h[h.first_year < test_year] if held else h
+        name = src.layout().get("name", "Your program")
     else:
         raise SystemExit(f"unknown source {source!r}")
 
@@ -221,6 +233,7 @@ def real(source: str = "g2f") -> dict:
                      + (f", the {test_year} cohort, ranked before its field results and scored against them."
                         if held_out else "."),
             "held_out_year": test_year if held_out else None,
+            "dataset": f"{name}, {int(h.first_year.min())} to {test_year}",
         },
         "price_defaults": PRICE_DEFAULTS,
         "candidates": rows,
@@ -671,7 +684,8 @@ def write(payload: dict, name: str = "recommendations.json") -> Path:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--synthetic", action="store_true", help="emit placeholder data")
-    ap.add_argument("--source", default="g2f", choices=["g2f", "bayer"], help="dataset adapter")
+    ap.add_argument("--source", default="g2f", choices=["g2f", "bayer", "custom"], help="dataset adapter")
+    ap.add_argument("--out", help="write the JSON here instead of public/recommendations.json")
     ap.add_argument("--n", type=int, default=2000)
     ap.add_argument("--judge", action="store_true",
                     help="judge mode: run the Bayer pipeline on the synthetic program from scripts/make_fixture.py")
@@ -686,7 +700,13 @@ def main() -> None:
         bayer.use(sample, "bayer_sample")
         write(real_bayer(synthetic=True))
     else:
-        write(real_bayer() if args.source == "bayer" else real(args.source))
+        payload = real_bayer() if args.source == "bayer" else real(args.source)
+        if args.out:
+            out = Path(args.out)
+            out.write_text(json.dumps(_finite(payload), separators=(",", ":"), allow_nan=False))
+            print(f"{out}  {out.stat().st_size / 1024:.0f} KB  {payload['meta']['n_candidates']:,} candidates")
+        else:
+            write(payload)
 
 
 if __name__ == "__main__":

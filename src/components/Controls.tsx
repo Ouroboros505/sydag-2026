@@ -19,6 +19,7 @@ interface Props {
   onEngine: (e: EngineId) => void
   heldOut: number | null
   seasons?: number
+  dataset?: string
 }
 
 const SHORT: Record<EngineId, string> = { family: 'Family', gblup: 'Standard', environment: 'Environment' }
@@ -35,7 +36,7 @@ const WHEN: Record<EngineId, string> = {
   environment: 'The family engine plus each test site\'s weather and soil.',
 }
 
-export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, seasons }: Props) {
+export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, seasons, dataset }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
   const capTop = Math.min(maxFamily, 80)
@@ -51,7 +52,7 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
       </Info></h2>
       <div className="control">
         <div className="small" style={{ marginBottom: 8 }}>
-          <b>Bayer maize trials, 2000 to {heldOut ?? 'now'}</b>: {n.toLocaleString()} new lines to rank.{' '}
+          <b>{dataset ?? `Bayer maize trials, 2000 to ${heldOut ?? 'now'}`}</b>: {n.toLocaleString()} new lines to rank.{' '}
           <a href="/cleaning/">How it was cleaned →</a>
         </div>
         <DataCheck compact />

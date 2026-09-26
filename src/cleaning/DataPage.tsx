@@ -47,23 +47,30 @@ interface Step { id: string; title: string; why: string; body: ReactNode }
 
 const STEPS: Step[] = [
   {
-    id: 'field', title: 'Compare every plot to its own field',
-    why: 'A good field lifts every line in it. We want the line, not the field.',
+    id: 'files', title: 'Use the complete files',
+    why: 'A cut-off file silently drops families.',
+    body: (
+      <p className="explain" style={{ marginTop: 0 }}>
+        The first upload of the C2 DNA zip was cut off: <b>290 of 500</b> families, and none of C2's 2007 and 2008 families.
+        We confirmed it three ways (no proper ending, stops in the middle of a file, same as the server's copy), told the
+        organizers, and used the re-upload, which has <b>all 500</b>.
+      </p>
+    ),
+  },
+  {
+    id: 'ids', title: 'Fix the names so the files match',
+    why: 'Field results and DNA live in different files. If the names do not match, a line has no DNA.',
     body: (
       <>
-        <table className="harvest two" style={{ maxWidth: 560 }}>
-          <thead><tr><th className="l">Line C1.7.3 planted in</th><th>field average</th><th>this plot</th><th>compared to its field</th></tr></thead>
-          <tbody>
-            <tr><td className="l">a great field</td><td>215</td><td>212</td><td>−3</td></tr>
-            <tr><td className="l">a dry field</td><td>180</td><td>190</td><td><b>+10</b></td></tr>
-            <tr><td className="l"><b>the line's value</b></td><td /><td className="muted">raw average 201</td><td><b>+3.5</b></td></tr>
-          </tbody>
-        </table>
-        <p className="explain">
-          An example with round numbers. Each plot is measured against the average of every plot in the same field that
-          year, and within the same group (C1 or C2), because the two groups are separate trials even when they share a
-          farm. Then we average over the line's ~7 locations. Moisture, maturity and lodging get the same treatment.
+        <p className="explain" style={{ marginTop: 0 }}>
+          The C2 field file wrote line names with a stray <b>.0</b> at the end (<span className="mono">C2.1.1.0</span>),
+          which never matches the DNA files (<span className="mono">C2.1.1</span>). We removed it. A few DNA rows had broken
+          names (<span className="mono">000000161.1</span>); nothing matches them, so we dropped them. After that, 93% of
+          lines with field results have DNA:
         </p>
+        <div className="small muted" style={{ margin: '10px 0 4px' }}>lines with DNA, by year they were tested</div>
+        {GENOTYPED.map(([y, p]) => <Bar key={y} label={String(y)} pct={p} />)}
+        <p className="explain">The early years (2000 to 2003) were only partly genotyped; from 2004 on, nearly every line was.</p>
       </>
     ),
   },
@@ -95,19 +102,27 @@ const STEPS: Step[] = [
     ),
   },
   {
-    id: 'ids', title: 'Fix the names so the files match',
-    why: 'Field results and DNA live in different files. If the names do not match, a line has no DNA.',
+    id: 'field', title: 'Compare every plot to its own field',
+    why: 'A good field lifts every line in it. We want the line, not the field.',
     body: (
       <>
-        <p className="explain" style={{ marginTop: 0 }}>
-          The C2 field file wrote line names with a stray <b>.0</b> at the end (<span className="mono">C2.1.1.0</span>),
-          which never matches the DNA files (<span className="mono">C2.1.1</span>). We removed it. A few DNA rows had broken
-          names (<span className="mono">000000161.1</span>); nothing matches them, so we dropped them. After that, 93% of
-          lines with field results have DNA:
+        <table className="harvest two" style={{ maxWidth: 560 }}>
+          <thead><tr><th className="l">Line C1.7.3 planted in</th><th>field average</th><th>this plot</th><th>compared to its field</th></tr></thead>
+          <tbody>
+            <tr><td className="l">a great field</td><td>215</td><td>212</td><td>−3</td></tr>
+            <tr><td className="l">a dry field</td><td>180</td><td>190</td><td><b>+10</b></td></tr>
+            <tr><td className="l"><b>the line's value</b></td><td /><td className="muted">raw average 201</td><td><b>+3.5</b></td></tr>
+          </tbody>
+        </table>
+        <p className="explain">
+          An example with round numbers. Each plot is measured against the average of every plot in the same field that
+          year, and within the same group (C1 or C2), because the two groups are separate trials even when they share a
+          farm. Then we average over the line's ~7 locations. Moisture, maturity and lodging get the same treatment.
         </p>
-        <div className="small muted" style={{ margin: '10px 0 4px' }}>lines with DNA, by year they were tested</div>
-        {GENOTYPED.map(([y, p]) => <Bar key={y} label={String(y)} pct={p} />)}
-        <p className="explain">The early years (2000 to 2003) were only partly genotyped; from 2004 on, nearly every line was.</p>
+        <p className="explain">
+          This comes after the clean-up steps on purpose: a field's average is worked out only from values that passed
+          them, so one impossible number can't drag a whole field up or down.
+        </p>
       </>
     ),
   },
@@ -144,17 +159,6 @@ const STEPS: Step[] = [
           tester effects come only from the years before it.
         </p>
       </>
-    ),
-  },
-  {
-    id: 'files', title: 'Use the complete files',
-    why: 'A cut-off file silently drops families.',
-    body: (
-      <p className="explain" style={{ marginTop: 0 }}>
-        The first upload of the C2 DNA zip was cut off: <b>290 of 500</b> families, and none of C2's 2007 and 2008 families.
-        We confirmed it three ways (no proper ending, stops in the middle of a file, same as the server's copy), told the
-        organizers, and used the re-upload, which has <b>all 500</b>.
-      </p>
     ),
   },
 ]

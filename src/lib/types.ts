@@ -13,6 +13,7 @@ export interface Meta {
   n_candidates: number
   notes?: string
   held_out_year?: number | null   // set when the candidates are a real cohort scored after the fact
+  dataset?: string                 // what was loaded, e.g. "Example program, 2003 to 2007"
 }
 
 export interface PriceDefaults {
