@@ -2,7 +2,7 @@
 
 **SyDAg 2026 Hackathon, Bayer Genomic Prediction track.** Team: Alexander Baena, Sofia Gerena, Alen Lizarazo.
 
-**Live demo: [promaize.stipe.app](https://promaize.stipe.app)** · how it works, from zero: [promaize.stipe.app/learn](https://promaize.stipe.app/learn/)
+**Live demo: [promaize.stipe.app](https://promaize.stipe.app)** · how it works, from zero: [promaize.stipe.app/learn](https://promaize.stipe.app/learn/) · one-page summary: [docs/ProMaize_summary.pdf](docs/ProMaize_summary.pdf) · slides: [docs/ProMaize_deck.pptx](docs/ProMaize_deck.pptx)
 
 It is January 2008. The plot budget has been cut, and 15,962 new lines from 157 biparental
 families are waiting for their first testcross season. None of those families has ever been in a
