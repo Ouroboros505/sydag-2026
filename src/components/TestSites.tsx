@@ -4,7 +4,7 @@ import { feature, mesh } from 'topojson-client'
 import type { GeometryCollection, Topology } from 'topojson-specification'
 import us from 'us-atlas/states-10m.json'
 import type { Scored } from '../lib/econ'
-import type { EnvironmentCheck, TestSite } from '../lib/types'
+import type { TestSite } from '../lib/types'
 import Info from './Info'
 
 const W = 760
@@ -41,7 +41,6 @@ interface Props {
   familySites?: Record<string, string[]>
   all: Scored[]
   advanced: Scored[]
-  env?: EnvironmentCheck
 }
 
 /** lines tested at each site: every line goes to (nearly) all of its family's sites */
@@ -51,7 +50,7 @@ function perSite(lines: Scored[], familySites: Record<string, string[]>): Map<st
   return n
 }
 
-function TestSites({ sites, year, persistence, familySites, all, advanced, env }: Props) {
+function TestSites({ sites, year, persistence, familySites, all, advanced }: Props) {
   const [hover, setHover] = useState<TestSite | null>(null)
   const [showPast, setShowPast] = useState(false)
   const [plan, setPlan] = useState(true)
@@ -226,15 +225,6 @@ function TestSites({ sites, year, persistence, familySites, all, advanced, env }
           )}
         </div>
       </div>
-      {env && (
-        <p className="small" style={{ margin: '10px 0 0' }}>
-          <b>Can the data match lines to places?</b> We tested it: parent DNA combined with each site's summer rain,
-          heat and soil, trained on earlier seasons and checked on each new one, predicted which family does better
-          where at <b>r = {env.climate_r.toFixed(2)}</b> (no better than chance), and at {env.climate_r_real_weather.toFixed(2)} even
-          when given the season's real weather. So ProMaize ranks lines for the whole network, and this map is for
-          checking where your plan is tested, not for matching lines to sites.
-        </p>
-      )}
     </div>
   )
 }

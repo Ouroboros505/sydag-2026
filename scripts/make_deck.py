@@ -144,10 +144,8 @@ def main() -> None:
         "Sibling differences <- which parental segments each line inherited (ridge on within-family deviations).",
         "Tester effect removed as a BLUP: advance lines, not testers.",
         "**Baselines: environmental means, pedigree BLUP, standard GBLUP.",
-    ] + ([f"**Tested, not used: location response (r = {fmt(v['location_specific']['r_history'])}), weather and soil"
-          f" (r = {fmt(v['environment']['climate_r'])})."] if v.get("location_specific") and v.get("environment") else
-         [f"**Broad-acre, tested: location response predicted at r = {fmt(v['location_specific']['r_history'])}"
-          f" ({v['location_specific']['n_plots']:,} held-out plots)."] if v.get("location_specific") else []), 18)
+        "**Weather and soil feed the test-network map: where each plan is tested, in what kind of summer.",
+    ], 18)
     if by_year:
         cd = CategoryChartData()
         cd.categories = [str(y["year"]) for y in by_year]
