@@ -82,22 +82,22 @@ reads. The app computes only the user's own pricing on top, so it works offline,
 **Two engines, one switch.** The demo runs on either prediction engine, each shown with its own
 forward record:
 
-- **Crossline** (ProMaize's own engine, the default): the two-part model above, the cross first,
-  then the line, built for seasons full of new
+- **2-Step** (ProMaize's own engine, the default): the two-part model above, step 1 the cross,
+  step 2 the line, built for seasons full of new
   families. Mean r 0.22 over six seasons, 0.13 in 2008.
 - **Standard engine (GBLUP):** one ridge over every earlier line, the method most breeding programs
   use. Mean r 0.15, 0.07 in 2008. A familiar second opinion, and the better fit when lines don't
   come in families.
 
 Switching changes every prediction on the page, including what 2008 then paid for the chosen
-lines ($5 an acre over random with Crossline, $1 with the standard one, at a 30% budget).
+lines ($5 an acre over random with 2-Step, $1 with the standard one, at a 30% budget).
 A third engine, weather and soil, was built and tested the same way and did not earn a place
 (section 6).
 
 **Where the plan won.** The map scores the current plan site by site on the held-out season: at
 each 2008 test site, the plan's lines against the lines it leaves out, in the same fields, on what
 the field paid at the user's prices (every plot is shipped with the build, relative to its own
-trial). At the default settings Crossline's plan comes out ahead at 112 of 163 sites (69%)
+trial). At the default settings 2-Step's plan comes out ahead at 112 of 163 sites (69%)
 and in every kind of summer (hot or cool, wet or dry; +$6.5 to +$8.8 an acre); the conservative plan
 at 150 of 179 (84%); standard GBLUP at 76 of 132 (58%), behind in hot summers. It updates live
 with the engine switch and every slider.

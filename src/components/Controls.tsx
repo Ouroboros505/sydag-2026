@@ -22,18 +22,18 @@ interface Props {
   dataset?: string
 }
 
-const SHORT: Record<EngineId, string> = { family: 'Crossline', gblup: 'Standard', environment: 'Environment' }
+const SHORT: Record<EngineId, string> = { family: '2-Step', gblup: 'Standard', environment: 'Environment' }
 // what each engine runs on, for the hover
 const BEHIND: Record<EngineId, string> = {
-  family: "Crossline, ProMaize's own engine: rates each cross from its parents' DNA, then each line against its brothers and sisters (two GBLUP-type marker models)",
+  family: "2-Step, ProMaize's own engine. Step 1 rates each cross from its parents' DNA; step 2 ranks each line against its brothers and sisters (two GBLUP-type marker models)",
   gblup: 'The standard method in plant breeding: GBLUP, one marker model over every line tested before, no family step',
-  environment: 'Crossline plus weather and soil',
+  environment: '2-Step plus weather and soil',
 }
 // when each engine is the right tool, in the breeder's terms
 const WHEN: Record<EngineId, string> = {
   family: "ProMaize's own engine, built for seasons full of new families: it rates each cross by what its parents passed on, then ranks the lines inside it against each other.",
   gblup: "The standard method in plant breeding: one model over every line tested before. It needs no family records, and it lets you check ProMaize against the method your team already trusts.",
-  environment: 'Crossline plus each test site\'s weather and soil.',
+  environment: '2-Step plus each test site\'s weather and soil.',
 }
 
 export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, seasons, dataset }: Props) {
@@ -63,7 +63,7 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
           <h2 style={{ marginTop: 20 }}>Prediction engine<Info wide>
             Every engine predicts the same things for each new line, from its DNA: yield, grain moisture and lodging.
             They differ in how they learn from earlier seasons.<br /><br />
-            <b>Crossline</b>, ProMaize's own engine: first predicts each family's average from its two parents' DNA, then ranks the
+            <b>2-Step</b>, ProMaize's own engine: first predicts each family's average from its two parents' DNA, then ranks the
             brothers and sisters inside the family.<br />
             <b>Standard</b>: GBLUP, the method most breeding programs use; one model over all earlier lines.<br /><br />
             <b>Accuracy</b> is how well the predicted ranking matched the real one, in seasons the engine never saw:

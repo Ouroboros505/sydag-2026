@@ -176,7 +176,7 @@ def main() -> None:
     bullets(s, (left + pic_w + Inches(0.3), top, width - pic_w - Inches(0.3), height - Inches(0.5)), [
         "**In the order we show it",
         "The strip: numbers from seasons the model never saw.",
-        "The engine switch: Crossline (ours) or standard GBLUP.",
+        "The engine switch: 2-Step (ours) or standard GBLUP.",
         f"What {year} actually said: the ranking vs the real field.",
         "Which way to spend the plots: aggressive or conservative.",
         "The map: where your plan won, in every kind of summer.",

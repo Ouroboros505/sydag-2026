@@ -539,7 +539,7 @@ def real_bayer(synthetic: bool = False) -> dict:
             "families_by_parents_on_record": {k: int((kp[cohort][np.unique(cp.fam_index)] == c).sum()) for k, c in (("none", 0), ("one", 1), ("both", 2))},
             "strategies": strategies,
             "engines": [
-                {"id": "family", "name": "Crossline", "r_mean": round(float(np.mean([b["r"] for b in by_year])), 3),
+                {"id": "family", "name": "2-Step", "r_mean": round(float(np.mean([b["r"] for b in by_year])), 3),
                  "r_last": round(head["r"], 3), "coverage90": round(coverage, 3)},
                 {"id": "gblup", "name": "Standard engine (GBLUP)", "r_mean": round(float(np.mean([b["r_gblup"] for b in by_year])), 3),
                  "r_last": by_year[-1]["r_gblup"], "coverage90": round(g_cov, 3), "half90": round(g_half, 1)},
