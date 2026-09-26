@@ -6,7 +6,7 @@
  *
  * Deliberately simple and fully visible. Every term is a number the user can move.
  */
-import type { Candidate, PriceDefaults } from './types'
+import type { Candidate, EngineId, PriceDefaults } from './types'
 
 export interface Prices extends PriceDefaults {}
 
@@ -31,13 +31,36 @@ export interface Scored extends Candidate {
 }
 
 /** Sorted by margin, descending, with both ranks attached. */
+/** The same candidates as another engine sees them. The family engine's numbers are the defaults;
+ *  the benchmark engine swaps in its own yield, moisture and lodging, and its one 90% band. */
+export function withEngine(cands: Candidate[], engine: EngineId, half90 = 0): Candidate[] {
+  if (engine !== 'gblup') return cands
+  return cands.map((c) => (c.gy == null ? c : {
+    ...c, pred_yield: c.gy, pred_mst: c.gm ?? c.pred_mst, pred_lodging: c.gl ?? c.pred_lodging,
+    lo: c.gy - half90, hi: c.gy + half90,
+  }))
+}
+
 export function score(cands: Candidate[], p: Prices): Scored[] {
-  const withMargin = cands.map((c) => ({ ...c, margin: marginPerAcre(c, p) }))
-  const byMargin = [...withMargin].sort((a, b) => b.margin - a.margin)
-  const byYield = [...withMargin].sort((a, b) => b.pred_yield - a.pred_yield)
-  const rm = new Map(byMargin.map((c, i) => [c.id, i + 1]))
-  const ry = new Map(byYield.map((c, i) => [c.id, i + 1]))
-  return byMargin.map((c) => ({ ...c, rankByMargin: rm.get(c.id)!, rankByYield: ry.get(c.id)! }))
+  // sorts on index arrays and copies each line once: this runs on every price-slider move
+  const n = cands.length
+  const margin = new Float64Array(n)
+  for (let i = 0; i < n; i++) {
+    const c = cands[i]
+    margin[i] = c.pred_yield * p.corn_price
+      - Math.max(0, c.pred_mst - p.target_moisture) * p.drying_cost_per_point * c.pred_yield
+      - (c.pred_lodging / 100) * p.lodging_loss_fraction * c.pred_yield * p.corn_price
+  }
+  const byM = Array.from({ length: n }, (_, i) => i).sort((a, b) => margin[b] - margin[a])
+  const byY = Array.from({ length: n }, (_, i) => i).sort((a, b) => cands[b].pred_yield - cands[a].pred_yield)
+  const rankY = new Int32Array(n)
+  for (let r = 0; r < n; r++) rankY[byY[r]] = r + 1
+  const out: Scored[] = new Array(n)
+  for (let r = 0; r < n; r++) {
+    const i = byM[r]
+    out[r] = { ...cands[i], margin: margin[i], rankByMargin: r + 1, rankByYield: rankY[i] }
+  }
+  return out
 }
 
 /** Advancement order under a per-family cap. Greedy in ranking order, so the first k of the
@@ -97,10 +120,10 @@ export interface FrontierPoint {
 
 /** Expected gain per advanced acre versus advancing at random, for both rankings:
  *  the selection differential, priced. Both respect the same family cap. */
-export function frontier(scored: Scored[], cap: number, step = 1): FrontierPoint[] {
+export function frontier(scored: Scored[], cap: number, step = 1, yieldOrder?: Scored[]): FrontierPoint[] {
   const mean = populationMean(scored)
   const m = advanceOrder(scored, cap)
-  const y = advanceOrder(byYieldOrder(scored), cap)
+  const y = advanceOrder(yieldOrder ?? byYieldOrder(scored), cap)
   const n = Math.min(m.length, y.length)
   const out: FrontierPoint[] = []
   let cm = 0
@@ -140,11 +163,12 @@ export interface Summary {
   capCost: number             // $/acre given up by the family cap (0 when uncapped)
 }
 
-export function summarize(scored: Scored[], k: number, cap: number, even = false): Summary {
+export function summarize(scored: Scored[], k: number, cap: number, even = false, yieldOrder?: Scored[]): Summary {
   const mean = populationMean(scored)
   const avg = (xs: Scored[]) => xs.reduce((s, c) => s + c.margin, 0) / (xs.length || 1)
+  const byYield = yieldOrder ?? byYieldOrder(scored)   // pass it in: sorting 16k lines per call adds up
   const advanced = even ? evenShare(scored, k) : advanceOrder(scored, cap).slice(0, k)
-  const yieldSet = even ? evenShare(byYieldOrder(scored), k) : advanceOrder(byYieldOrder(scored), cap).slice(0, k)
+  const yieldSet = even ? evenShare(byYield, k) : advanceOrder(byYield, cap).slice(0, k)
   const uncapped = scored.slice(0, k)
   const inYield = new Set(yieldSet.map((c) => c.id))
   const gainByMargin = avg(advanced) - mean
@@ -194,8 +218,19 @@ function pearson(xs: number[], ys: number[]): number {
   return sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0
 }
 
-/** Score the advancement decision against the cohort's real field results. */
-export function backtest(scored: Scored[], advanced: Scored[], yieldSet: Scored[], p: Prices): Backtest | null {
+/** The parts of the backtest that depend only on prices: computed once per price change. */
+export interface BacktestBase {
+  n: number
+  mean: number
+  act: Map<string, number>        // realised $/acre per line
+  actRank: Map<string, number>    // 0 = the line that really earned the most
+  cumTop: Float64Array            // running sum of realised $/acre, best first
+  deciles: number[]
+  r: number
+  rYield: number
+}
+
+export function backtestBase(scored: Scored[], p: Prices): BacktestBase | null {
   const rows: { id: string; pred: number; act: number }[] = []
   for (const c of scored) {
     const act = actualMargin(c, p)
@@ -203,31 +238,44 @@ export function backtest(scored: Scored[], advanced: Scored[], yieldSet: Scored[
   }
   if (rows.length < 20) return null
   const avg = (xs: number[]) => xs.reduce((s, v) => s + v, 0) / (xs.length || 1)
-  const act = new Map(rows.map((r) => [r.id, r.act]))
   const mean = avg(rows.map((r) => r.act))
-  const setGain = (xs: Scored[]) => {
-    const v = xs.map((c) => act.get(c.id)).filter((x): x is number => x != null)
-    return v.length ? avg(v) - mean : 0
-  }
-  const k = advanced.length
   const byActual = [...rows].sort((a, b) => b.act - a.act)
-  const topK = new Set(byActual.slice(0, k).map((r) => r.id))
+  const cumTop = new Float64Array(byActual.length)
+  let run = 0
+  byActual.forEach((r, i) => { run += r.act; cumTop[i] = run })
   const withYield = scored.filter((c) => c.actual_yield != null)
-  const byPred = [...rows].sort((a, b) => b.pred - a.pred)
-  const deciles: number[] = []
+  const deciles: number[] = []   // scored is already in predicted-$ order
   for (let d = 0; d < 10; d++) {
-    const slice = byPred.slice(Math.floor((d * rows.length) / 10), Math.floor(((d + 1) * rows.length) / 10))
+    const slice = rows.slice(Math.floor((d * rows.length) / 10), Math.floor(((d + 1) * rows.length) / 10))
     deciles.push(avg(slice.map((r) => r.act)) - mean)
   }
   return {
     n: rows.length, mean,
-    byMargin: setGain(advanced), byYield: setGain(yieldSet),
-    oracle: avg(byActual.slice(0, k).map((r) => r.act)) - mean,
-    topRecovered: k ? advanced.filter((c) => topK.has(c.id)).length / k : 0,
-    chance: k / rows.length,
+    act: new Map(rows.map((r) => [r.id, r.act])),
+    actRank: new Map(byActual.map((r, i) => [r.id, i])),
+    cumTop, deciles,
     r: pearson(rows.map((r) => r.pred), rows.map((r) => r.act)),
     rYield: pearson(withYield.map((c) => c.pred_yield), withYield.map((c) => c.actual_yield as number)),
-    deciles,
+  }
+}
+
+/** Score the advancement decision against the cohort's real field results: cheap, per budget. */
+export function backtest(base: BacktestBase, advanced: Scored[], yieldSet: Scored[]): Backtest {
+  const setGain = (xs: Scored[]) => {
+    let s = 0, n = 0
+    for (const c of xs) { const a = base.act.get(c.id); if (a != null) { s += a; n++ } }
+    return n ? s / n - base.mean : 0
+  }
+  const k = Math.min(advanced.length, base.n)
+  let hits = 0
+  for (const c of advanced) { const r = base.actRank.get(c.id); if (r != null && r < k) hits++ }
+  return {
+    n: base.n, mean: base.mean,
+    byMargin: setGain(advanced), byYield: setGain(yieldSet),
+    oracle: k ? base.cumTop[k - 1] / k - base.mean : 0,
+    topRecovered: k ? hits / k : 0,
+    chance: k / base.n,
+    r: base.r, rYield: base.rYield, deciles: base.deciles,
   }
 }
 

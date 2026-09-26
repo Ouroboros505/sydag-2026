@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Scored } from '../lib/econ'
 import { breakdown, fmtNum, fmtUSD, toCSV, type Prices } from '../lib/econ'
 import Info from './Info'
@@ -9,7 +10,7 @@ interface Props {
   limit?: number
 }
 
-export default function CandidateTable({ advanced, yieldSet, prices, limit = 40 }: Props) {
+function CandidateTable({ advanced, yieldSet, prices, limit = 40 }: Props) {
   const shown = advanced.slice(0, limit)
   const showFamily = shown.some((c) => c.family !== c.id)
   const showActual = shown.some((c) => c.actual_yield != null)
@@ -89,3 +90,5 @@ export default function CandidateTable({ advanced, yieldSet, prices, limit = 40 
     </div>
   )
 }
+
+export default memo(CandidateTable)

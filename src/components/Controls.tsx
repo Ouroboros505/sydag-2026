@@ -1,4 +1,5 @@
 import type { Prices } from '../lib/econ'
+import type { EngineId, EngineInfo } from '../lib/types'
 import Info from './Info'
 
 interface Props {
@@ -12,17 +13,60 @@ interface Props {
   onCap: (c: number) => void
   onPrices: (p: Prices) => void
   onEven: (e: boolean) => void
+  engines?: EngineInfo[]
+  engine: EngineId
+  onEngine: (e: EngineId) => void
+  heldOut: number | null
+  seasons?: number
 }
 
-export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven }: Props) {
+const SHORT: Record<EngineId, string> = { family: 'Family engine', gblup: 'Standard (GBLUP)', environment: 'Environment' }
+// when each engine is the right tool, in the breeder's terms
+const WHEN: Record<EngineId, string> = {
+  family: "ProMaize's default, built for seasons full of new families: it judges each family by what its parents passed on, then ranks the brothers and sisters inside it.",
+  gblup: "The standard method in plant breeding: one model over every line tested before, with no family step. A familiar second opinion, and the better fit when lines don't come in families.",
+  environment: 'The family engine plus each test site\'s weather and soil.',
+}
+
+export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, seasons }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
   const capTop = Math.min(maxFamily, 80)
   const capValue = Number.isFinite(cap) ? cap : capTop + 1
 
+  const cur = engines?.find((e) => e.id === engine)
+
   return (
     <div className="panel">
-      <h2>Your season<Info>
+      {engines && engines.length > 1 && cur && (
+        <>
+          <h2>Prediction engine<Info wide>
+            Every engine predicts the same things for each new line, from its DNA: yield, grain moisture and lodging.
+            They differ in how they learn from earlier seasons.<br /><br />
+            <b>Family engine</b>: first predicts each family's average from its two parents' DNA, then ranks the
+            brothers and sisters inside the family.<br />
+            <b>Standard (GBLUP)</b>: the method most breeding programs use; one model over all earlier lines.<br /><br />
+            <b>Accuracy</b> is how well the predicted ranking matched the real one, in seasons the engine never saw:
+            1 is perfect, 0 is no better than chance. Switch engines and every panel on the page updates, including
+            what {heldOut ?? 'the field'} actually said.
+          </Info></h2>
+          <div className="control">
+            <div className="toggle">
+              {engines.map((e) => (
+                <button key={e.id} className={e.id === engine ? 'on' : ''} onClick={() => onEngine(e.id)}>{SHORT[e.id]}</button>
+              ))}
+            </div>
+            <div className="engine-note">
+              {WHEN[engine]}<br />
+              Track record: accuracy <b>{cur.r_mean.toFixed(2)}</b> on average over {seasons ?? 'the'} past seasons
+              {heldOut ? <>, <b>{cur.r_last.toFixed(2)}</b> in {heldOut}, when <b>{Math.round(cur.coverage90 * 100)}%</b> of
+              real results fell inside its ranges</> : null}.
+            </div>
+          </div>
+        </>
+      )}
+
+      <h2 style={engines && engines.length > 1 ? { marginTop: 20 } : undefined}>Your season<Info>
         <b>Lines you can field-test</b>: the plot budget, how many candidates get into the field this year.<br />
         <b>Most lines from one family</b>: a limit to keep the advanced set varied; "no limit" ranks purely on value.
       </Info></h2>

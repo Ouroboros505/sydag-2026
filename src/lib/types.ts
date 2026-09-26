@@ -40,6 +40,9 @@ export interface Candidate {
   actual_mst?: number
   actual_lodging?: number
   actual_erm?: number
+  gy?: number   // benchmark engine (standard GBLUP): predicted yield, moisture, lodging
+  gm?: number
+  gl?: number
 }
 
 export interface Baseline {
@@ -71,6 +74,8 @@ export interface Validation {
   vs_gblup_ci95?: [number, number]  // same, for our r minus standard GBLUP's
   seasons_won?: number
   seasons?: number
+  engines?: EngineInfo[]           // the prediction engines the app can switch between, with track records
+  site_persistence?: number        // does a test site's reliability carry over to the next season?
   location_specific?: {             // can a line's response across locations be predicted?
     r_oracle: number                // even knowing each trial's productivity
     r_history: number               // from each location's history, as known in January
@@ -114,10 +119,36 @@ export interface YearResult {
   families_both?: number
 }
 
+export interface EngineInfo {
+  id: 'family' | 'gblup' | 'environment'
+  name: string
+  r_mean: number        // forward accuracy, mean over the tested seasons
+  r_last: number        // forward accuracy in the decision year
+  coverage90: number    // share of decision-year lines inside their 90% band
+  half90?: number       // width of that band, bu/ac (engines with one fixed band)
+}
+
+export type EngineId = EngineInfo['id']
+
+export interface TestSite {
+  loc: string
+  lat: number
+  lon: number
+  used: boolean         // has plots in the decision year
+  r?: number            // how consistently it ranked lines in earlier seasons
+  trials?: number
+  level?: number        // average yield there, bu/ac
+  rain?: number         // June to August rain, mm, average of earlier seasons
+  heat?: number         // July mean temperature, C
+  clay?: number         // topsoil clay, %
+  sand?: number         // topsoil sand, %
+}
+
 export interface Recommendations {
   meta: Meta
   price_defaults: PriceDefaults
   candidates: Candidate[]
+  locations?: TestSite[]
   baselines: Baseline[]
   validation: Validation
 }

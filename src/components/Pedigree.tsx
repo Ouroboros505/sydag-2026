@@ -1,9 +1,10 @@
+import { memo } from 'react'
 import type { YearResult } from '../lib/types'
 import Info from './Info'
 
 /** The structure of the data that drives the recommendation: each season's families by how much of
  *  their pedigree was on record, next to how well the family call worked that season. */
-export default function Pedigree({ years, heldOut }: { years: YearResult[]; heldOut: number | null }) {
+function Pedigree({ years, heldOut }: { years: YearResult[]; heldOut: number | null }) {
   const rows = years.filter((y) => y.families_none != null && y.families_one != null && y.families_both != null)
   if (rows.length < 2) return null
   const W = 720, H = 268, M = { t: 18, r: 56, b: 56, l: 44 }
@@ -76,3 +77,5 @@ export default function Pedigree({ years, heldOut }: { years: YearResult[]; held
     </div>
   )
 }
+
+export default memo(Pedigree)

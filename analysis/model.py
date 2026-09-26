@@ -456,3 +456,24 @@ def location_response_check(fd: FamilyData, plots: pd.DataFrame, year: int, alph
     out["n_plots"] = int(test.sum())
     out["sd_within_line"] = float(np.nanstd(d[test]))
     return out
+
+
+def trial_reliability(plots: pd.DataFrame, trait: str = "yield_bu", min_lines: int = 30) -> pd.DataFrame:
+    """How much one plot at a trial tells you about a line: per trial (year x location x cluster),
+    the correlation between each line's trial-adjusted result there and its average at its other
+    locations. Computed from sums, so it is one pass over a million plots."""
+    p = plots[plots[trait].notna()].copy()
+    p["ya"] = p[trait] - p.groupby("env")[trait].transform("mean")
+    g = p.groupby("id")["ya"]
+    p["s"], p["n"] = g.transform("sum"), g.transform("count")
+    p = p[p["n"] >= 3].copy()
+    p["other"] = (p["s"] - p["ya"]) / (p["n"] - 1)
+    x, y, e = p["ya"], p["other"], p["env"]
+    agg = pd.DataFrame({"n": p.groupby("env").size(), "sx": x.groupby(e).sum(), "sy": y.groupby(e).sum(),
+                        "sxx": (x * x).groupby(e).sum(), "syy": (y * y).groupby(e).sum(), "sxy": (x * y).groupby(e).sum()})
+    num = agg.sxy - agg.sx * agg.sy / agg.n
+    den = np.sqrt((agg.sxx - agg.sx ** 2 / agg.n) * (agg.syy - agg.sy ** 2 / agg.n))
+    agg["r"] = num / den
+    agg = agg.join(p.drop_duplicates("env").set_index("env")[["year", "location", "cluster"]])
+    agg["trial_mean"] = plots[plots[trait].notna()].groupby("env")[trait].mean()
+    return agg[agg["n"] >= min_lines]

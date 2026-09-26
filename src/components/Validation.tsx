@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Baseline, Validation as V } from '../lib/types'
 import Info from './Info'
 
@@ -7,7 +8,7 @@ const f2 = (x: number | null | undefined) => (x == null || !Number.isFinite(x) ?
 
 /** How far to trust the ranking: the forward test, its repeats on earlier cohorts, the
  *  baselines it has to beat, and how honest its error bands turned out to be. */
-export default function Validation({ v, baselines, notes, heldOut }: Props) {
+function Validation({ v, baselines, notes, heldOut }: Props) {
   const years = v.by_year ?? []
   const maxR = Math.max(0.05, ...years.flatMap((y) => [y.r, y.r_gblup, y.r_pedigree]).filter(Number.isFinite))
   return (
@@ -115,3 +116,5 @@ export default function Validation({ v, baselines, notes, heldOut }: Props) {
     </div>
   )
 }
+
+export default memo(Validation)

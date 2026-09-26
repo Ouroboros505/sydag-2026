@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import type { Scored } from '../lib/econ'
-import { fmtNum, fmtUSD, niceTicks, summarize } from '../lib/econ'
+import { advanceOrder, diversity, evenShare, fmtNum, fmtUSD, niceTicks, populationMean } from '../lib/econ'
 import Info from './Info'
 
 interface Props {
@@ -19,20 +19,29 @@ const M = { t: 16, r: 20, b: 40, l: 56 }
 
 /** The price of genetic breadth: each point is one family cap, placed by how broad the
  *  advanced set becomes and how much margin that costs. */
-export default function Breadth({ scored, budget, cap, even = false, onCap, onEven }: Props) {
+function Breadth({ scored, budget, cap, even = false, onCap, onEven }: Props) {
   const [hover, setHover] = useState<number | null>(null)
+  // each limit's ordering depends only on prices; a budget move then only walks the first k lines
+  const orders = useMemo(() => CAPS.map((c) => advanceOrder(scored, c)), [scored])
+  const mean = useMemo(() => populationMean(scored), [scored])
   const pts = useMemo(
     () =>
-      CAPS.map((c) => {
-        const s = summarize(scored, budget, c)
-        return { cap: c, n: s.advanced.length, breadth: s.diversity.effective, gain: s.gainByMargin, largest: s.diversity.largestShare }
+      CAPS.map((c, j) => {
+        const adv = orders[j].slice(0, budget)
+        let s = 0
+        for (const x of adv) s += x.margin
+        const d = diversity(adv)
+        return { cap: c, n: adv.length, breadth: d.effective, gain: s / (adv.length || 1) - mean, largest: d.largestShare }
       }).filter((p) => p.n >= budget),
-    [scored, budget],
+    [orders, mean, budget],
   )
   const evenPt = useMemo(() => {
-    const s = summarize(scored, budget, Infinity, true)
-    return { breadth: s.diversity.effective, gain: s.gainByMargin, largest: s.diversity.largestShare }
-  }, [scored, budget])
+    const adv = evenShare(scored, budget)
+    let s = 0
+    for (const x of adv) s += x.margin
+    const d = diversity(adv)
+    return { breadth: d.effective, gain: s / (adv.length || 1) - mean, largest: d.largestShare }
+  }, [scored, budget, mean])
   if (pts.length < 2) return null
 
   const xMax = Math.max(evenPt.breadth, ...pts.map((p) => p.breadth)) * 1.08
@@ -107,3 +116,5 @@ export default function Breadth({ scored, budget, cap, even = false, onCap, onEv
     </div>
   )
 }
+
+export default memo(Breadth)

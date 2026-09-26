@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import type { Candidate } from '../lib/types'
-import { fmtNum, fmtUSD, scenarios, score, summarize, type Prices } from '../lib/econ'
+import { byYieldOrder, fmtNum, fmtUSD, scenarios, score, summarize, type Prices } from '../lib/econ'
 import Info from './Info'
 
 interface Props {
@@ -11,14 +11,14 @@ interface Props {
   even?: boolean
 }
 
-export default function Scenarios({ candidates, prices, budget, cap, even = false }: Props) {
+function Scenarios({ candidates, prices, budget, cap, even = false }: Props) {
+  const scoredRuns = useMemo(
+    () => scenarios(prices).map((s) => { const sc = score(candidates, s.prices); return { s, sc, byYield: byYieldOrder(sc) } }),
+    [candidates, prices],
+  )
   const rows = useMemo(
-    () =>
-      scenarios(prices).map((s) => {
-        const sc = score(candidates, s.prices)
-        return { ...s, ...summarize(sc, Math.min(budget, sc.length), cap, even) }
-      }),
-    [candidates, prices, budget, cap, even],
+    () => scoredRuns.map(({ s, sc, byYield }) => ({ ...s, ...summarize(sc, Math.min(budget, sc.length), cap, even, byYield) })),
+    [scoredRuns, budget, cap, even],
   )
   return (
     <div className="panel tablewrap">
@@ -58,3 +58,5 @@ export default function Scenarios({ candidates, prices, budget, cap, even = fals
     </div>
   )
 }
+
+export default memo(Scenarios)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import type { PlotsToMatch, StrategyRow } from '../lib/types'
 import { fmtNum, fmtPct, fmtUSD } from '../lib/econ'
 import Info from './Info'
@@ -7,13 +7,18 @@ interface Props { rows: StrategyRow[]; heldOut: number | null; match?: PlotsToMa
 
 // the organizers' framing: the tradeoff between aggressive and conservative selection under limited plots
 const LABEL: Record<string, string> = {
-  'ProMaize, rank by $/acre': 'Aggressive: ProMaize, every line ranked by $/acre',
-  'ProMaize, same share of every family': 'Conservative: ProMaize, same share of every family',
+  'ProMaize, rank by $/acre': 'Aggressive: family engine, every line ranked by $/acre',
+  'ProMaize, same share of every family': 'Conservative: family engine, same share of every family',
+  'ProMaize, $/acre, max 50 per family': 'Family engine, $/acre, at most 50 lines per family',
+  'ProMaize, rank by bushels': 'Family engine, ranked by bushels',
+  'standard GBLUP, rank by $/acre': 'Standard engine (GBLUP), ranked by $/acre',
+  'standard GBLUP, rank by bushels': 'Usual practice: standard engine (GBLUP), ranked by bushels',
+  random: 'Random pick (the zero line)',
 }
 
 /** The resource-allocation question answered with the record: the same plots spent different
  *  ways, every forward year, scored on what the field then paid. */
-export default function Strategies({ rows, heldOut, match }: Props) {
+function Strategies({ rows, heldOut, match }: Props) {
   const budgets = [...new Set(rows.map((r) => r.budget))].sort()
   const [budget, setBudget] = useState(budgets[0] ?? 0.3)
   const years = [...new Set(rows.filter((r) => r.year !== 'mean').map((r) => r.year as number))].sort()
@@ -66,8 +71,8 @@ export default function Strategies({ rows, heldOut, match }: Props) {
         const last = match.find((m) => m.year === heldOut)
         return (
           <p style={{ margin: '10px 0 0' }}>
-            <b>In plots:</b> to keep as many of the real top 10% as ProMaize keeps with 30% of the lines, the standard
-            ranking had to plant <b>{fmtPct(needs)}</b> of them on average over the {match.length} seasons
+            <b>In plots:</b> to keep as many of the real top 10% as ProMaize keeps with 30% of the lines, the usual
+            practice (GBLUP, ranked by bushels) had to plant <b>{fmtPct(needs)}</b> of them on average over the {match.length} seasons
             {last && <> ({fmtPct(last.standard_needs)} in {heldOut})</>}: about <b>{fmtNum(saved)}</b> more lines a
             season, each tested at about seven locations.
           </p>
@@ -97,3 +102,5 @@ export default function Strategies({ rows, heldOut, match }: Props) {
     </div>
   )
 }
+
+export default memo(Strategies)

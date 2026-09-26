@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Summary } from '../lib/econ'
 import { fmtNum, fmtPct, fmtUSD } from '../lib/econ'
 import Info from './Info'
@@ -6,7 +7,7 @@ interface Props extends Summary {
   capped: boolean
 }
 
-export default function StatTiles({ gainByMargin, gainByYield, gap, swapCount, diversity, capCost, capped }: Props) {
+function StatTiles({ gainByMargin, gainByYield, gap, swapCount, diversity, capCost, capped }: Props) {
   return (
     <div className="tiles">
       <div className="tile">
@@ -65,3 +66,5 @@ export default function StatTiles({ gainByMargin, gainByYield, gap, swapCount, d
     </div>
   )
 }
+
+export default memo(StatTiles)

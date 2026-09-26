@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Backtest as BT, CapturePoint } from '../lib/econ'
 import { fmtNum, fmtPct, fmtUSD, plantedFor } from '../lib/econ'
 import Info from './Info'
@@ -14,7 +15,7 @@ interface Props { bt: BT; year: number; k: number; curve: CapturePoint[]; maturi
 const days = (v: number | null) => (v == null ? 'n/a' : `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)} d`)
 
 /** The cohort was ranked before it was planted; then it was grown. This is the receipt. */
-export default function Backtest({ bt, year, k, curve, maturity }: Props) {
+function Backtest({ bt, year, k, curve, maturity }: Props) {
   const W = 640, H = 190, padL = 44, padR = 12, padT = 16, padB = 52
   const lo = Math.min(0, ...bt.deciles), hi = Math.max(0, ...bt.deciles)
   const span = hi - lo || 1
@@ -132,3 +133,5 @@ function Capture({ curve }: { curve: CapturePoint[] }) {
     </div>
   )
 }
+
+export default memo(Backtest)

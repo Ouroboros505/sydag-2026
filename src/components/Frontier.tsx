@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import type { FrontierPoint } from '../lib/econ'
 import { fmtNum, fmtUSD, niceTicks } from '../lib/econ'
 import Info from './Info'
@@ -13,7 +13,7 @@ const W = 760
 const H = 300
 const M = { t: 18, r: 92, b: 40, l: 56 }
 
-export default function Frontier({ points, budget, onBudget }: Props) {
+function Frontier({ points, budget, onBudget }: Props) {
   const ref = useRef<SVGSVGElement>(null)
   const [hover, setHover] = useState<FrontierPoint | null>(null)
   const [mouse, setMouse] = useState<{ x: number; y: number } | null>(null)
@@ -117,3 +117,5 @@ export default function Frontier({ points, budget, onBudget }: Props) {
     </div>
   )
 }
+
+export default memo(Frontier)

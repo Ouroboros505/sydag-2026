@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { Scored } from '../lib/econ'
 import { fmtUSD } from '../lib/econ'
 import Info from './Info'
@@ -12,30 +12,55 @@ const W = 760
 const H = 300
 const M = { t: 12, r: 12, b: 28, l: 12 }
 
-export default function GenomicMap({ all, advanced }: Props) {
-  const ref = useRef<SVGSVGElement>(null)
+// 16k points: drawn on a canvas, not as 16k SVG elements, so moving a slider stays instant
+function GenomicMap({ all, advanced }: Props) {
+  const canvas = useRef<HTMLCanvasElement>(null)
   const [hover, setHover] = useState<Scored | null>(null)
   const [mouse, setMouse] = useState<{ x: number; y: number } | null>(null)
 
   const pts = useMemo(() => all.filter((c) => c.pc1 !== undefined && c.pc2 !== undefined), [all])
   const [x, y] = useMemo(() => {
-    const xs = pts.map((c) => c.pc1!), ys = pts.map((c) => c.pc2!)
-    const [x0, x1] = [Math.min(...xs), Math.max(...xs)]
-    const [y0, y1] = [Math.min(...ys), Math.max(...ys)]
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity
+    for (const c of pts) {
+      x0 = Math.min(x0, c.pc1!); x1 = Math.max(x1, c.pc1!); y0 = Math.min(y0, c.pc2!); y1 = Math.max(y1, c.pc2!)
+    }
     return [
       (v: number) => M.l + ((v - x0) / (x1 - x0 || 1)) * (W - M.l - M.r),
       (v: number) => M.t + (1 - (v - y0) / (y1 - y0 || 1)) * (H - M.t - M.b),
     ]
   }, [pts])
 
-  if (!pts.length) return null
-  const out = pts.filter((c) => !advanced.has(c.id))
-  const inn = pts.filter((c) => advanced.has(c.id))
+  useEffect(() => {
+    const el = canvas.current
+    if (!el) return
+    const dpr = window.devicePixelRatio || 1
+    el.width = W * dpr
+    el.height = H * dpr
+    const g = el.getContext('2d')
+    if (!g) return
+    g.scale(dpr, dpr)
+    const css = getComputedStyle(document.documentElement)
+    const grey = css.getPropertyValue('--text-3').trim() || '#888'
+    const blue = css.getPropertyValue('--series-1').trim() || '#3b82f6'
+    g.clearRect(0, 0, W, H)
+    g.globalAlpha = 0.28
+    g.fillStyle = grey
+    for (const c of pts) {
+      if (advanced.has(c.id)) continue
+      g.beginPath(); g.arc(x(c.pc1!), y(c.pc2!), 3.5, 0, 2 * Math.PI); g.fill()
+    }
+    g.globalAlpha = 1
+    g.fillStyle = blue
+    for (const c of pts) {
+      if (!advanced.has(c.id)) continue
+      g.beginPath(); g.arc(x(c.pc1!), y(c.pc2!), 3.5, 0, 2 * Math.PI); g.fill()
+    }
+  }, [pts, advanced, x, y])
 
-  function move(e: React.MouseEvent<SVGSVGElement>) {
-    const svg = ref.current
-    if (!svg) return
-    const r = svg.getBoundingClientRect()
+  if (!pts.length) return null
+
+  function move(e: React.MouseEvent<HTMLDivElement>) {
+    const r = e.currentTarget.getBoundingClientRect()
     const px = ((e.clientX - r.left) / r.width) * W
     const py = ((e.clientY - r.top) / r.height) * H
     let best: Scored | null = null
@@ -57,24 +82,17 @@ export default function GenomicMap({ all, advanced }: Props) {
         going to one family; spread out means a varied set.
       </Info></h2>
       <div className="chartbox">
-      <svg
-        ref={ref} className="chart" viewBox={`0 0 ${W} ${H}`} role="img"
-        aria-label="Candidates plotted by their top two genomic principal components; advanced lines highlighted"
-        onMouseMove={move} onMouseLeave={() => { setHover(null); setMouse(null) }}
-      >
-        {out.map((c) => (
-          <circle key={c.id} cx={x(c.pc1!)} cy={y(c.pc2!)} r={4} fill="var(--text-3)" opacity={0.28} />
-        ))}
-        {inn.map((c) => (
-          <circle key={c.id} cx={x(c.pc1!)} cy={y(c.pc2!)} r={4} fill="var(--series-1)" stroke="var(--surface)" strokeWidth={1} />
-        ))}
-        {hover && (
-          <circle cx={x(hover.pc1!)} cy={y(hover.pc2!)} r={7} fill="none" stroke="var(--text)" strokeWidth={1.5} />
-        )}
-        <text x={W - M.r} y={H - 8} fontSize={11} fill="var(--text-3)" textAnchor="end">
-          genomic PC1 →   (nearby points are close relatives)
-        </text>
-      </svg>
+        <div className="chart" style={{ position: 'relative', width: '100%', aspectRatio: `${W} / ${H}` }}
+          onMouseMove={move} onMouseLeave={() => { setHover(null); setMouse(null) }}
+          role="img" aria-label="Candidates plotted by their top two genomic principal components; advanced lines highlighted">
+          <canvas ref={canvas} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+          <svg viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+            {hover && <circle cx={x(hover.pc1!)} cy={y(hover.pc2!)} r={7} fill="none" stroke="var(--text)" strokeWidth={1.5} />}
+            <text x={W - M.r} y={H - 8} fontSize={11} fill="var(--text-3)" textAnchor="end">
+              genomic PC1 →   (nearby points are close relatives)
+            </text>
+          </svg>
+        </div>
       </div>
       <div className="legend">
         <span><i style={{ background: 'var(--series-1)', height: 8, width: 8, borderRadius: 4 }} />advanced</span>
@@ -89,3 +107,5 @@ export default function GenomicMap({ all, advanced }: Props) {
     </div>
   )
 }
+
+export default memo(GenomicMap)

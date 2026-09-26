@@ -245,6 +245,7 @@ def real_bayer(synthetic: bool = False) -> dict:
     that year: every one of its families is new, and nothing from that year is used in training.
     Its field results come back only to score the ranking (the backtest the app shows)."""
     import numpy as np
+    import pandas as pd
     from analysis import bayer as src, model
 
     t0 = time.time()
@@ -360,6 +361,39 @@ def real_bayer(synthetic: bool = False) -> dict:
     H = max(0.0, (s2m - s2e * float((1 / n_i[n_i > 1]).mean())) / s2m)
     say(f"line-mean repeatability {H:.2f} -> ceiling r ~ {np.sqrt(H):.2f}; plot noise sd {np.sqrt(s2e):.1f} vs line sd {np.sqrt(max(s2m - s2e / n_i.mean(), 0)):.1f} bu")
 
+    # the test network: where the plots are, each site's climate and soil, and how consistently it
+    # ranked lines in earlier years (a weak signal: see the persistence number)
+    rel = model.trial_reliability(src.plots())
+    def site_mean(d):
+        return d.groupby("location").apply(lambda z: pd.Series({
+            "r": float(np.average(z["r"], weights=z["n"])), "trials": int(len(z)), "plots": int(z["n"].sum()),
+            "level": float(z["trial_mean"].mean())}), include_groups=False)
+    past_s, now_s = site_mean(rel[rel["year"] < cohort]), site_mean(rel[rel["year"] == cohort])
+    both = past_s.index.intersection(now_s.index)
+    persistence = float(np.corrcoef(past_s.loc[both, "r"], now_s.loc[both, "r"])[0, 1]) if len(both) > 10 else float("nan")
+    env = src.environments()
+    env = env[env["YEAR"] < cohort].copy()
+    env["rain"] = env[["X06_PRCP", "X07_PRCP", "X08_PRCP"]].sum(axis=1)
+    clim = env.groupby("LOC").agg(rain=("rain", "mean"), heat=("X07_TAVG", "mean"), clay=("clay_0_5cm", "mean"),
+                                  sand=("sand_0_5cm", "mean"))
+    pl = src.plots()
+    coords = pl.dropna(subset=["lat", "lon"]).groupby("location")[["lat", "lon"]].first()
+    used = set(pl.loc[pl["year"] == cohort, "location"])
+    locations = []
+    for loc in sorted(set(past_s.index) | used):
+        if loc not in coords.index:
+            continue
+        row = {"loc": str(loc), "lat": round(float(coords.loc[loc, "lat"]), 2), "lon": round(float(coords.loc[loc, "lon"]), 2),
+               "used": loc in used}
+        if loc in past_s.index:
+            row.update({"r": round(float(past_s.loc[loc, "r"]), 3), "trials": int(past_s.loc[loc, "trials"]),
+                        "level": round(float(past_s.loc[loc, "level"]), 1)})
+        if loc in clim.index and np.isfinite(clim.loc[loc, "rain"]):
+            row.update({"rain": round(float(clim.loc[loc, "rain"]), 0), "heat": round(float(clim.loc[loc, "heat"]), 1),
+                        "clay": round(float(clim.loc[loc, "clay"]) / 10, 1), "sand": round(float(clim.loc[loc, "sand"]) / 10, 1)})
+        locations.append(row)
+    say(f"test network: {len(locations)} locations, {len(used)} used in {cohort}; site reliability persists at r {persistence:.2f}")
+
     # broad-acre or location-specific: is a line's response across locations predictable at all?
     loc = model.location_response_check(fd, src.plots(), cohort)
     say(f"location-specific response predicted at r {loc['oracle']:.3f} even knowing each trial's productivity, "
@@ -377,6 +411,13 @@ def real_bayer(synthetic: bool = False) -> dict:
 
     means = {"yield_adj": h.attrs["mean_yield_bu"], "mst_adj": h.attrs["mean_mst"], "erm_adj": h.attrs["mean_erm"],
              "lodging_adj": h.attrs["mean_lodging"]}
+    # the benchmark engine: standard GBLUP, one ridge over every earlier line, same traits
+    gb = {t: model.global_ridge_cohort(fd, t, cohort) for t in ("yield_adj", "mst_adj", "lodging_adj")}
+    gres = np.concatenate([fwd["yield_adj"][y].truth - model.global_ridge_cohort(fd, "yield_adj", y) for y in dev_years])
+    g_half = 1.645 * float(np.nanstd(gres))
+    g_ok = np.isfinite(cp.truth)
+    g_cov = float(np.mean(np.abs(cp.truth[g_ok] - gb["yield_adj"][g_ok]) <= g_half))
+    say(f"benchmark engine: 90% band +-{g_half:.1f} bu, coverage in {cohort} {g_cov:.3f}")
     pr = {t: fwd[t][cohort] for t in TRAITS}
     conf = np.array(["low", "medium", "high"])[cls]
     fams = fd.families[cp.fam_index]
@@ -392,6 +433,10 @@ def real_bayer(synthetic: bool = False) -> dict:
             "pred_erm": round(float(means["erm_adj"] + pr["erm_adj"].pred[i]), 1),
             "confidence": str(conf[i]),
             "pc1": round(float(pcs[i, 0]), 2), "pc2": round(float(pcs[i, 1]), 2),
+            # benchmark engine predictions (yield, moisture, lodging), so the app can switch engines
+            "gy": round(float(means["yield_adj"] + gb["yield_adj"][i]), 1),
+            "gm": round(float(means["mst_adj"] + gb["mst_adj"][i]), 2),
+            "gl": round(float(max(0.0, means["lodging_adj"] + gb["lodging_adj"][i])), 2),
         }
         for t, key in (("yield_adj", "actual_yield"), ("mst_adj", "actual_mst"), ("erm_adj", "actual_erm"),
                        ("lodging_adj", "actual_lodging")):
@@ -429,6 +474,7 @@ def real_bayer(synthetic: bool = False) -> dict:
         },
         "price_defaults": PRICE_DEFAULTS,
         "candidates": rows,
+        "locations": locations,
         "baselines": baselines,
         "validation": {
             "scheme": f"year-forward: every {cohort} family predicted from {years[0]}-{cohort - 1} only, none of them seen before",
@@ -448,6 +494,13 @@ def real_bayer(synthetic: bool = False) -> dict:
             "by_confidence": {k: (round(v, 3) if np.isfinite(v) else None) for k, v in zip(("low", "medium", "high"), by_conf.values())},
             "families_by_parents_on_record": {k: int((kp[cohort][np.unique(cp.fam_index)] == c).sum()) for k, c in (("none", 0), ("one", 1), ("both", 2))},
             "strategies": strategies,
+            "engines": [
+                {"id": "family", "name": "Family engine", "r_mean": round(float(np.mean([b["r"] for b in by_year])), 3),
+                 "r_last": round(head["r"], 3), "coverage90": round(coverage, 3)},
+                {"id": "gblup", "name": "Standard engine (GBLUP)", "r_mean": round(float(np.mean([b["r_gblup"] for b in by_year])), 3),
+                 "r_last": by_year[-1]["r_gblup"], "coverage90": round(g_cov, 3), "half90": round(g_half, 1)},
+            ],
+            "site_persistence": round(persistence, 3) if np.isfinite(persistence) else None,
             "plots_to_match": match,
         },
     }
@@ -477,8 +530,11 @@ def strategy_backtest(fd, fwd, eval_years, means, model, budgets=(0.3, 0.5), cap
         realised = _margin(means["yield_adj"] + Y.truth, means["mst_adj"] + M.truth, act_l)
         erm = E.truth
         g = model.global_ridge_cohort(fd, "yield_adj", y)
+        g_m = means["mst_adj"] + model.global_ridge_cohort(fd, "mst_adj", y)
+        g_l = np.maximum(0, means["lodging_adj"] + model.global_ridge_cohort(fd, "lodging_adj", y))
         scores = {
             "standard GBLUP, rank by bushels": g,
+            "standard GBLUP, rank by $/acre": _margin(means["yield_adj"] + g, g_m, g_l),
             "ProMaize, rank by bushels": pred_y,
             "ProMaize, rank by $/acre": _margin(pred_y, pred_m, pred_l),
         }
