@@ -72,10 +72,10 @@ line          <- ridge on sibling differences                (within a family)
 yield, moisture, maturity, lodging  ->  $/acre at the breeder's prices, with 90% bands
         |
         v
-ProMaize: budget slider, family limit, what 2008 actually paid, strategies compared, CSV list
+ProMaize: budget, allocation (rank all / same share per family), what 2008 paid, strategies, CSV
 ```
 
-The analysis runs once (about three minutes on a laptop) and writes one JSON file the web app
+The analysis runs once (about five minutes on a laptop) and writes one JSON file the web app
 reads. The app computes only the user's own pricing on top, so it works offline, on a phone.
 
 ## 3. Technical approach
@@ -246,8 +246,8 @@ top 39% by predicted $/acre kept half of the season's real top 10% (random plant
 72% kept 80% of them. Across the six forward seasons, planting 30% kept 41% of the real top 10%
 (random: 30%).
 
-**Operational fit:** one command rebuilds everything from the program's files in about three
-minutes on a laptop (six the first time, while it caches the genotype files); new years are added
+**Operational fit:** one command rebuilds everything from the program's files in about five
+minutes on a laptop (eight the first time, while it caches the genotype files); new years are added
 as sufficient statistics; the output is a static page and a CSV.
 
 ## 6. Broad-acre or location-specific?
@@ -271,7 +271,7 @@ loaded by `bayer.environments()`) are the input for that.
   flags them; the 90% band is widest there.
 - **A year like 2008**, with many new parents, degrades the family-level prediction (r 0.10); the
   within-family part still works. Mitigation: in such years spread plots across families, which
-  then costs little (recommendation 2).
+  then costs little (recommendation 1).
 - **New testers** (5 in 2008) have no estimated effect; their families are compared on the
   trial-adjusted scale only.
 - **Population structure shifts**: marker effects are learned from earlier cohorts, weighted to
@@ -305,7 +305,8 @@ plot noise matched to the real data (line-mean repeatability 0.43 vs 0.46 real).
 Put the organizers' files anywhere under `data/raw/bayer/` (zips extracted), then:
 
 ```bash
-.venv/bin/python scripts/build_data.py --source bayer   # ~3 min, ~4 GB RAM; caches to data/processed/
+.venv/bin/python scripts/build_data.py --source bayer   # ~5 min, ~4 GB RAM; caches to data/processed/
+.venv/bin/python scripts/export_list.py                 # docs/advance_2008.csv and _ranked.csv
 npm run build && npm run preview
 .venv/bin/python scripts/make_deck.py                   # fills the organizers' slide template
 ```
