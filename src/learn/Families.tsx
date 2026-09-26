@@ -8,7 +8,7 @@ const YEARS = [
   { year: 2003, between: 0.27, within: 0.13, ours: 0.19, standard: 0.19 },
   { year: 2004, between: 0.2, within: 0.15, ours: 0.17, standard: 0.1 },
   { year: 2005, between: 0.49, within: 0.19, ours: 0.31, standard: 0.26 },
-  { year: 2006, between: 0.44, within: 0.23, ours: 0.3, standard: 0.21 },
+  { year: 2006, between: 0.44, within: 0.23, ours: 0.29, standard: 0.21 },
   { year: 2007, between: 0.23, within: 0.23, ours: 0.21, standard: 0.07 },
   { year: 2008, between: 0.1, within: 0.16, ours: 0.13, standard: 0.07 },
 ]
