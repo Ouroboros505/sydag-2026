@@ -297,6 +297,25 @@ def real_bayer(synthetic: bool = False) -> dict:
             f"as planted: ours {m['r_as_planted']:.3f}, GBLUP {by_year[-1]['r_gblup_as_planted']:.3f}")
     head = met["yield_adj"][cohort]
 
+    # how sure: resample the cohort's families (the unit that was sampled), 2,000 times
+    cp_ = fwd["yield_adj"][cohort]
+    g_ = model.global_ridge_cohort(fd, "yield_adj", cohort)
+    ok_ = np.isfinite(cp_.truth)
+    fam_rows = [np.flatnonzero((cp_.fam_index == k) & ok_) for k in np.unique(cp_.fam_index)]
+    rng_ = np.random.default_rng(7)
+    boot = []
+    for _ in range(2000):
+        idx = np.concatenate([fam_rows[i] for i in rng_.integers(0, len(fam_rows), len(fam_rows))])
+        a_ = np.corrcoef(cp_.pred[idx], cp_.truth[idx])[0, 1]
+        b_ = np.corrcoef(g_[idx], cp_.truth[idx])[0, 1]
+        boot.append((a_, a_ - b_))
+    boot = np.array(boot)
+    r_ci = [float(np.quantile(boot[:, 0], q)) for q in (0.025, 0.975)]
+    d_ci = [float(np.quantile(boot[:, 1], q)) for q in (0.025, 0.975)]
+    wins = sum(1 for y in eval_years if met["yield_adj"][y]["r"] > model._r(model.global_ridge_cohort(fd, "yield_adj", y), fwd["yield_adj"][y].truth))
+    say(f"{cohort}: r 95% CI {r_ci[0]:.3f}-{r_ci[1]:.3f}; ours minus standard GBLUP 95% CI {d_ci[0]:.3f}-{d_ci[1]:.3f} "
+        f"(families resampled); beats it in {wins} of {len(eval_years)} seasons")
+
     # uncertainty: forward residuals on the development years, by how many parents are on record
     kp = {y: model.known_parents(fd, y) for y in eval_years}
     sd = {}
@@ -416,6 +435,8 @@ def real_bayer(synthetic: bool = False) -> dict:
             "r_as_planted": round(head["r_as_planted"], 3),
             "by_year": by_year, "coverage90": round(coverage, 3), "ceiling": round(float(np.sqrt(H)), 3),
             "tuned_on": TUNED_ON,
+            "r_ci95": [round(x, 3) for x in r_ci], "vs_gblup_ci95": [round(x, 3) for x in d_ci],
+            "seasons_won": wins, "seasons": len(eval_years),
             "first_frozen_r": FIRST_FROZEN_R,
             "location_specific": {"r_oracle": round(loc["oracle"], 3), "r_history": round(loc["history"], 3),
                                   "n_plots": loc["n_plots"], "sd_within_line": round(loc["sd_within_line"], 1),

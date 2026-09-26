@@ -17,7 +17,8 @@ Every number is from predicting seasons the model had not seen (year-forward: ea
 predicted from earlier years only), then checking what the field did.
 
 - **Accuracy:** beats standard GBLUP in all 6 seasons (mean r 0.22 vs 0.15); in 2008, the
-  decision year, r = 0.13 vs 0.07. Plot noise caps any predictor near 0.68.
+  decision year, r = 0.13 vs 0.07, a gain whose 95% interval (0.03 to 0.11, resampling families)
+  excludes zero. Plot noise caps any predictor near 0.68.
 - **Value:** planting 30% of lines by ProMaize's $/acre ranking realised $8.8/acre over random,
   60% more than standard GBLUP ($5.5), averaged over six seasons; 4x as much in 2008.
 - **Plots:** the standard ranking needed 1,277 more lines in 2008 (about 8,900 plots) to keep the
@@ -178,7 +179,10 @@ training reads r = 0.56 on the same 2008 lines.
 | **2008 (decision year)** | **157** | **0.13** | **0.07** | **0.05** | **0.13** |
 | mean | | **0.22** | 0.15 | 0.06 | 0.26 |
 
-- ProMaize beats standard GBLUP in all 6 years (2003 narrowly: 0.192 vs 0.188), and doubles it in 2008.
+- ProMaize beats standard GBLUP in all 6 years (2003 narrowly: 0.192 vs 0.188; one-sided sign test
+  p = 0.016), and doubles it in 2008.
+- How sure, in 2008: resampling the 157 families 2,000 times gives r = 0.13 (95% interval 0.06 to
+  0.20) and a gain over standard GBLUP of 0.03 to 0.11 in r: the interval excludes zero.
 - 2008 split: families ranked at r = 0.10 from what their parents passed on (the hardest year of
   the six to call families; 15% of them had no parent on record, the second-highest share),
   siblings at r = 0.16.

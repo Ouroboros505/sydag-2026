@@ -26,6 +26,7 @@ good" has nothing to say about next year's. ProMaize splits the question the way
 | realised $/acre over random, plant 30%, 6-season mean | **$8.8** | $5.5 | |
 | real top 10% kept, plant 30% (random: 30%) | **41%** | 36% | |
 
+- 2008 gain over standard GBLUP: 0.03 to 0.11 in r (95%, resampling families); 6 of 6 seasons, sign test p = 0.016.
 - 90% bands held **90.2%** of real 2008 results. Plot noise caps any predictor near r = 0.68.
 - Standard GBLUP needed **1,277 more lines** (about 8,900 plots) in 2008 to keep the same winners.
 - Location-specific response is not predictable here (**r = 0.03** on 82,790 held-out plots):

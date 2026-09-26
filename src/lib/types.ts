@@ -67,6 +67,10 @@ export interface Validation {
   plots_to_match?: PlotsToMatch[]   // what the standard ranking needs to keep as many real winners
   tuned_on?: number[]               // cohorts the settings were chosen on
   first_frozen_r?: number           // the decision year's score with the first frozen model (disclosure)
+  r_ci95?: [number, number]         // bootstrap over the cohort's families
+  vs_gblup_ci95?: [number, number]  // same, for our r minus standard GBLUP's
+  seasons_won?: number
+  seasons?: number
   location_specific?: {             // can a line's response across locations be predicted?
     r_oracle: number                // even knowing each trial's productivity
     r_history: number               // from each location's history, as known in January

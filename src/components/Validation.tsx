@@ -22,7 +22,11 @@ export default function Validation({ v, baselines, notes, heldOut }: Props) {
       <p>
         <b>{v.scheme}.</b> On {v.n_test.toLocaleString()} held-out lines, correlation with their real yield is{' '}
         <b>r = {v.r.toFixed(2)}</b>
-        {v.ceiling != null && <> (plot noise caps any predictor near <b>{v.ceiling.toFixed(2)}</b>)</>}, and the top 20% by
+        {v.r_ci95 && <> (95% interval {f2(v.r_ci95[0])} to {f2(v.r_ci95[1])}, resampling families)</>}
+        {v.ceiling != null && <>; plot noise caps any predictor near <b>{v.ceiling.toFixed(2)}</b></>}. Against standard
+        GBLUP{v.vs_gblup_ci95 && <> the gain is {f2(v.vs_gblup_ci95[0])} to {f2(v.vs_gblup_ci95[1])} in r (95%), and</>}
+        {v.seasons_won != null && v.seasons != null && <> ProMaize won {v.seasons_won} of {v.seasons} seasons
+          {v.seasons_won === v.seasons && <> (sign test p = {(0.5 ** v.seasons).toFixed(3)})</>}.</>} The top 20% by
         prediction holds <b>{Math.round(v.top20_recovery * 100)}%</b> of the real top 20% (chance is 20%).
         {v.r_between != null && v.r_within != null && (
           <> Split: families ranked at <b>r = {f2(v.r_between)}</b> from what their parents passed on, siblings inside a family at{' '}
