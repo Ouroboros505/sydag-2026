@@ -2,7 +2,7 @@
 
 **SyDAg 2026 Hackathon, Bayer Genomic Prediction track.** Team: Alexander Baena, Sofia Gerena, Alen Lizarazo.
 
-**Live demo: [promaize.stipe.app](https://promaize.stipe.app)** · how it works, from zero: [promaize.stipe.app/learn](https://promaize.stipe.app/learn/) · one-page summary: [docs/ProMaize_summary.pdf](docs/ProMaize_summary.pdf) · slides: [docs/ProMaize_deck.pptx](docs/ProMaize_deck.pptx)
+**Live demo: [promaize.stipe.app](https://promaize.stipe.app)** · how it works, from zero: [promaize.stipe.app/learn](https://promaize.stipe.app/learn/) · one-page summary: [docs/ProMaize_summary.pdf](docs/ProMaize_summary.pdf) · memo for a breeding lead: [docs/ProMaize_memo_2008.pdf](docs/ProMaize_memo_2008.pdf) · slides: [docs/ProMaize_deck.pptx](docs/ProMaize_deck.pptx)
 
 It is January 2008. The plot budget has been cut, and 15,962 new lines from 157 biparental
 families are waiting for their first testcross season. None of those families has ever been in a
@@ -220,25 +220,30 @@ standard ranking had to plant 32-38% of them (34% on average): about 790 more li
 
 ## 5. Commercial recommendations
 
-**For the 2008 season** (30% of plots; the demo exports any setting as CSV):
+**For the 2008 season** (30% of plots; the demo exports any setting as CSV). The same
+recommendation in plain language, for the breeding lead, is
+[docs/ProMaize_memo_2008.pdf](docs/ProMaize_memo_2008.pdf); the tradeoff is framed as
+**conservative** (same share per family) vs **aggressive** (every line ranked), as in the demo:
 
 1. **Plant [`docs/advance_2008.csv`](docs/advance_2008.csv): the same share of every family, with
    markers choosing the siblings.** 4,789 lines, all 157 families represented, each line with its
    predicted $/acre, 90% band and confidence tier.
    *Why this, in January 2008:* the family-level call is only as good as the pedigree on record,
    and 2008's is thin: 15% of its families have no parent with an earlier family and 56% have just
-   one. The last season like that was 2007 (21% with none). There, splitting plots evenly across
-   families gave up only $0.33/acre of realised value against the full ranking while advancing
-   about twice as many families (89 vs 40 effective), and 2007's results were in hand by January.
-   Across all six seasons the share of families with no parent on record correlates -0.54 with
-   family-level accuracy. This first stage is general germplasm evaluation, and next year's crosses
-   come from this year's winners, so breadth has value a one-season number does not count.
+   one. Two earlier seasons looked like that, 2003 and 2007 (21% with none), and in both the even
+   split was cheap: it gave up $2.02 and $0.33/acre of realised value against the full ranking,
+   against $4.5-7.5 in the three well-recorded seasons, while advancing about twice as many
+   families (89 vs 40 effective in 2007). All of that was in hand by January 2008. Across the six
+   seasons, the share of families with no parent on record correlates -0.52 with family-level
+   accuracy (the chart under the strategy panel in the demo). This first stage is general
+   germplasm evaluation, and next year's crosses come from this year's winners, so breadth has
+   value a one-season number does not count.
    *What 2008 then did:* the even split realised $4.98/acre over random against $5.06 for the full
    ranking, a difference of eight cents, with 138 effective families instead of 71.
 2. **When the pedigree is well recorded, rank every line:**
    [`docs/advance_2008_ranked.csv`](docs/advance_2008_ranked.csv) is the full $/acre ranking. On
    average over the six seasons it realised the most ($8.8/acre vs $5.5 for an even split), and in
-   seasons with good records the even split cost $2-7/acre. The top of each cluster:
+   the well-recorded seasons (2004-2006) the even split cost $4.5-7.5/acre. The top of each cluster:
 
    | cluster | line | family | predicted $/acre | yield bu/ac (90% band) | moisture % | confidence |
    |---|---|---|---|---|---|---|

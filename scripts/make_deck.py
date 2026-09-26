@@ -85,14 +85,37 @@ def main() -> None:
 
     s = title["Intro to the problem"]
     fams = v.get("families_by_parents_on_record", {})
-    bullets(s, body(s, s.shapes.title), [
+    left, top, width, height = body(s, s.shapes.title)
+    ped = [y for y in by_year if y.get("families_none") is not None]
+    if ped:
+        # the structure of the data that drives the answer: every season is new families, and in some
+        # of them most parents have never been tested
+        cd = CategoryChartData()
+        cd.categories = [str(y["year"]) for y in ped]
+        cd.add_series("both parents on record", [y["families_both"] for y in ped])
+        cd.add_series("one", [y["families_one"] for y in ped])
+        cd.add_series("neither", [y["families_none"] for y in ped])
+        ch = s.shapes.add_chart(XL_CHART_TYPE.COLUMN_STACKED, left + int(width * 0.55), top, int(width * 0.45),
+                                height, cd).chart
+        ch.has_title = True
+        ch.chart_title.text_frame.text = "Every season is new families; parents on record?"
+        ch.has_legend = True
+        ch.legend.position = XL_LEGEND_POSITION.BOTTOM
+        ch.legend.include_in_layout = False
+        ch.font.size = Pt(13)
+        ch.font.color.rgb = TEXT
+        for i, ser in enumerate(ch.series):
+            ser.format.fill.solid()
+            ser.format.fill.fore_color.rgb = rgb((PALETTE[0], PALETTE[5], PALETTE[1])[i])
+        width = int(width * 0.53)
+    bullets(s, (left, top, width, height), [
         f"**January {year}: the plot budget is cut. {meta['n_candidates']:,} new lines are waiting.",
         f"They come from {head['n_families'] if head else '?'} biparental families that have never been in a field;"
         f" {fams.get('none', '?')} of those families have neither parent on record.",
         "The field test measures GCA: each line crossed to a tester from the other cluster, ~7 locations.",
         "Every line we cannot test is a line we can never advance. Which ones get the ground?",
         ("Users: pipeline managers (the budget), population development (which families), field testing (the list).", 1),
-    ], 22)
+    ], 20)
 
     s = title["Analysis Goal"]
     bullets(s, body(s, s.shapes.title), [
@@ -220,29 +243,31 @@ def main() -> None:
     lift = f"{ours['gain'] / std['gain'] - 1:.0%}" if ours and std and std["gain"] > 0 else "n/a"
     m08 = next((m for m in v.get("plots_to_match", []) if m["year"] == year), None)
     notes = {
-        "Intro to the problem": f"January {year}. The plot budget has been cut. {meta['n_candidates']:,} new lines are waiting "
-            "for their first testcross, and not one of their families has ever been in a field. Every line we don't plant "
-            "is a line we can never advance. Which ones get the ground? (30 s)",
+        "Intro to the problem": f"January {year}. The plot budget has been cut. {meta['n_candidates']:,} new lines are waiting, "
+            "from families that have never been in a field (the chart: every season is new families, and in some most "
+            "parents are untested). Every line we don't plant is a line we can never advance. ProMaize decides which "
+            "lines get the ground, in dollars per acre, and says how far to trust it. (30 s, then go live)",
         "Analysis Goal": "This program tests every family once, in one year. A model that learns 'which families were good' "
             "has nothing to say about next year's families: they are all new. So we split the question the way a breeder "
             "does: the family's mean from what its parents passed on, the sibling from which parental segments it inherited. "
             "Then price it in dollars per acre. (30 s)",
-        "Tech Stack": "Keep it short: Python for the model, a static web app for the demo, runs on a laptop in five minutes, "
-            "works with no network. (15 s)",
+        "Tech Stack": "Not shown in the 4 minutes; for Q&A: five minutes on a laptop from the raw files, 3.5 on one "
+            "Anvil node, a static web app that works with no network.",
         "Technical Approach": f"Point at the chart. Each bar is a separate forward test: that year's families predicted from "
             f"earlier years only. We beat standard GBLUP in all six seasons; in {year} we double it, "
             f"r {fmt(head['r'] if head else None)} vs {fmt(head['r_gblup'] if head else None)}. The same data under a random "
             f"k-fold reads {fmt(v.get('leaky_r'))}: that is siblings in training, and we show it so nobody mistakes one for "
             "the other. (45 s)",
-        "Demo/Prototype": "Switch to the live demo. 1) The strip: every number from seasons the model never saw. 2) What "
-            f"{year} actually said: the decile bars. 3) Which way to spend the plots. 4) Click 'same share per family' and "
-            "show the breadth tile vs the realised gain. 5) Hover a $/acre cell. 6) How much to trust this. (90 s)",
+        "Demo/Prototype": "Not shown in the 4 minutes: go live instead. 1) The strip (15 s). 2) What "
+            f"{year} actually said (30 s). 3) Which way to spend the plots: aggressive vs conservative (35 s). 4) The "
+            "pedigree chart, then click 'conservative' (25 s). 5) The list, hover a $/acre cell (15 s). 6) Trust (15 s).",
         "Business Value": f"Same plots, six rules, six seasons, scored on what the field paid. The standard approach realised "
             f"${std['gain']:.1f} an acre over random; ours ${ours['gain']:.1f}: {lift} more value from the same plots. "
             + (f"In plots: the standard ranking needed {m08['lines_saved']:,} more lines in {year} to keep the same winners. "
                if m08 else "")
-            + f"And our 90% error bars held {v.get('coverage90', 0):.0%} of real {year} results. Recommendation: the same "
-            "share of every family this year, because the pedigree is thin and breadth is nearly free. (45 s)",
+            + f"Recommendation for {year}: the conservative plan, the same share of every family, DNA picking the "
+            "siblings: 4,789 lines in docs/advance_2008.csv, with a one-page memo for the breeding lead. We need from "
+            "them: their plot budget, their drying costs, and confirmation that lines are judged on GCA. (45 s)",
         "Future Development": "Limits first: the family call is weak in a year like 2008; lodging is barely predictable from "
             "DNA; costs are sliders with typical values. Next: choose crosses, not only lines; location placement once lines "
             "have multi-year records; the program's own costs. (30 s)",

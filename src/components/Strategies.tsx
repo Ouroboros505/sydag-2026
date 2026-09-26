@@ -5,6 +5,12 @@ import Info from './Info'
 
 interface Props { rows: StrategyRow[]; heldOut: number | null; match?: PlotsToMatch[] }
 
+// the organizers' framing: the tradeoff between aggressive and conservative selection under limited plots
+const LABEL: Record<string, string> = {
+  'ProMaize, rank by $/acre': 'Aggressive: ProMaize, every line ranked by $/acre',
+  'ProMaize, same share of every family': 'Conservative: ProMaize, same share of every family',
+}
+
 /** The resource-allocation question answered with the record: the same plots spent different
  *  ways, every forward year, scored on what the field then paid. */
 export default function Strategies({ rows, heldOut, match }: Props) {
@@ -43,7 +49,7 @@ export default function Strategies({ rows, heldOut, match }: Props) {
           <tbody>
             {mean.map((r) => (
               <tr key={r.strategy} className={r.gain === best ? 'swap' : undefined}>
-                <td className="l wrap">{r.strategy}</td>
+                <td className="l wrap">{LABEL[r.strategy] ?? r.strategy}</td>
                 <td><b>{fmtUSD(r.gain, 1)}</b></td>
                 {heldOut != null && <td className="muted hide-sm">{fmtUSD(at(r.strategy, heldOut)?.gain ?? 0, 1)}</td>}
                 <td>{fmtPct(r.top10_kept)}</td>
@@ -76,11 +82,11 @@ export default function Strategies({ rows, heldOut, match }: Props) {
         if (!now || !before) return null
         return (
           <p style={{ margin: '10px 0 0' }}>
-            <b>Our {heldOut} recommendation is the even split.</b> Ranking all lines wins on average, but the family call
+            <b>Our {heldOut} recommendation is the conservative plan.</b> Ranking all lines wins on average, but the family call
             is only as good as the pedigree on record, and {heldOut}'s is thin. In {heldOut - 1}, the last season like it,
             the even split gave up {fmtUSD(before.usd, 2)}/acre for {fmtNum(before.fe)} effective families instead
             of {fmtNum(before.fr)}; in {heldOut} it gave up {fmtUSD(now.usd, 2)} for {fmtNum(now.fe)} instead
-            of {fmtNum(now.fr)}. Switch it on in the left panel.
+            of {fmtNum(now.fr)}. Switch it on in the left panel; the chart below shows why the pedigree decides it.
           </p>
         )
       })()}

@@ -14,6 +14,7 @@ import Backtest from './components/Backtest'
 import Validation from './components/Validation'
 import Strategies from './components/Strategies'
 import Evidence from './components/Evidence'
+import Pedigree from './components/Pedigree'
 
 export default function App() {
   const [data, setData] = useState<Recommendations | null>(null)
@@ -127,6 +128,7 @@ export default function App() {
           {data.validation.strategies && data.validation.strategies.length > 0 && (
             <Strategies rows={data.validation.strategies} heldOut={heldOut} match={data.validation.plots_to_match} />
           )}
+          {data.validation.by_year && <Pedigree years={data.validation.by_year} heldOut={heldOut} />}
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={prices} />
           <Validation v={data.validation} baselines={data.baselines} notes={data.meta.notes} heldOut={heldOut} />
           <Breadth scored={scored} budget={k} cap={cap} even={even} onCap={(c) => { setCap(c); setEven(false) }} onEven={() => setEven(true)} />

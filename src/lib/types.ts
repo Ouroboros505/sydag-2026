@@ -109,6 +109,9 @@ export interface YearResult {
   r_pedigree: number    // parents' earlier families only, no markers
   r_as_planted?: number         // same, against the raw result with the known tester effect added
   r_gblup_as_planted?: number
+  families_none?: number        // that year's families with no parent on record, one, both
+  families_one?: number
+  families_both?: number
 }
 
 export interface Recommendations {

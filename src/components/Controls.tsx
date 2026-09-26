@@ -38,12 +38,12 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
       <div className="control">
         <label>How plots are spread</label>
         <div className="toggle" style={{ marginTop: 4 }}>
-          <button className={!even ? 'on' : ''} onClick={() => onEven(false)}>rank all lines</button>
-          <button className={even ? 'on' : ''} onClick={() => onEven(true)}>same share per family</button>
+          <button className={!even ? 'on' : ''} onClick={() => onEven(false)}>aggressive: rank all</button>
+          <button className={even ? 'on' : ''} onClick={() => onEven(true)}>conservative: same share</button>
         </div>
         <div className="hint">
-          Same share: every family gets its fair share of plots and markers pick the siblings. Nearly free in 2008,
-          when the family call was weak.
+          Aggressive bets the plots on the best-predicted families. Conservative gives every family its fair share and
+          lets markers pick the siblings: nearly free in 2008, when the family call was weak.
         </div>
       </div>
 

@@ -291,6 +291,9 @@ def real_bayer(synthetic: bool = False) -> dict:
             "top20": round(m["top20"], 3), "n_lines": m["n_lines"], "n_families": m["n_families"],
             "r_gblup": round(model._r(g, cp.truth), 3), "r_pedigree": round(model._r(pb, cp.truth), 3),
             "r_as_planted": round(m["r_as_planted"], 3), "r_gblup_as_planted": round(model._r(g, cp.raw), 3),
+            # the structure behind the family call: how many of this year's families had 0/1/2 parents on record
+            **{f"families_{lab}": int((model.known_parents(fd, y)[np.unique(cp.fam_index)] == c).sum())
+               for lab, c in (("none", 0), ("one", 1), ("both", 2))},
         })
         say(f"{y}: ours r={m['r']:.3f} (between {m['r_between']:.3f}, within {m['r_within']:.3f}) | "
             f"standard GBLUP {by_year[-1]['r_gblup']:.3f} | pedigree BLUP {by_year[-1]['r_pedigree']:.3f} | "
