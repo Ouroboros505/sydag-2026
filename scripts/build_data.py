@@ -389,7 +389,7 @@ def real_bayer(synthetic: bool = False) -> dict:
         {"name": "environmental means (no genetics)", "metric": "r", "value": 0.0},
         {"name": "pedigree BLUP: parents' earlier families, no markers", "metric": "r", "value": by_year[-1]["r_pedigree"]},
         {"name": "standard GBLUP: one ridge over all lines", "metric": "r", "value": by_year[-1]["r_gblup"]},
-        {"name": "ProMaize: parents' genotypes -> family, sibling model -> line", "metric": "r", "value": round(head["r"], 3)},
+        {"name": "ProMaize: family genotype -> family mean, sibling model -> line", "metric": "r", "value": round(head["r"], 3)},
         {"name": "random k-fold, siblings in training (leaky, for contrast)", "metric": "r", "value": round(leaky_r, 3)},
     ]
     n_new = int((kp[cohort][np.unique(cp.fam_index)] == 0).sum())

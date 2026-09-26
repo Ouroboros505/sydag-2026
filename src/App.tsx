@@ -130,9 +130,14 @@ export default function App() {
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={prices} />
           <Validation v={data.validation} baselines={data.baselines} notes={data.meta.notes} heldOut={heldOut} />
           <Breadth scored={scored} budget={k} cap={cap} even={even} onCap={(c) => { setCap(c); setEven(false) }} onEven={() => setEven(true)} />
-          <Frontier points={curve} budget={k} onBudget={setBudget} />
-          <Scenarios candidates={data.candidates} prices={prices} budget={k} cap={cap} even={even} />
-          <GenomicMap all={scored} advanced={advancedIds} />
+          <details className="more">
+            <summary>More tools: the budget curve, price scenarios, the genomic map</summary>
+            <div className="stack" style={{ marginTop: 12 }}>
+              <Frontier points={curve} budget={k} onBudget={setBudget} />
+              <Scenarios candidates={data.candidates} prices={prices} budget={k} cap={cap} even={even} />
+              <GenomicMap all={scored} advanced={advancedIds} />
+            </div>
+          </details>
         </div>
       </div>
     </main>
