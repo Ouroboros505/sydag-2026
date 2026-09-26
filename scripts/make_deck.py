@@ -144,10 +144,10 @@ def main() -> None:
         "Sibling differences <- which parental segments each line inherited (ridge on within-family deviations).",
         "Tester effect removed as a BLUP: advance lines, not testers.",
         "**Baselines: environmental means, pedigree BLUP, standard GBLUP.",
-    ] + ([f"**Broad-acre, tested: location response predicted at r = {fmt(v['location_specific']['r_history'])}"
-          f" ({v['location_specific']['n_plots']:,} held-out plots)."] if v.get("location_specific") else [])
-      + ([f"Weather and soil, tested: which family does better where, r = {fmt(v['environment']['climate_r'])}. "
-          "Not offered; the demo switches between the family engine and standard GBLUP."] if v.get("environment") else []), 18)
+    ] + ([f"**Tested, not used: location response (r = {fmt(v['location_specific']['r_history'])}), weather and soil"
+          f" (r = {fmt(v['environment']['climate_r'])})."] if v.get("location_specific") and v.get("environment") else
+         [f"**Broad-acre, tested: location response predicted at r = {fmt(v['location_specific']['r_history'])}"
+          f" ({v['location_specific']['n_plots']:,} held-out plots)."] if v.get("location_specific") else []), 18)
     if by_year:
         cd = CategoryChartData()
         cd.categories = [str(y["year"]) for y in by_year]
@@ -177,14 +177,14 @@ def main() -> None:
     bullets(s, (left, top + height - Inches(0.4), width, Inches(0.4)), [f"Live: {DEMO_URL}"], 16)
     bullets(s, (left + pic_w + Inches(0.3), top, width - pic_w - Inches(0.3), height - Inches(0.5)), [
         "**In the order we show it",
-        "The strip: every number from seasons the model never saw.",
-        f"What {year} actually said: the ranking, scored on the real field.",
-        "Which way to spend the plots: six rules, six seasons.",
-        "The list: every line with $/acre, 90% band, confidence; CSV.",
-        "Allocation: rank all lines, or the same share per family.",
-        "How much to trust this: forward tests, baselines, bands.",
-        "**Works offline, on a phone; every state is a URL.",
-    ], 16)
+        "The strip: numbers from seasons the model never saw.",
+        "The engine switch: family engine or standard GBLUP.",
+        f"What {year} actually said: the ranking vs the real field.",
+        "Which way to spend the plots: aggressive or conservative.",
+        "The map: where your plan is tested, by kind of summer.",
+        "The list: every line, $/acre, range, confidence; CSV.",
+        "**Offline, on a phone; every state is a URL.",
+    ], 15)
 
     s = title["Business Value"]
     left, top, width, height = body(s, s.shapes.title)
@@ -192,7 +192,8 @@ def main() -> None:
         f"**Same plots (30% of lines), six ways, scored on what the field paid, {by_year[0]['year']}-{by_year[-1]['year']}"
         if by_year else "**Same plots, six ways, scored on what the field paid"], 18)
     y08 = {r["strategy"]: r for r in v.get("strategies", []) if r["year"] == year and r["budget"] == 0.3}
-    rows_ = sorted(strat, key=lambda r: -r["gain"])
+    # the slide keeps the standard ranking by bushels (the usual practice); the $/acre variant is in the README
+    rows_ = sorted([r for r in strat if r["strategy"] != "standard GBLUP, rank by $/acre"], key=lambda r: -r["gain"])
     tbl = s.shapes.add_table(len(rows_) + 1, 4, left, top + Inches(0.55), int(width * 0.78), Inches(0.34) * (len(rows_) + 1)).table
     heads = ["Rule", "Realised $/acre over random (6-year mean)", f"in {year}", "Real top 10% kept"]
     for j, t_ in enumerate(heads):
@@ -260,9 +261,11 @@ def main() -> None:
             f"r {fmt(head['r'] if head else None)} vs {fmt(head['r_gblup'] if head else None)}. The same data under a random "
             f"k-fold reads {fmt(v.get('leaky_r'))}: that is siblings in training, and we show it so nobody mistakes one for "
             "the other. (45 s)",
-        "Demo/Prototype": "Not shown in the 4 minutes: go live instead. 1) The strip (15 s). 2) What "
-            f"{year} actually said (30 s). 3) Which way to spend the plots: aggressive vs conservative (35 s). 4) The "
-            "pedigree chart, then click 'conservative' (25 s). 5) The list, hover a $/acre cell (15 s). 6) Trust (15 s).",
+        "Demo/Prototype": "Not shown in the 4 minutes: go live instead. 1) The strip (15 s). 2) The engine switch: "
+            f"flip to standard GBLUP and watch what {year} actually said drop from $5 to $1 an acre, then flip back (20 s). "
+            "3) Which way to spend the plots: aggressive vs conservative (30 s). 4) The pedigree chart, then click "
+            "'conservative' (20 s). 5) The map: the aggressive plan tilts toward hot, dry sites, the conservative one keeps "
+            "the full mix (20 s). 6) The list, hover a $/acre cell (10 s).",
         "Business Value": f"Same plots, six rules, six seasons, scored on what the field paid. The standard approach realised "
             f"${std['gain']:.1f} an acre over random; ours ${ours['gain']:.1f}: {lift} more value from the same plots. "
             + (f"In plots: the standard ranking needed {m08['lines_saved']:,} more lines in {year} to keep the same winners. "
