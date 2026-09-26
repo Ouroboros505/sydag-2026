@@ -164,7 +164,7 @@ export default function DataPage() {
     <div className="learn">
       <header className="lhead">
         <div>
-          <h1>How we cleaned the data</h1>
+          <h1>How we cleaned the data <span className="version" title={`ProMaize v${__VERSION__}, built ${__BUILD__} UTC`}>v{__VERSION__}</span></h1>
           <p className="sub">What we did to the Bayer files before any model saw them, step by step, with the real numbers.</p>
         </div>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

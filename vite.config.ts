@@ -1,11 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import pkg from './package.json'
 
 const BUILD_STAMP = new Date().toISOString().slice(0, 16).replace('T', ' ')
+// shown on every page, so anyone can tell at a glance which release they are looking at
+const VERSION = pkg.version
 
 export default defineConfig({
-  define: { __BUILD__: JSON.stringify(BUILD_STAMP) },
+  define: { __BUILD__: JSON.stringify(BUILD_STAMP), __VERSION__: JSON.stringify(VERSION) },
   // Binds every interface so a phone on the same network can reach it.
   server: { host: true },
   // Three pages: the demo at /, the learning walkthrough at /learn/, the data cleaning at /cleaning/.

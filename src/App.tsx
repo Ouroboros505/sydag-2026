@@ -113,6 +113,7 @@ export default function App() {
     <main>
       <header>
         <h1>ProMaize</h1>
+        <span className="version" title={`ProMaize v${__VERSION__}, built ${__BUILD__} UTC`}>v{__VERSION__}</span>
         <span className="sub">trial planner · which lines get the ground this season</span>
         <span style={{ marginLeft: 'auto', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
           {data.meta.synthetic && <span className="banner" style={{ marginLeft: 0 }}>synthetic placeholder data</span>}

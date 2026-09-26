@@ -30,7 +30,7 @@ export default function Learn() {
     <div className="learn">
       <header className="lhead">
         <div>
-          <h1>ProMaize, from zero</h1>
+          <h1>ProMaize, from zero <span className="version" title={`ProMaize v${__VERSION__}, built ${__BUILD__} UTC`}>v{__VERSION__}</span></h1>
           <p className="sub">What the breeding problem is, what the data looks like, and what the model does. No background needed.</p>
         </div>
         <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
