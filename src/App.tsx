@@ -67,6 +67,20 @@ export default function App() {
   const half90 = data?.validation.engines?.find((e) => e.id === dEngine)?.half90
   const cands = useMemo(() => (data ? withEngine(data.candidates, dEngine, half90) : []), [data, dEngine, half90])
   const nFamilies = useMemo(() => new Set(data?.candidates.map((c) => c.family)).size, [data])
+  // how the lines are organized decides the engine: families of siblings, or lines that stand alone
+  const shape = useMemo(() => {
+    if (!data) return undefined
+    const n = new Map<string, number>()
+    for (const c of data.candidates) n.set(c.family, (n.get(c.family) ?? 0) + 1)
+    const sizes = [...n.values()].filter((k) => k >= 2).sort((a, b) => a - b)
+    return { lines: data.candidates.length, families: sizes.length, inFamilies: sizes.reduce((a, k) => a + k, 0),
+      perFamily: sizes[Math.floor(sizes.length / 2)] ?? 0 }
+  }, [data])
+  // what each engine's picks really earned in the held-out season, plant 30%
+  const real = useMemo(() => {
+    const row = (name: string) => data?.validation.strategies?.find((r) => r.year === data.meta.held_out_year && r.budget === 0.3 && r.strategy === name)?.gain
+    return { family: row('ProMaize, rank by $/acre'), gblup: row('standard GBLUP, rank by $/acre') }
+  }, [data])
   const scored = useMemo(() => (dPrices ? score(cands, dPrices) : []), [cands, dPrices])
   const byYield = useMemo(() => byYieldOrder(scored), [scored])
   const maxFamily = useMemo(() => {
@@ -148,7 +162,7 @@ export default function App() {
         <Controls
           n={scored.length} budget={budget} cap={cap} maxFamily={maxFamily} prices={prices} even={even}
           onBudget={setBudget} onCap={onCap} onPrices={setPrices} onEven={setEven}
-          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset}
+          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape} real={real}
         />
         <div className="stack" style={{ opacity: stale ? 0.72 : 1, transition: 'opacity 120ms' }}>
           {k < dBudget && (

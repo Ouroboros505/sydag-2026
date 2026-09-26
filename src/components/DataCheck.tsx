@@ -54,7 +54,7 @@ export default function DataCheck({ compact = false }: { compact?: boolean }) {
           <b>{rep.file}</b>: {n0(rep.rows)} plots, cleaned in {rep.seconds.toFixed(1)} s
           <ol style={{ margin: '6px 0 0', paddingLeft: 18 }}>
             <li>{rep.idsFixed ? <>{n0(rep.idsFixed)} line names fixed (a stray ".0").</> : <>Line names clean.</>}{' '}
-              {n0(rep.lines)} lines{rep.families ? <> in {n0(rep.families)} families</> : null}.</li>
+              {n0(rep.lines)} lines.</li>
             <li>{imp.length
               ? <>Impossible values set to missing: {imp.map(([t, c]) => `${n0(c)} ${NAMES[t]}`).join(', ')}.</>
               : <>No impossible values.</>}</li>
@@ -63,6 +63,12 @@ export default function DataCheck({ compact = false }: { compact?: boolean }) {
               {n0(rep.plotsPerTrial)} plots each); every plot is compared with its own field. Field averages ran from{' '}
               {rep.trialSpread[0].toFixed(0)} to {rep.trialSpread[1].toFixed(0)} bu/ac: that gap is the field, not the line.</li>
           </ol>
+          <div style={{ marginTop: 6 }}>
+            {rep.families >= 3 && rep.inFamilies >= 0.5
+              ? <><b>These lines come in families</b> ({n0(rep.families)} families of about {n0(rep.perFamily)} lines): ProMaize
+                recommends <b>2-Step</b>.</>
+              : <><b>These lines don't come in families</b>: ProMaize recommends <b>Standard</b>.</>}
+          </div>
           <div style={{ marginTop: 6 }}>
             <b>Clean and ready for the model.</b> With the DNA files for these lines, the pipeline ranks them in about
             five minutes (<span className="mono">scripts/build_data.py</span>).

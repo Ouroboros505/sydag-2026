@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Prices } from '../lib/econ'
 import type { EngineId, EngineInfo } from '../lib/types'
 import Info from './Info'
@@ -20,29 +21,33 @@ interface Props {
   heldOut: number | null
   seasons?: number
   dataset?: string
+  shape?: DataShape
+  real?: Partial<Record<EngineId, number>>   // what each engine's picks really earned in the held-out season, $/acre
 }
+
+/** How the loaded lines are organized: the fact that decides which engine fits. */
+export interface DataShape { lines: number; families: number; inFamilies: number; perFamily: number }
+export const hasFamilies = (s: DataShape) => s.families >= 3 && s.inFamilies / s.lines >= 0.5
 
 const SHORT: Record<EngineId, string> = { family: '2-Step', gblup: 'Standard', environment: 'Environment' }
 // what each engine runs on, for the hover
-const BEHIND: Record<EngineId, string> = {
-  family: "2-Step, ProMaize's own engine. Step 1 rates each cross from its parents' DNA; step 2 ranks each line against its brothers and sisters (two GBLUP-type marker models)",
-  gblup: 'The standard method in plant breeding: GBLUP, one marker model over every line tested before, no family step',
-  environment: '2-Step plus weather and soil',
-}
-// when each engine is the right tool, in the breeder's terms
-const WHEN: Record<EngineId, string> = {
-  family: "ProMaize's own engine, built for seasons full of new families: it rates each cross by what its parents passed on, then ranks the lines inside it against each other.",
-  gblup: "The standard method in plant breeding: one model over every line tested before. It needs no family records, and it lets you check ProMaize against the method your team already trusts.",
-  environment: '2-Step plus each test site\'s weather and soil.',
+const FOR: Record<EngineId, string> = { family: 'for data with families', gblup: 'for data without families', environment: '' }
+const HOW: Record<EngineId, string> = {
+  family: "Step 1 rates each cross from its parents' DNA; step 2 ranks the lines inside each family.",
+  gblup: 'One model over every line, no family needed: the usual method (GBLUP).',
+  environment: '',
 }
 
-export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, seasons, dataset }: Props) {
+export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, dataset, shape, real }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
   const capTop = Math.min(maxFamily, 80)
   const capValue = Number.isFinite(cap) ? cap : capTop + 1
 
   const cur = engines?.find((e) => e.id === engine)
+  const [peek, setPeek] = useState<EngineId | null>(null)
+  const [fit, setFit] = useState(false)
+  const best: EngineId = shape && hasFamilies(shape) ? 'family' : 'gblup'
 
   return (
     <div className="panel">
@@ -70,18 +75,48 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
             1 is perfect, 0 is no better than chance. Switch engines and every panel on the page updates, including
             what {heldOut ?? 'the field'} actually said.
           </Info></h2>
-          <div className="control">
+          <div className="control" style={{ position: 'relative' }}>
             <div className="toggle">
               {engines.map((e) => (
-                <button key={e.id} className={e.id === engine ? 'on' : ''} onClick={() => onEngine(e.id)} title={BEHIND[e.id]}>{SHORT[e.id]}</button>
+                <button key={e.id} className={e.id === engine ? 'on' : ''} onClick={() => onEngine(e.id)}
+                  onMouseEnter={() => setPeek(e.id)} onMouseLeave={() => setPeek(null)}
+                  onFocus={() => setPeek(e.id)} onBlur={() => setPeek(null)}>{SHORT[e.id]}</button>
               ))}
             </div>
-            <div className="engine-note">
-              {WHEN[engine]}<br />
-              Track record: accuracy <b>{cur.r_mean.toFixed(2)}</b> on average over {seasons ?? 'the'} past seasons
-              {heldOut ? <>, <b>{cur.r_last.toFixed(2)}</b> in {heldOut}, when <b>{Math.round(cur.coverage90 * 100)}%</b> of
-              real results fell inside its ranges</> : null}.
-            </div>
+            {peek && (
+              <div className="enginecard" role="tooltip">
+                <div><b>{SHORT[peek]}</b> <span className="muted">{FOR[peek]}</span></div>
+                <div style={{ margin: '4px 0 8px' }}>{HOW[peek]}</div>
+                <table className="mini">
+                  <thead><tr><th /> {engines.map((e) => <th key={e.id} className={e.id === peek ? 'hi' : ''}>{SHORT[e.id]}</th>)}</tr></thead>
+                  <tbody>
+                    <tr><td>accuracy, past seasons <span className="muted">(1 = perfect)</span></td>
+                      {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>{e.r_mean.toFixed(2)}</td>)}</tr>
+                    {heldOut && real && (
+                      <tr><td>{heldOut}, real $/acre over random</td>
+                        {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>
+                          {real[e.id] != null ? `+$${real[e.id]!.toFixed(0)}` : ''}</td>)}</tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {shape && (
+              <div style={{ marginTop: 8 }}>
+                <button className="link small" onClick={() => setFit((f) => !f)}>Which engine fits my data?</button>
+                {fit && (
+                  <div className="small fitnote">
+                    {best === 'family'
+                      ? <>Your lines come in families: <b>{shape.families.toLocaleString('en-US')}</b> families of about{' '}
+                        {shape.perFamily} lines. ProMaize recommends <b>2-Step</b>.</>
+                      : <>Your lines don't come in families. ProMaize recommends <b>Standard</b>.</>}
+                    {engine !== best && engines.some((e) => e.id === best) && (
+                      <> <button className="link" onClick={() => onEngine(best)}>Use {SHORT[best]}</button></>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}

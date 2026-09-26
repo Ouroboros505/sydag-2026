@@ -166,6 +166,19 @@ button.pill:hover, label.pill:hover { color: var(--accent); border-color: var(--
   transition: border-color 120ms, color 120ms;
 }
 .dropzone:hover, .dropzone.over { border-color: var(--accent); color: var(--accent); }
+/* the engine hover: what each engine is for, and how the two did on this data */
+.enginecard {
+  position: absolute; left: 0; top: 36px; z-index: 30; width: min(320px, 86vw); font-size: 12px; line-height: 1.45;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); color: var(--text-2);
+}
+.enginecard b { color: var(--text); }
+table.mini { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.mini th, table.mini td { padding: 3px 4px; text-align: right; border-bottom: 1px solid var(--grid); font-weight: 400; }
+table.mini th:first-child, table.mini td:first-child { text-align: left; }
+table.mini th { color: var(--text-3); }
+table.mini .hi { color: var(--text); font-weight: 700; background: var(--highlight); }
+.fitnote { margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--row-alt); color: var(--text-2); line-height: 1.45; }
 
 /* phones */
 .layout { grid-template-columns: 300px minmax(0, 1fr); }
