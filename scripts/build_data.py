@@ -457,6 +457,23 @@ def real_bayer(synthetic: bool = False) -> dict:
                 row[key] = round(float(max(0.0, means[t] + v) if t == "lodging_adj" else means[t] + v), 1 if t != "mst_adj" else 2)
         rows.append(row)
 
+    # every plot of the held-out season, so the app can score any plan site by site: the chosen lines
+    # against the lines left out, in the same fields. Values are relative to each plot's own trial.
+    ix = {r_["id"]: i for i, r_ in enumerate(rows)}
+    site_ix = {l_["loc"]: k for k, l_ in enumerate(locations)}
+    q = pl[(pl["year"] == cohort) & pl["yield_bu"].notna() & pl["id"].isin(ix.keys()) & pl["location"].isin(site_ix.keys())].copy()
+    for col in ("yield_bu", "mst", "lodging"):
+        q[col] = q[col] - q.groupby("env")[col].transform("mean")
+    season_plots = {
+        "line": q["id"].map(ix).astype(int).tolist(), "site": q["location"].map(site_ix).astype(int).tolist(),
+        "y10": (q["yield_bu"] * 10).round().astype(int).tolist(),                     # bu/ac x 10
+        "m100": (q["mst"].fillna(0) * 100).round().astype(int).tolist(),              # moisture points x 100
+        "l10": (q["lodging"].fillna(0) * 10).round().astype(int).tolist(),            # lodging % x 10; unscored = trial average
+        "means": {"yield": round(float(means["yield_adj"]), 2), "mst": round(float(means["mst_adj"]), 3),
+                  "lodging": round(float(means["lodging_adj"]), 3)},
+    }
+    say(f"{cohort} plots for the site-by-site check: {len(q):,} at {q['location'].nunique()} sites")
+
     strategies, match = strategy_backtest(fd, fwd, eval_years, means, model)
     for m_ in match:
         say(f"{m_['year']}: ProMaize at 30% keeps {m_['ours_kept']:.0%} of the real top 10%; standard GBLUP needs "
@@ -488,6 +505,7 @@ def real_bayer(synthetic: bool = False) -> dict:
         "candidates": rows,
         "locations": locations,
         "family_sites": family_sites,
+        "season_plots": season_plots,
         "baselines": baselines,
         "validation": {
             "scheme": f"year-forward: every {cohort} family predicted from {years[0]}-{cohort - 1} only, none of them seen before",

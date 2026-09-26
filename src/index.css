@@ -142,6 +142,17 @@ a.pill {
   border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; white-space: nowrap;
 }
 a.pill:hover { color: var(--accent); border-color: var(--accent); }
+button.pill, label.pill {
+  font: inherit; font-size: 12px; color: var(--text-2); background: var(--surface); cursor: pointer;
+  border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; white-space: nowrap;
+}
+button.pill:hover, label.pill:hover { color: var(--accent); border-color: var(--accent); }
+.popover {
+  position: absolute; right: 0; top: calc(100% + 6px); width: min(440px, 92vw); z-index: 30;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); color: var(--text); white-space: normal;
+}
+.popover .datacheck { margin: 10px 0; }
 
 /* phones */
 .layout { grid-template-columns: 300px minmax(0, 1fr); }

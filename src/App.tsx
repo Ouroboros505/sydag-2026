@@ -16,6 +16,7 @@ import Strategies from './components/Strategies'
 import Evidence from './components/Evidence'
 import Pedigree from './components/Pedigree'
 import TestSites from './components/TestSites'
+import DataCheck from './components/DataCheck'
 
 export default function App() {
   const [data, setData] = useState<Recommendations | null>(null)
@@ -61,6 +62,7 @@ export default function App() {
   const dEngine = useDeferredValue(engine)
   const stale = dPrices !== prices || dBudget !== budget || dCap !== cap || dEven !== even || dEngine !== engine
   const [moreOpen, setMoreOpen] = useState(false)
+  const [dataOpen, setDataOpen] = useState(false)
   const onCap = useCallback((c: number) => { setCap(c); setEven(false) }, [])
   const onEvenOn = useCallback(() => setEven(true), [])
 
@@ -116,6 +118,23 @@ export default function App() {
         <span className="sub">trial planner · which lines get the ground this season</span>
         <span style={{ marginLeft: 'auto', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
           {data.meta.synthetic && <span className="banner" style={{ marginLeft: 0 }}>synthetic placeholder data</span>}
+          <span style={{ position: 'relative' }}>
+            <button className="pill" onClick={() => setDataOpen((o) => !o)} aria-expanded={dataOpen}>
+              Data: Bayer maize, {heldOut ? `2000 to ${heldOut}` : 'loaded'} ▾
+            </button>
+            {dataOpen && (
+              <div className="popover">
+                <div className="small">
+                  <b>Loaded:</b> Bayer's maize trials{heldOut ? `, 2000 to ${heldOut}` : ''}, cleaned in seven steps;{' '}
+                  {data.meta.n_candidates.toLocaleString()} new lines to rank.
+                </div>
+                <DataCheck compact />
+                <div className="small muted">
+                  Every file goes through the same cleaning. <a href="/cleaning/">See the steps, with the real numbers →</a>
+                </div>
+              </div>
+            )}
+          </span>
           <a className="pill" href="/cleaning/" title="What we did to the data before any model saw it">
             How we cleaned the data →
           </a>
@@ -161,9 +180,9 @@ export default function App() {
             <Strategies rows={data.validation.strategies} heldOut={heldOut} match={data.validation.plots_to_match} />
           )}
           {data.validation.by_year && <Pedigree years={data.validation.by_year} heldOut={heldOut} />}
-          {data.locations && data.locations.length > 0 && (
-            <TestSites sites={data.locations} year={heldOut} persistence={data.validation.site_persistence}
-              familySites={data.family_sites} all={scored} advanced={summary.advanced} />
+          {data.locations && data.locations.length > 0 && data.season_plots && (
+            <TestSites sites={data.locations} year={heldOut} candidates={data.candidates} plots={data.season_plots}
+              prices={dPrices} advanced={summary.advanced} />
           )}
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={dPrices} />
           <Validation v={data.validation} baselines={data.baselines} notes={data.meta.notes} heldOut={heldOut} />

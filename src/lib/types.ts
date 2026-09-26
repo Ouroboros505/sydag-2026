@@ -131,6 +131,16 @@ export interface EngineInfo {
 
 export type EngineId = EngineInfo['id']
 
+/** Every plot of the held-out season, relative to its own trial, for the site-by-site check. */
+export interface SeasonPlots {
+  line: number[]      // index into candidates
+  site: number[]      // index into locations
+  y10: number[]       // yield, bu/ac x 10
+  m100: number[]      // grain moisture, points x 100
+  l10: number[]       // lodging %, x 10 (unscored plots = the trial average)
+  means: { yield: number; mst: number; lodging: number }
+}
+
 /** Forward checks of the environment data (see analysis/model.py). */
 export interface EnvironmentCheck {
   climate_r: number                 // parent DNA x usual weather and soil: which family does better where
@@ -166,6 +176,7 @@ export interface Recommendations {
   candidates: Candidate[]
   locations?: TestSite[]
   family_sites?: Record<string, string[]>   // the sites testing each new family
+  season_plots?: SeasonPlots
   baselines: Baseline[]
   validation: Validation
 }

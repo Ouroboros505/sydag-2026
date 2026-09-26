@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
+import DataCheck from '../components/DataCheck'
 
 // Counts from the Bayer files as delivered (see README, "Data quality, counted").
 const RECORDED: [string, number][] = [
@@ -71,9 +72,10 @@ const STEPS: Step[] = [
     why: 'One typo can move an average more than a real difference between lines.',
     body: (
       <p className="explain" style={{ marginTop: 0 }}>
-        <b>1,069 maturity values</b> were outside any possible range, like <b>−24</b> or <b>383</b> days. They were set to
-        missing instead of being averaged in. Yield, moisture and test weight had no impossible values: we checked every
-        column against a plausible range (yield 20 to 350 bu/ac, moisture 5 to 45%, maturity 80 to 140 days).
+        <b>1,069 maturity values</b> were outside any possible range, like <b>−24</b> or <b>383</b> days; so were{' '}
+        <b>56 lodging readings</b> above 100% of plants (one says 3,056%) and <b>14 harvest moistures</b> above 45%. All were
+        set to missing instead of being averaged in. Yield and test weight had none: we checked every column against a
+        plausible range (yield 20 to 350 bu/ac, moisture 5 to 45%, maturity 80 to 140 days, lodging 0 to 100%).
       </p>
     ),
   },
@@ -174,6 +176,11 @@ export default function DataPage() {
       <section className="panel lsec" style={{ marginBottom: 16 }}>
         <h2 style={{ paddingLeft: 0 }}>What we started with, and what we ended with</h2>
         <Funnel />
+      </section>
+
+      <section className="panel lsec" style={{ marginBottom: 16 }}>
+        <h2 style={{ paddingLeft: 0 }}>Try it on a file</h2>
+        <DataCheck />
       </section>
 
       <div className="lgrid">

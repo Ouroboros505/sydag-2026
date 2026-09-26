@@ -120,7 +120,7 @@ A third engine, weather and soil, was built and tested the same way and did not 
 |---|---|
 | field plots | 1,072,276, 2000-2008 |
 | yield / harvest moisture recorded | 95.9% / 97.3% of plots |
-| relative maturity (ERM) recorded | 59.5% of plots; 1,069 impossible values (e.g. -24, 383) set to missing |
+| relative maturity (ERM) recorded | 59.5% of plots; 1,069 impossible values (e.g. -24, 383) set to missing; also 56 lodging readings over 100% and 14 moistures over 45% |
 | lodging (root or stalk) recorded | 72.0% of plots; unscored is missing, never zero |
 | lines with genotypes | 143,726 of 154,330 (93.1%): 65-93% in 2000-2003, 99-100% from 2004 |
 | genotype cells unknown after imputation | 0.065%, set to the neutral code |

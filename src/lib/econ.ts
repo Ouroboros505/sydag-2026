@@ -6,7 +6,7 @@
  *
  * Deliberately simple and fully visible. Every term is a number the user can move.
  */
-import type { Candidate, EngineId, PriceDefaults } from './types'
+import type { Candidate, EngineId, PriceDefaults, SeasonPlots } from './types'
 
 export interface Prices extends PriceDefaults {}
 
@@ -367,3 +367,32 @@ export const fmtUSD = (v: number, digits = 0) =>
 export const fmtNum = (v: number, digits = 0) =>
   v.toLocaleString('en-US', { maximumFractionDigits: digits })
 export const fmtPct = (v: number, digits = 0) => `${(v * 100).toFixed(digits)}%`
+
+/** What every plot of the held-out season really paid, $/acre at these prices. */
+export function plotMargins(sp: SeasonPlots, p: Prices): Float64Array {
+  const out = new Float64Array(sp.line.length)
+  for (let i = 0; i < out.length; i++) {
+    const y = sp.means.yield + sp.y10[i] / 10
+    const m = sp.means.mst + sp.m100[i] / 100
+    const l = Math.max(0, sp.means.lodging + sp.l10[i] / 10)
+    out[i] = y * p.corn_price - Math.max(0, m - p.target_moisture) * p.drying_cost_per_point * y
+      - (l / 100) * p.lodging_loss_fraction * y * p.corn_price
+  }
+  return out
+}
+
+export interface SiteResult { chosen: number; others: number; gain: number | null }
+
+/** Per site: the chosen lines' plots against the other lines' plots in the same fields, $/acre.
+ *  A site needs a few plots of each to count. */
+export function siteResults(sp: SeasonPlots, margins: Float64Array, chosen: Uint8Array, nSites: number, min = 5): SiteResult[] {
+  const sc = new Float64Array(nSites), so = new Float64Array(nSites)
+  const nc = new Int32Array(nSites), no = new Int32Array(nSites)
+  for (let i = 0; i < margins.length; i++) {
+    const s = sp.site[i]
+    if (chosen[sp.line[i]]) { sc[s] += margins[i]; nc[s]++ } else { so[s] += margins[i]; no[s]++ }
+  }
+  return Array.from({ length: nSites }, (_, s) => ({
+    chosen: nc[s], others: no[s], gain: nc[s] >= min && no[s] >= min ? sc[s] / nc[s] - so[s] / no[s] : null,
+  }))
+}
