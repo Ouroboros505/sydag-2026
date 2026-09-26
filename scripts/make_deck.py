@@ -144,9 +144,21 @@ def main() -> None:
     s = title["Demo/Prototype"]
     left, top, width, height = body(s, s.shapes.title)
     shot = ROOT / "docs" / "screens" / "1-default.png"
+    pic_w = 0
     if shot.exists():
-        s.shapes.add_picture(str(shot), left, top, height=height - Inches(0.5))
+        pic = s.shapes.add_picture(str(shot), left, top, height=height - Inches(0.5))
+        pic_w = pic.width
     bullets(s, (left, top + height - Inches(0.4), width, Inches(0.4)), [f"Live: {DEMO_URL}"], 16)
+    bullets(s, (left + pic_w + Inches(0.3), top, width - pic_w - Inches(0.3), height - Inches(0.5)), [
+        "**In the order we show it",
+        "The strip: every number from seasons the model never saw.",
+        f"What {year} actually said: the ranking, scored on the real field.",
+        "Which way to spend the plots: six rules, six seasons.",
+        "The list: every line with $/acre, 90% band, confidence; CSV.",
+        "Allocation: rank all lines, or the same share per family.",
+        "How much to trust this: forward tests, baselines, bands.",
+        "**Works offline, on a phone; every state is a URL.",
+    ], 16)
 
     s = title["Business Value"]
     left, top, width, height = body(s, s.shapes.title)
