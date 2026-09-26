@@ -324,26 +324,6 @@ def families() -> pd.DataFrame:
     return fam
 
 
-def _parents() -> dict[str, tuple[str, str]]:
-    fam = families()
-    return {f: (r.parent1, r.parent2) for f, r in fam.iterrows()}
-
-
-def candidates(h: pd.DataFrame) -> pd.DataFrame:
-    """Genotyped progeny with no field record (the delivered data has few; build_data ranks
-    the last cohort instead)."""
-    _, meta = _genotype_cache()
-    have = set(h.index)
-    ids = [i for i in meta["ids"] if i not in have]
-    c = pd.DataFrame(index=pd.Index(ids, name="id"))
-    c["family"] = family_of(ids).to_numpy()
-    c["population"] = c["family"]
-    fam = families()
-    c["parent1"] = fam["parent1"].reindex(c["family"]).fillna("").to_numpy()
-    c["parent2"] = fam["parent2"].reindex(c["family"]).fillna("").to_numpy()
-    return c
-
-
 def environments() -> pd.DataFrame:
     """Year x location weather and soil, as delivered."""
     f = next(iter(sorted(BASE.rglob("environmental_features.csv"))), None)
