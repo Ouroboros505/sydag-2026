@@ -163,4 +163,8 @@ export const GLOSSARY: [string, string][] = [
   ['Ridge regression / GBLUP', 'The standard model for that: one small weight per marker, kept small on purpose so thousands of markers don\'t overfit. The two names are the same maths.'],
   ['r (correlation)', 'How well predictions rank the truth. 1 = perfect, 0 = coin flip. Honest values on this data are 0.13 to 0.31, depending on the year.'],
   ['Leakage', 'Accidentally testing on relatives of training lines. Makes a model look far better than it is.'],
+  ['Forward validation', 'Train on earlier years only, predict the next year, check against what happened. In this program every family is new each year, so it is also family-disjoint: the honest test.'],
+  ['GCA scale', 'A line\'s result with its trial\'s mean and its tester\'s effect removed, so lines are compared on what they would give as parents, not on the partner they were crossed to.'],
+  ['Backtest', 'Replay a past season: rank its lines using only what was known before it, then score the choice on what the field really did.'],
+  ['Same share per family', 'Give every family the same fraction of plots and let markers choose which siblings get them. Buys genetic breadth; nearly free in a year when family predictions are weak.'],
 ]
