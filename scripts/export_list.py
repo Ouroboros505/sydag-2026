@@ -2,10 +2,11 @@
 """The recommendation as a file: which lines to plant, at the recommended settings.
 
     python scripts/export_list.py            # -> docs/advance_2008.csv (after build_data.py)
-    python scripts/export_list.py --share 0.3 --cap 50
+    python scripts/export_list.py --share 0.3 --cap 50   # with a family limit
 
-Same arithmetic as the app (src/lib/econ.ts) at the default prices: rank by predicted $/acre,
-at most `cap` lines per family, until `share` of the cohort has a plot. Only what was known in
+Same arithmetic as the app (src/lib/econ.ts) at the default prices: rank by predicted $/acre
+(optionally at most `cap` lines per family) until `share` of the cohort has a plot. The default is
+no family limit: across six forward seasons that ranking realised the most (see README). Only what was known in
 January is written; the cohort's real results stay in the app's backtest.
 """
 from __future__ import annotations
@@ -28,7 +29,7 @@ def margin(c: pd.DataFrame, p: dict) -> pd.Series:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--share", type=float, default=0.3, help="share of the cohort that gets a plot")
-    ap.add_argument("--cap", type=int, default=50, help="most lines from one family")
+    ap.add_argument("--cap", type=int, default=0, help="most lines from one family (0 = no limit)")
     args = ap.parse_args()
     rec = json.loads((ROOT / "public" / "recommendations.json").read_text())
     c = pd.DataFrame(rec["candidates"])
@@ -36,7 +37,7 @@ def main() -> None:
     c = c.sort_values("usd_per_acre", ascending=False)
     c["rank_in_family"] = c.groupby("family").cumcount() + 1
     k = round(args.share * len(c))
-    pick = c[c["rank_in_family"] <= args.cap].head(k).copy()
+    pick = (c[c["rank_in_family"] <= args.cap] if args.cap else c).head(k).copy()
     pick.insert(0, "rank", range(1, len(pick) + 1))
     cols = ["rank", "id", "group", "family", "tester", "usd_per_acre", "pred_yield", "lo", "hi", "pred_mst",
             "pred_erm", "pred_lodging", "confidence"]

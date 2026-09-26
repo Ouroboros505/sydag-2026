@@ -25,7 +25,7 @@ export default function Validation({ v, baselines, notes, heldOut }: Props) {
         {v.ceiling != null && <> (plot noise caps any predictor near <b>{v.ceiling.toFixed(2)}</b>)</>}, and the top 20% by
         prediction holds <b>{Math.round(v.top20_recovery * 100)}%</b> of the real top 20% (chance is 20%).
         {v.r_between != null && v.r_within != null && (
-          <> Split: families ranked at <b>r = {f2(v.r_between)}</b> from their parents' DNA, siblings inside a family at{' '}
+          <> Split: families ranked at <b>r = {f2(v.r_between)}</b> from what their parents passed on, siblings inside a family at{' '}
             <b>r = {f2(v.r_within)}</b>.</>
         )}
         {v.r_as_planted != null && (

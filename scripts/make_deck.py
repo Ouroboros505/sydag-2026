@@ -116,7 +116,7 @@ def main() -> None:
     left, top, width, height = body(s, s.shapes.title)
     bullets(s, (left, top, int(width * 0.46), height), [
         "**Two questions, two models",
-        "Family mean <- the parents' genotypes (ridge on the midparent, recent years weighted up).",
+        "Family mean <- what the parents passed on (the family's mean genotype; ridge, recent years weighted up).",
         "Sibling differences <- which parental segments each line inherited (ridge on within-family deviations).",
         "Tester effect removed as a BLUP: advance lines, not testers.",
         "**Baselines: environmental means, pedigree BLUP, standard GBLUP.",
@@ -181,14 +181,16 @@ def main() -> None:
                 p.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF) if i == 0 else TEXT
     table_bottom = top + Inches(0.55) + Inches(0.6) + Inches(0.34) * len(rows_)
     match = v.get("plots_to_match") or []
+    even = y08.get("ProMaize, same share of every family"); rank = y08.get("ProMaize, rank by $/acre")
+    even_cost = rank["gain"] - even["gain"] if even and rank else None
+    even_fam, rank_fam = (even or {}).get("eff_families") or 0, (rank or {}).get("eff_families") or 0
     needs = sum(m["standard_needs"] for m in match) / len(match) if match else None
     bullets(s, (left, table_bottom + Inches(0.15), width, Inches(1.4)), ([
         f"**In plots: to keep the real winners ProMaize keeps with 30% of lines, standard GBLUP had to plant"
         f" {needs:.0%} of them.", ] if needs else []) + [
         f"**Honest error bars: the 90% bands held {v.get('coverage90', 0):.0%} of real {year} results.",
-        f"**{year} was the hardest year to call families (lowest between-family r of the six), and ProMaize still"
-        f" doubled standard GBLUP (r {fmt(head['r'] if head else None)} vs {fmt(head['r_gblup'] if head else None)}).",
-    ], 16)
+    ] + ([f"**Breadth is nearly free in {year}: an even share per family cost ${even_cost:.2f}/acre and advanced"
+          f" {even_fam:.0f} families instead of {rank_fam:.0f}."] if even_cost is not None else []), 15)
 
     s = title["Future Development"]
     bullets(s, body(s, s.shapes.title), [

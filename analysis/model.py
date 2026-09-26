@@ -153,8 +153,9 @@ def two_stage(f: Fit, M_lines: pd.DataFrame, family: pd.Series, M_parents: pd.Da
 # were good" and has little left for the new ones. The model below splits the problem the
 # way a breeder does:
 #
-#   between families: the family's mean GCA from its two parents' genotypes (real calls at
-#                     every marker), ridge on the midparent, trained on earlier families
+#   between families: the family's mean GCA from what its parents passed on: the average
+#                     genotype of its lines (for a backcross, three quarters of one parent),
+#                     ridge on that, trained on earlier families
 #   within a family:  each line's deviation from its siblings, from which parental segments
 #                     it inherited; one ridge trained on sibling differences in every earlier
 #                     family (tester and trial effects cancel inside a family)
@@ -280,9 +281,11 @@ def within_effects(fd: FamilyData, t: str, before: int, alpha: float) -> np.ndar
 
 def between_predict(fd: FamilyData, target: np.ndarray, before: int, alpha: float,
                     half_life: float | None = 3.0) -> np.ndarray:
-    """Family-level ridge on the midparent genotype, per cluster, trained on families before
-    `before`. Weights favour families with more lines, and recent cohorts: linkage between
-    markers and genes decays over generations, so old associations transfer less."""
+    """Family-level ridge on the family's mean genotype, per cluster, trained on families before
+    `before`. The mean of the lines' genotypes is what the parents actually passed on: for the
+    quarter of families that are backcrosses it is 3/4 one parent, which a 50/50 midparent
+    misses (chosen on 2005-2007: r 0.256 -> 0.271). Weights favour families with more lines, and
+    recent cohorts: linkage between markers and genes decays, so old associations transfer less."""
     train = np.flatnonzero((fd.year < before) & np.isfinite(target))
     out = np.full(len(fd.families), np.nan)
     for cl in np.unique(fd.cluster):
@@ -292,12 +295,12 @@ def between_predict(fd: FamilyData, target: np.ndarray, before: int, alpha: floa
         w = fd.counts[tr] / (fd.counts[tr] + 20.0)
         if half_life:
             w = w * 0.5 ** ((before - 1 - fd.year[tr]) / half_life)
-        mu = np.average(fd.MP[tr], axis=0, weights=w)
+        mu = np.average(fd.Xbar[tr], axis=0, weights=w)
         ym = np.average(target[tr], weights=w)
-        A = (fd.MP[tr] - mu) * np.sqrt(w)[:, None]
+        A = (fd.Xbar[tr] - mu) * np.sqrt(w)[:, None]
         a = np.linalg.solve(A @ A.T + alpha * np.eye(len(tr)), (target[tr] - ym) * np.sqrt(w))
         sel = fd.cluster == cl
-        out[sel] = ym + (fd.MP[sel] - mu) @ (A.T @ a)
+        out[sel] = ym + (fd.Xbar[sel] - mu) @ (A.T @ a)
     return out
 
 

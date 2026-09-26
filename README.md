@@ -16,14 +16,15 @@ seen, then checking against what the field actually did.
 Every number is from predicting seasons the model had not seen (year-forward: each year's families
 predicted from earlier years only), then checking what the field did.
 
-- **Accuracy:** beats standard GBLUP in 5 of 6 seasons (mean r 0.21 vs 0.15); in 2008, the
+- **Accuracy:** beats standard GBLUP in all 6 seasons (mean r 0.22 vs 0.15); in 2008, the
   decision year, r = 0.13 vs 0.07. Plot noise caps any predictor near 0.68.
-- **Value:** planting 30% of lines by ProMaize's $/acre ranking realised $8.4/acre over random,
-  53% more than standard GBLUP ($5.5), averaged over six seasons.
-- **Plots:** the standard ranking needed 1,117 more lines in 2008 to keep the same real winners.
+- **Value:** planting 30% of lines by ProMaize's $/acre ranking realised $8.8/acre over random,
+  60% more than standard GBLUP ($5.5), averaged over six seasons; 4x as much in 2008.
+- **Plots:** the standard ranking needed 1,277 more lines in 2008 (about 8,900 plots) to keep the
+  same real winners.
 - **Risk:** the 90% bands held 90.2% of real 2008 results; every line carries a confidence tier.
 - **Broad vs specific:** location-specific response is not predictable here (r = 0.03 on 82,790
-  held-out plots), so the recommendation is broad-acre, with the family limit as the hedge.
+  held-out plots), so the recommendation is broad-acre GCA.
 
 ## Contents
 
@@ -61,7 +62,7 @@ has nothing to say about them.
 153k genotyped lines x 2,911 SNPs, 514 parents with real calls
         |
         v
-family mean   <- ridge on the parents' midparent genotype   (between families)
+family mean   <- ridge on the family's genotype: what its parents passed on   (between families)
 line          <- ridge on sibling differences                (within a family)
         |
         v
@@ -99,7 +100,7 @@ reads. The app computes only the user's own pricing on top, so it works offline,
 
 | part | predicts | from | why |
 |---|---|---|---|
-| between families | the family's mean GCA | ridge on the midparent genotype, per cluster, recent cohorts weighted up (half-life 3 years) | a new family's mean can only come from its parents; linkage decays over generations, so recent years transfer better |
+| between families | the family's mean GCA | ridge on the family's mean genotype (what its parents passed on: three quarters of one parent in a backcross), per cluster, recent cohorts weighted up (half-life 3 years) | a new family's mean can only come from its parents; a quarter of families are backcrosses, which a 50/50 midparent misrepresents; linkage decays over generations, so recent years transfer better |
 | within a family | each line's deviation from its siblings | ridge on within-family deviations of markers and phenotype, all earlier families | tester, trial and family effects cancel inside a family, so this learns which parental segments help |
 
 Both parts train from per-cohort sufficient statistics (within-family X'X, family means), so a
@@ -118,12 +119,17 @@ ridge over every line, family structure ignored, which is what most entries do).
 only; every family in Y is new. Repeated for 2003 through 2008. Model settings (the two ridge
 penalties, the recency half-life) were chosen on 2005-2007 only; 2008 was held out.
 
-Disclosure: after 2008 was first scored, we found our tester correction was under-shrunk (a fixed
-lambda of 1), which subtracted part of each family's own merit as "tester effect" for testers used
-by only one or two families. We replaced it with the variance-component BLUP above, for every year,
-and at the same time added the recency weighting, whose half-life was chosen on 2005-2007 (it
-moved those years by about +0.005). 2008 moved from r = 0.120 to 0.127; the ridge penalties were
-not touched.
+Disclosure. With the first model, settings frozen on 2005-2007, 2008 scored **r = 0.120**. Three
+changes came after that, each chosen on 2005-2007 and applied to every year:
+
+1. the tester correction was under-shrunk (a fixed lambda of 1), which subtracted part of each
+   family's own merit as "tester effect" for testers with one or two families; replaced by the
+   variance-component BLUP above (a fix to the yardstick as much as the model);
+2. recency weighting of training cohorts (+0.005 on 2005-2007);
+3. the family's mean genotype in place of the 50/50 midparent (+0.015 on 2005-2007, better in each
+   of those three years).
+
+2008 now scores r = 0.132. The ridge penalties were never changed.
 
 The leaky number is reported next to the honest one: a random k-fold that lets siblings into
 training reads r = 0.56 on the same 2008 lines.
@@ -140,6 +146,7 @@ training reads r = 0.56 on the same 2008 lines.
 | parents scored with the within-family allele effects, blended in | +0.004, within noise | no |
 | rescaling the yield model's two parts | hurt the ranking (0.234 vs 0.252) | no (kept for moisture, maturity) |
 | do parents appear as earlier tested lines? | 474 of 514 parents' closest genotype is their own child: no | no |
+| 50/50 midparent as the family genotype (first version) | r 0.256; the family's mean genotype gives 0.271 | replaced |
 
 ## 4. Results
 
@@ -147,18 +154,19 @@ training reads r = 0.56 on the same 2008 lines.
 
 | predicted year | families | ProMaize | standard GBLUP | pedigree BLUP | ProMaize, as planted (tester included) |
 |---|---|---|---|---|---|
-| 2003 | 140 | 0.18 | 0.19 | 0.06 | 0.21 |
-| 2004 | 157 | 0.18 | 0.10 | 0.01 | 0.23 |
+| 2003 | 140 | 0.19 | 0.19 | 0.06 | 0.23 |
+| 2004 | 157 | 0.17 | 0.10 | 0.01 | 0.23 |
 | 2005 | 141 | **0.31** | 0.26 | 0.13 | 0.37 |
-| 2006 | 97 | 0.26 | 0.21 | 0.10 | 0.33 |
-| 2007 | 102 | 0.20 | 0.07 | 0.01 | 0.22 |
-| **2008 (decision year)** | **157** | **0.13** | **0.07** | **0.05** | **0.12** |
-| mean | | **0.21** | 0.15 | 0.06 | 0.25 |
+| 2006 | 97 | 0.30 | 0.21 | 0.10 | 0.36 |
+| 2007 | 102 | 0.21 | 0.07 | 0.01 | 0.23 |
+| **2008 (decision year)** | **157** | **0.13** | **0.07** | **0.05** | **0.13** |
+| mean | | **0.22** | 0.15 | 0.06 | 0.26 |
 
-- ProMaize beats standard GBLUP in 5 of 6 years, and doubles it in 2008.
-- 2008 split: families ranked at r = 0.09 from their parents' DNA (the hardest year of the six to
-  call families; 15% of them had no parent on record, the second-highest share), siblings at r = 0.16.
-- Moisture r = 0.21, maturity r = 0.20, lodging r = 0.10 (barely predictable, so it moves the
+- ProMaize beats standard GBLUP in all 6 years (2003 narrowly: 0.192 vs 0.188), and doubles it in 2008.
+- 2008 split: families ranked at r = 0.10 from what their parents passed on (the hardest year of
+  the six to call families; 15% of them had no parent on record, the second-highest share),
+  siblings at r = 0.16.
+- Moisture r = 0.21, maturity r = 0.20, lodging r = 0.09 (barely predictable, so it moves the
   ranking little; we do not pretend otherwise).
 - Ceiling: line means repeat at 0.46 across locations, so no predictor can exceed r of about 0.68.
 
@@ -177,53 +185,57 @@ drying on what the chosen lines really yielded. Plant 30% of lines:
 |---|---|---|---|---|
 | random | $0.0 | $0.0 | 30% | |
 | standard GBLUP, rank by bushels | $5.5 | $1.2 | 36% | 46 |
-| ProMaize, rank by bushels | $8.1 | $3.9 | 40% | 70 |
-| **ProMaize, rank by $/acre** | **$8.4** | **$4.3** | **40%** | 65 |
-| ProMaize, $/acre, max 50 lines per family | $5.2 | $4.4 | 37% | 120 |
+| ProMaize, rank by bushels | $8.5 | $4.6 | 41% | 72 |
+| **ProMaize, rank by $/acre** | **$8.8** | **$5.1** | **41%** | 67 |
 | ProMaize, same share of every family | $5.5 | $5.0 | 37% | 125 |
+| ProMaize, $/acre, max 50 lines per family | $5.2 | $4.2 | 37% | 121 |
 
-ProMaize's ranking realised **53% more value per acre** than standard GBLUP across six seasons,
-and 3.5x as much in 2008. Ranking by dollars instead of bushels adds a little (+$0.25/acre) and
-keeps the pipeline's maturity from drifting later (+0.08 days vs +0.21).
+ProMaize's ranking realised **60% more value per acre** than standard GBLUP across six seasons,
+and 4x as much in 2008. Ranking by dollars instead of bushels adds a little (+$0.30/acre) and keeps
+the pipeline's maturity from drifting later (+0.08 days vs +0.21).
 
 **In plots:** to keep as many of the real top 10% as ProMaize keeps with 30% of the lines, the
-standard ranking had to plant 30-37% of them (33.5% on average): about 720 more lines a season,
-and 1,117 more in 2008. At about seven locations per line, that is roughly 7,800 plots in 2008.
+standard ranking had to plant 32-38% of them (34% on average): about 790 more lines a season, and
+1,277 more in 2008. At about seven locations per line, that is roughly 8,900 plots in 2008.
 
 ## 5. Commercial recommendations
 
 **For the 2008 season** (the demo at 30% of plots, exportable as CSV):
 
 1. **Plant the list in [`docs/advance_2008.csv`](docs/advance_2008.csv):** 4,789 lines (30% of the
-   cohort) from 141 families, ranked by predicted $/acre with at most 50 lines from any family,
-   each with its 90% band and confidence tier. Regenerate with `scripts/export_list.py` for another
-   budget or family limit, or export from the demo at any setting. The top of each cluster:
+   cohort) from 132 families, ranked by predicted $/acre, each with its 90% band and confidence
+   tier. This ranking realised the most value on average across the six forward seasons.
+   Regenerate with `scripts/export_list.py` for another budget or a family limit, or export from
+   the demo at any setting. The top of each cluster:
 
    | cluster | line | family | predicted $/acre | yield bu/ac (90% band) | moisture % | confidence |
    |---|---|---|---|---|---|---|
-   | C1 | C1.401.18 | C1.401 | $856 | 204.8 (189-221) | 20.1 | high |
-   | C1 | C1.401.27 | C1.401 | $855 | 202.0 (186-218) | 19.3 | high |
-   | C1 | C1.379.88 | C1.379 | $851 | 204.0 (187-221) | 20.6 | medium |
-   | C2 | C2.442.165 | C2.442 | $844 | 202.9 (187-219) | 19.8 | low |
-   | C2 | C2.385.6 | C2.385 | $843 | 201.8 (185-219) | 19.9 | medium |
+   | C1 | C1.401.18 | C1.401 | $855 | 204.6 (188-221) | 20.1 | high |
+   | C1 | C1.401.27 | C1.401 | $854 | 201.8 (186-218) | 19.4 | high |
+   | C1 | C1.379.88 | C1.379 | $851 | 204.2 (188-221) | 20.6 | medium |
+   | C2 | C2.442.165 | C2.442 | $844 | 202.8 (187-219) | 19.8 | low |
+   | C2 | C2.385.6 | C2.385 | $842 | 201.6 (185-218) | 19.9 | medium |
 
    Family C2.442 ranks near the top with neither parent on record: its family mean is a pure
-   genomic estimate. That is exactly the bet the family limit caps.
-2. **Hedge the family bet this year.** 2008 has an unusual share of families with little pedigree
-   on record, and the family-level prediction is weakest exactly then. Across 2003-2008, the more
-   brand-new families a cohort has, the worse family means are predicted (correlation -0.51 over
-   six years; a rule of thumb, not a law). In such years a family limit costs little and insures
-   against a wrong family call: in 2008 the 50-per-family cap realised as much as the uncapped
-   ranking ($4.4 vs $4.3) with 108 effective families instead of 71.
+   genomic estimate, and the low tier says so.
+2. **This year, genetic breadth is nearly free: consider buying it.** Giving every family the same
+   share of plots (markers choose the siblings) realised within $0.1-0.3/acre of the full ranking in
+   the two seasons with the most families lacking pedigree (2007, 2008), while advancing about twice
+   as many families (138 instead of 71 in 2008). In the other four seasons it cost $2-7/acre. The
+   reason: the family call is weakest exactly when many parents are new (across the six seasons,
+   the share of families with no parent on record correlates -0.54 with family-level accuracy).
+   Next year's crosses come from this year's winners, so breadth has value a one-season backtest
+   does not count; in 2008 its price is close to zero.
 3. **Use genomics where it is reliable.** Within-family ranking held up every year (r 0.13-0.23);
-   the family call swings with the pedigree on record (0.09-0.47). When in doubt, spread plots
-   across families and let markers choose the siblings.
-4. **Price breadth explicitly.** The demo's breadth chart shows the $/acre cost of each family
-   limit, so narrowing the genetic base is a decision, not an accident.
+   the family call swings with the pedigree on record (0.10-0.49).
+4. **Price breadth explicitly.** The demo's family limit and breadth chart show the $/acre cost of
+   any setting, so narrowing the genetic base is a decision, not an accident. A hard cap of 50 per
+   family was the costliest way to buy breadth in our backtest; an even split did better.
 
 **For the program:** the planted share can be traded against what it keeps. In 2008, planting the
-top 42% by predicted $/acre kept half of the season's real top 10% (random planting needs 50%).
-Across the six forward seasons, planting 30% kept 40% of the real top 10% (random: 30%).
+top 39% by predicted $/acre kept half of the season's real top 10% (random planting needs 50%), and
+72% kept 80% of them. Across the six forward seasons, planting 30% kept 41% of the real top 10%
+(random: 30%).
 
 **Operational fit:** one command rebuilds everything from the program's files in about three
 minutes on a laptop (six the first time, while it caches the genotype files); new years are added
@@ -232,7 +244,7 @@ as sufficient statistics; the output is a static page and a CSV.
 ## 6. Broad-acre or location-specific?
 
 **Broad-acre, and we tested the alternative.** Within a line, plot-to-plot variation across its
-locations (SD 16.5 bu, after removing each trial's mean) is 2.3x the spread between lines (SD 7.1
+locations (SD 14.7 bu, after removing each trial's mean) is twice the spread between lines (SD 7.1
 bu). Is any of that location-to-location response predictable? We fitted a genomic reaction norm
 (marker effects on a line's sensitivity to how productive a location is) on 2000-2007 plots and
 asked it for each 2008 line's deviation at each of its locations: **r = 0.025 on 82,790 held-out
@@ -248,8 +260,9 @@ loaded by `bayer.environments()`) are the input for that.
 
 - **Families with no parent on record** get a purely genomic family mean. The confidence tier
   flags them; the 90% band is widest there.
-- **A year like 2008**, with many new parents, degrades the family-level prediction to near zero;
-  the within-family part still works. Mitigation: the family limit (recommendation 2).
+- **A year like 2008**, with many new parents, degrades the family-level prediction (r 0.10); the
+  within-family part still works. Mitigation: in such years spread plots across families, which
+  then costs little (recommendation 2).
 - **New testers** (5 in 2008) have no estimated effect; their families are compared on the
   trial-adjusted scale only.
 - **Population structure shifts**: marker effects are learned from earlier cohorts, weighted to
