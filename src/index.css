@@ -153,6 +153,12 @@ button.pill:hover, label.pill:hover { color: var(--accent); border-color: var(--
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); color: var(--text); white-space: normal;
 }
 .popover .datacheck { margin: 10px 0; }
+.dropzone {
+  display: flex; gap: 10px; align-items: center; cursor: pointer; font-size: 13px; color: var(--text-2);
+  border: 1.5px dashed var(--border); border-radius: 10px; padding: 10px 12px; background: var(--row-alt);
+  transition: border-color 120ms, color 120ms;
+}
+.dropzone:hover, .dropzone.over { border-color: var(--accent); color: var(--accent); }
 
 /* phones */
 .layout { grid-template-columns: 300px minmax(0, 1fr); }

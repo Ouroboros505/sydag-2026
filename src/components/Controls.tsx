@@ -1,6 +1,7 @@
 import type { Prices } from '../lib/econ'
 import type { EngineId, EngineInfo } from '../lib/types'
 import Info from './Info'
+import DataCheck from './DataCheck'
 
 interface Props {
   n: number
@@ -44,9 +45,21 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
 
   return (
     <div className="panel">
+      <h2>Your data<Info>
+        The Bayer maize trials, 2000 to {heldOut ?? 'now'}, cleaned in seven steps before any model saw them. Drop a new
+        season's field-results file and ProMaize cleans it the same way, in your browser; nothing is uploaded.
+      </Info></h2>
+      <div className="control">
+        <div className="small" style={{ marginBottom: 8 }}>
+          <b>Bayer maize trials, 2000 to {heldOut ?? 'now'}</b>: {n.toLocaleString()} new lines to rank.{' '}
+          <a href="/cleaning/">How it was cleaned →</a>
+        </div>
+        <DataCheck compact />
+      </div>
+
       {engines && engines.length > 1 && cur && (
         <>
-          <h2>Prediction engine<Info wide>
+          <h2 style={{ marginTop: 20 }}>Prediction engine<Info wide>
             Every engine predicts the same things for each new line, from its DNA: yield, grain moisture and lodging.
             They differ in how they learn from earlier seasons.<br /><br />
             <b>Family</b>: first predicts each family's average from its two parents' DNA, then ranks the

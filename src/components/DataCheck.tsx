@@ -10,21 +10,31 @@ export default function DataCheck({ compact = false }: { compact?: boolean }) {
   const [busy, setBusy] = useState<number | null>(null)
   const [rep, setRep] = useState<Report | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [over, setOver] = useState(false)
 
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
+  async function run(file: File | undefined) {
     if (!file) return
     setErr(null); setRep(null); setBusy(0)
     try { setRep(await checkText(await file.text(), file.name, setBusy)) } catch (x) { setErr(String(x)) } finally { setBusy(null) }
+  }
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    run(file)
   }
 
   const imp = rep ? Object.entries(rep.impossible) : []
   return (
     <div className="datacheck">
-      <label className="pill" style={{ cursor: 'pointer', display: 'inline-block' }}>
+      <label className={`dropzone${over ? ' over' : ''}`}
+        onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)}
+        onDrop={(e) => { e.preventDefault(); setOver(false); run(e.dataTransfer.files?.[0]) }}>
         <input type="file" accept=".csv,text/csv" onChange={onFile} style={{ display: 'none' }} />
-        {busy != null ? `Cleaning… ${Math.round(busy * 100)}%` : "Check a new season's field results (CSV)"}
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden style={{ flex: 'none' }}>
+          <path d="M9 12 V3 M5 6.5 L9 2.5 L13 6.5 M3 12.5 V15 H15 V12.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span>{busy != null ? `Cleaning… ${Math.round(busy * 100)}%`
+          : <><b>Load a new season</b>: drop its field results here (CSV), or click to choose</>}</span>
       </label>
       {!compact && !rep && busy == null && (
         <p className="small muted" style={{ margin: '8px 0 0' }}>
