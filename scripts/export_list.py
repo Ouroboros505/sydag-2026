@@ -1,13 +1,15 @@
 #!/usr/bin/env python
-"""The recommendation as a file: which lines to plant, at the recommended settings.
+"""The recommendation as files: which lines to plant.
 
-    python scripts/export_list.py            # -> docs/advance_2008.csv (after build_data.py)
-    python scripts/export_list.py --share 0.3 --cap 50   # with a family limit
+    python scripts/export_list.py            # after build_data.py
+      -> docs/advance_2008.csv          same share of every family, markers choose the siblings
+      -> docs/advance_2008_ranked.csv   every line ranked by predicted $/acre
+    python scripts/export_list.py --share 0.3 --cap 50   # the ranked list with a family limit
 
-Same arithmetic as the app (src/lib/econ.ts) at the default prices: rank by predicted $/acre
-(optionally at most `cap` lines per family) until `share` of the cohort has a plot. The default is
-no family limit: across six forward seasons that ranking realised the most (see README). Only what was known in
-January is written; the cohort's real results stay in the app's backtest.
+Same arithmetic as the app (src/lib/econ.ts) at the default prices. The even-share list is the
+2008 recommendation: in the last season with pedigree as thin as 2008's (2007) it gave up almost
+no value and advanced twice the families (README, section 5). Only what was known in January is
+written; the cohort's real results stay in the app's backtest.
 """
 from __future__ import annotations
 
@@ -37,18 +39,29 @@ def main() -> None:
     c = c.sort_values("usd_per_acre", ascending=False)
     c["rank_in_family"] = c.groupby("family").cumcount() + 1
     k = round(args.share * len(c))
-    pick = (c[c["rank_in_family"] <= args.cap] if args.cap else c).head(k).copy()
+    ranked = (c[c["rank_in_family"] <= args.cap] if args.cap else c).head(k).copy()
+    # same share of every family: largest-remainder quotas that sum to k, best lines inside each
+    size = c["family"].value_counts()
+    exact = size * k / len(c)
+    quota = exact.astype(int)
+    quota[(exact - quota).sort_values(ascending=False).index[: k - quota.sum()]] += 1
+    even = c[c["rank_in_family"] <= c["family"].map(quota)].head(k).copy()
+    year = rec["meta"].get("held_out_year", "")
+    for pick, name in ((even, f"advance_{year}.csv"), (ranked, f"advance_{year}_ranked.csv")):
+        write(pick, ROOT / "docs" / name, len(c))
+
+
+def write(pick: pd.DataFrame, path: Path, n: int) -> None:
+    pick = pick.copy()
     pick.insert(0, "rank", range(1, len(pick) + 1))
     cols = ["rank", "id", "group", "family", "tester", "usd_per_acre", "pred_yield", "lo", "hi", "pred_mst",
             "pred_erm", "pred_lodging", "confidence"]
     out = pick[[x for x in cols if x in pick.columns]].rename(columns={
         "id": "line", "group": "cluster", "pred_yield": "pred_yield_bu_ac", "lo": "lo90", "hi": "hi90",
         "pred_mst": "pred_moisture_pct", "pred_erm": "pred_rel_maturity_d", "pred_lodging": "pred_lodging_pct"})
-    year = rec["meta"].get("held_out_year", "")
-    path = ROOT / "docs" / f"advance_{year}.csv"
     out.to_csv(path, index=False)
     fam = out["family"].value_counts()
-    print(f"{path.relative_to(ROOT)}: {len(out):,} of {len(c):,} lines, {fam.size} families "
+    print(f"{path.relative_to(ROOT)}: {len(out):,} of {n:,} lines, {fam.size} families "
           f"(largest {fam.iloc[0]}), {out['cluster'].value_counts().to_dict()}")
 
 

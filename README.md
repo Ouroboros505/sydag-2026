@@ -23,6 +23,9 @@ predicted from earlier years only), then checking what the field did.
 - **Plots:** the standard ranking needed 1,277 more lines in 2008 (about 8,900 plots) to keep the
   same real winners.
 - **Risk:** the 90% bands held 90.2% of real 2008 results; every line carries a confidence tier.
+- **Recommendation for 2008:** plant the same share of every family and let markers pick the
+  siblings (`docs/advance_2008.csv`): the last season with pedigree this thin (2007) showed breadth
+  was nearly free, and 2008 confirmed it (8 cents an acre for twice the families).
 - **Broad vs specific:** location-specific response is not predictable here (r = 0.03 on 82,790
   held-out plots), so the recommendation is broad-acre GCA.
 
@@ -200,13 +203,25 @@ standard ranking had to plant 32-38% of them (34% on average): about 790 more li
 
 ## 5. Commercial recommendations
 
-**For the 2008 season** (the demo at 30% of plots, exportable as CSV):
+**For the 2008 season** (30% of plots; the demo exports any setting as CSV):
 
-1. **Plant the list in [`docs/advance_2008.csv`](docs/advance_2008.csv):** 4,789 lines (30% of the
-   cohort) from 132 families, ranked by predicted $/acre, each with its 90% band and confidence
-   tier. This ranking realised the most value on average across the six forward seasons.
-   Regenerate with `scripts/export_list.py` for another budget or a family limit, or export from
-   the demo at any setting. The top of each cluster:
+1. **Plant [`docs/advance_2008.csv`](docs/advance_2008.csv): the same share of every family, with
+   markers choosing the siblings.** 4,789 lines, all 157 families represented, each line with its
+   predicted $/acre, 90% band and confidence tier.
+   *Why this, in January 2008:* the family-level call is only as good as the pedigree on record,
+   and 2008's is thin: 15% of its families have no parent with an earlier family and 56% have just
+   one. The last season like that was 2007 (21% with none). There, splitting plots evenly across
+   families gave up only $0.33/acre of realised value against the full ranking while advancing
+   about twice as many families (89 vs 40 effective), and 2007's results were in hand by January.
+   Across all six seasons the share of families with no parent on record correlates -0.54 with
+   family-level accuracy. This first stage is general germplasm evaluation, and next year's crosses
+   come from this year's winners, so breadth has value a one-season number does not count.
+   *What 2008 then did:* the even split realised $4.98/acre over random against $5.06 for the full
+   ranking, a difference of eight cents, with 138 effective families instead of 71.
+2. **When the pedigree is well recorded, rank every line:**
+   [`docs/advance_2008_ranked.csv`](docs/advance_2008_ranked.csv) is the full $/acre ranking. On
+   average over the six seasons it realised the most ($8.8/acre vs $5.5 for an even split), and in
+   seasons with good records the even split cost $2-7/acre. The top of each cluster:
 
    | cluster | line | family | predicted $/acre | yield bu/ac (90% band) | moisture % | confidence |
    |---|---|---|---|---|---|---|
@@ -217,20 +232,14 @@ standard ranking had to plant 32-38% of them (34% on average): about 790 more li
    | C2 | C2.385.6 | C2.385 | $842 | 201.6 (185-218) | 19.9 | medium |
 
    Family C2.442 ranks near the top with neither parent on record: its family mean is a pure
-   genomic estimate, and the low tier says so.
-2. **This year, genetic breadth is nearly free: consider buying it.** Giving every family the same
-   share of plots (markers choose the siblings) realised within $0.1-0.3/acre of the full ranking in
-   the two seasons with the most families lacking pedigree (2007, 2008), while advancing about twice
-   as many families (138 instead of 71 in 2008). In the other four seasons it cost $2-7/acre. The
-   reason: the family call is weakest exactly when many parents are new (across the six seasons,
-   the share of families with no parent on record correlates -0.54 with family-level accuracy).
-   Next year's crosses come from this year's winners, so breadth has value a one-season backtest
-   does not count; in 2008 its price is close to zero.
+   genomic estimate, and the low tier says so. The even split keeps its best siblings without
+   betting 30% of the family on that estimate.
 3. **Use genomics where it is reliable.** Within-family ranking held up every year (r 0.13-0.23);
    the family call swings with the pedigree on record (0.10-0.49).
-4. **Price breadth explicitly.** The demo's family limit and breadth chart show the $/acre cost of
-   any setting, so narrowing the genetic base is a decision, not an accident. A hard cap of 50 per
-   family was the costliest way to buy breadth in our backtest; an even split did better.
+4. **Price breadth explicitly.** The demo's allocation switch (rank all lines / same share per
+   family), family limit and breadth chart show the $/acre cost of any setting, so narrowing the
+   genetic base is a decision, not an accident. A hard cap of 50 per family was the costliest way
+   to buy breadth in our backtest; an even split did better.
 
 **For the program:** the planted share can be traded against what it keeps. In 2008, planting the
 top 39% by predicted $/acre kept half of the season's real top 10% (random planting needs 50%), and

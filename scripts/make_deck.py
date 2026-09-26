@@ -189,8 +189,9 @@ def main() -> None:
         f"**In plots: to keep the real winners ProMaize keeps with 30% of lines, standard GBLUP had to plant"
         f" {needs:.0%} of them.", ] if needs else []) + [
         f"**Honest error bars: the 90% bands held {v.get('coverage90', 0):.0%} of real {year} results.",
-    ] + ([f"**Breadth is nearly free in {year}: an even share per family cost ${even_cost:.2f}/acre and advanced"
-          f" {even_fam:.0f} families instead of {rank_fam:.0f}."] if even_cost is not None else []), 15)
+    ] + ([f"**Recommendation for {year}: the same share of every family, markers pick the siblings. With pedigree"
+          f" this thin, breadth is nearly free: ${even_cost:.2f}/acre for {even_fam:.0f} families instead of {rank_fam:.0f}."]
+         if even_cost is not None else []), 15)
 
     s = title["Future Development"]
     bullets(s, body(s, s.shapes.title), [
