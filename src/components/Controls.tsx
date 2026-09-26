@@ -138,7 +138,7 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
 
       <h2 style={engines && engines.length > 1 ? { marginTop: 20 } : undefined}>Your plots<Info>
         <b>Lines you can field-test</b>: how many of the new lines get tested this season. Each one gets a plot at
-        each of its 5 to 7 test sites.<br />
+        each of its test sites, about five per line.<br />
         <b>How plots are spread</b>: aggressive gives them to the best-predicted lines, wherever they come from;
         conservative gives every family the same share.<br />
         <b>Most lines from one family</b>: a cap, so a few families can't take all the plots.
