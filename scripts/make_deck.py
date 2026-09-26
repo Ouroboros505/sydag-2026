@@ -213,6 +213,44 @@ def main() -> None:
         "Multi-trait economic index with test weight and maturity windows per market.",
     ], 22)
 
+    # speaker notes: the pitch (docs/pitch.md), slide by slide, numbers from the same JSON
+    ly = {r["strategy"]: r for r in v.get("strategies", []) if r["year"] == "mean" and r["budget"] == 0.3}
+    ours, std = ly.get("ProMaize, rank by $/acre"), ly.get("standard GBLUP, rank by bushels")
+    lift = f"{ours['gain'] / std['gain'] - 1:.0%}" if ours and std and std["gain"] > 0 else "n/a"
+    m08 = next((m for m in v.get("plots_to_match", []) if m["year"] == year), None)
+    notes = {
+        "Intro to the problem": f"January {year}. The plot budget has been cut. {meta['n_candidates']:,} new lines are waiting "
+            "for their first testcross, and not one of their families has ever been in a field. Every line we don't plant "
+            "is a line we can never advance. Which ones get the ground? (30 s)",
+        "Analysis Goal": "This program tests every family once, in one year. A model that learns 'which families were good' "
+            "has nothing to say about next year's families: they are all new. So we split the question the way a breeder "
+            "does: the family's mean from what its parents passed on, the sibling from which parental segments it inherited. "
+            "Then price it in dollars per acre. (30 s)",
+        "Tech Stack": "Keep it short: Python for the model, a static web app for the demo, runs on a laptop in five minutes, "
+            "works with no network. (15 s)",
+        "Technical Approach": f"Point at the chart. Each bar is a separate forward test: that year's families predicted from "
+            f"earlier years only. We beat standard GBLUP in all six seasons; in {year} we double it, "
+            f"r {fmt(head['r'] if head else None)} vs {fmt(head['r_gblup'] if head else None)}. The same data under a random "
+            f"k-fold reads {fmt(v.get('leaky_r'))}: that is siblings in training, and we show it so nobody mistakes one for "
+            "the other. (45 s)",
+        "Demo/Prototype": "Switch to the live demo. 1) The strip: every number from seasons the model never saw. 2) What "
+            f"{year} actually said: the decile bars. 3) Which way to spend the plots. 4) Click 'same share per family' and "
+            "show the breadth tile vs the realised gain. 5) Hover a $/acre cell. 6) How much to trust this. (90 s)",
+        "Business Value": f"Same plots, six rules, six seasons, scored on what the field paid. The standard approach realised "
+            f"${std['gain']:.1f} an acre over random; ours ${ours['gain']:.1f}: {lift} more value from the same plots. "
+            + (f"In plots: the standard ranking needed {m08['lines_saved']:,} more lines in {year} to keep the same winners. "
+               if m08 else "")
+            + f"And our 90% error bars held {v.get('coverage90', 0):.0%} of real {year} results. Recommendation: the same "
+            "share of every family this year, because the pedigree is thin and breadth is nearly free. (45 s)",
+        "Future Development": "Limits first: the family call is weak in a year like 2008; lodging is barely predictable from "
+            "DNA; costs are sliders with typical values. Next: choose crosses, not only lines; location placement once lines "
+            "have multi-year records; the program's own costs. (30 s)",
+    }
+    for s_ in prs.slides:
+        t_ = s_.shapes.title.text.strip() if s_.shapes.title is not None else ""
+        if t_ in notes:
+            s_.notes_slide.notes_text_frame.text = notes[t_]
+
     out = ROOT / "docs" / "ProMaize_deck.pptx"
     prs.save(str(out))
     print(f"{out.relative_to(ROOT)} written from {tpl.name}")
