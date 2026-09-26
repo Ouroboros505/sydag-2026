@@ -144,7 +144,7 @@ def main() -> None:
         "Sibling differences <- which parental segments each line inherited (ridge on within-family deviations).",
         "Tester effect removed as a BLUP: advance lines, not testers.",
         "**Baselines: environmental means, pedigree BLUP, standard GBLUP.",
-        "**Weather and soil feed the test-network map: where each plan is tested, in what kind of summer.",
+        "**Weather and soil feed the map: where the plan won in the real field, by kind of summer.",
     ], 18)
     if by_year:
         cd = CategoryChartData()
@@ -179,7 +179,7 @@ def main() -> None:
         "The engine switch: family engine or standard GBLUP.",
         f"What {year} actually said: the ranking vs the real field.",
         "Which way to spend the plots: aggressive or conservative.",
-        "The map: where your plan is tested, by kind of summer.",
+        "The map: where your plan won, in every kind of summer.",
         "The list: every line, $/acre, range, confidence; CSV.",
         "**Offline, on a phone; every state is a URL.",
     ], 15)
@@ -262,8 +262,9 @@ def main() -> None:
         "Demo/Prototype": "Not shown in the 4 minutes: go live instead. 1) The strip (15 s). 2) The engine switch: "
             f"flip to standard GBLUP and watch what {year} actually said drop from $5 to $1 an acre, then flip back (20 s). "
             "3) Which way to spend the plots: aggressive vs conservative (30 s). 4) The pedigree chart, then click "
-            "'conservative' (20 s). 5) The map: the aggressive plan tilts toward hot, dry sites, the conservative one keeps "
-            "the full mix (20 s). 6) The list, hover a $/acre cell (10 s).",
+            "'conservative' (20 s). 5) The map: green where the plan's lines beat the lines it left out in the real field, "
+            "about 7 sites in 10 and ahead in every kind of summer; flip to standard GBLUP and the hot sites turn red (20 s). "
+            "6) The list, hover a $/acre cell (10 s).",
         "Business Value": f"Same plots, six rules, six seasons, scored on what the field paid. The standard approach realised "
             f"${std['gain']:.1f} an acre over random; ours ${ours['gain']:.1f}: {lift} more value from the same plots. "
             + (f"In plots: the standard ranking needed {m08['lines_saved']:,} more lines in {year} to keep the same winners. "

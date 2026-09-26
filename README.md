@@ -93,6 +93,19 @@ lines ($5 an acre over random with the family engine, $1 with the standard one, 
 A third engine, weather and soil, was built and tested the same way and did not earn a place
 (section 6).
 
+**Where the plan won.** The map scores the current plan site by site on the held-out season: at
+each 2008 test site, the plan's lines against the lines it leaves out, in the same fields, on what
+the field paid at the user's prices (every plot is shipped with the build, relative to its own
+trial). At the default settings the family engine's plan comes out ahead at 112 of 163 sites (69%)
+and in every kind of summer (hot or cool, wet or dry; +$6.5 to +$8.8 an acre); the conservative plan
+at 150 of 179 (84%); standard GBLUP at 76 of 132 (58%), behind in hot summers. It updates live
+with the engine switch and every slider.
+
+**A new season's data.** The "Data" menu, and the cleaning page, take a field-results CSV and
+clean it in the browser with the pipeline's own rules (names, impossible values, missing values,
+trials), then report what they found: the organizers' 148 MB C1 file takes about 3 seconds. The
+ranking itself still runs in the pipeline.
+
 ## 3. Technical approach
 
 ### Data integration and preprocessing (`analysis/bayer.py`)
