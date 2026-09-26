@@ -331,5 +331,13 @@ src/                   the React app: lib/econ.ts is the pricing, components/ th
 src/learn/             the from-zero walkthrough at /learn
 ```
 
+### Provenance
+
+The toolchain and the app shell (pricing, budget and breadth panels, the learning page) were set
+up before the event on public stand-in data (Genomes to Fields), as the git history shows.
+Everything that touches the Bayer data was built at the event, from 25 September: the adapter,
+the family-structured model, the tester correction, the forward validation, the backtests, the
+location test and the recommendations.
+
 The contract between analysis and app is `src/lib/types.ts`. Team setup and conventions:
 [docs/setup.md](docs/setup.md), [CLAUDE.md](CLAUDE.md).
