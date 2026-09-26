@@ -339,5 +339,4 @@ Everything that touches the Bayer data was built at the event, from 25 September
 the family-structured model, the tester correction, the forward validation, the backtests, the
 location test and the recommendations.
 
-The contract between analysis and app is `src/lib/types.ts`. Team setup and conventions:
-[docs/setup.md](docs/setup.md), [CLAUDE.md](CLAUDE.md).
+The contract between analysis and app is `src/lib/types.ts`. Team setup: [docs/setup.md](docs/setup.md).
