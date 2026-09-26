@@ -11,6 +11,20 @@ prices it in dollars per acre, and tells the pipeline which lines to plant, how 
 worth, and how far to trust it. Every number below comes from predicting years the model had not
 seen, then checking against what the field actually did.
 
+## Results at a glance
+
+Every number is from predicting seasons the model had not seen (year-forward: each year's families
+predicted from earlier years only), then checking what the field did.
+
+- **Accuracy:** beats standard GBLUP in 5 of 6 seasons (mean r 0.21 vs 0.15); in 2008, the
+  decision year, r = 0.13 vs 0.07. Plot noise caps any predictor near 0.68.
+- **Value:** planting 30% of lines by ProMaize's $/acre ranking realised $8.4/acre over random,
+  53% more than standard GBLUP ($5.5), averaged over six seasons.
+- **Plots:** the standard ranking needed 1,117 more lines in 2008 to keep the same real winners.
+- **Risk:** the 90% bands held 90.2% of real 2008 results; every line carries a confidence tier.
+- **Broad vs specific:** location-specific response is not predictable here (r = 0.03 on 82,790
+  held-out plots), so the recommendation is broad-acre, with the family limit as the hedge.
+
 ## Contents
 
 1. [Problem and decision context](#1-problem-and-decision-context)
@@ -250,12 +264,14 @@ loaded by `bayer.environments()`) are the input for that.
 ### Judge mode: the whole pipeline in about ten seconds, no dataset needed
 
 ```bash
-uv venv .venv --python 3.12 && uv pip install --python .venv/bin/python -r requirements.txt
-npm install
+python3 -m venv .venv && .venv/bin/pip install -r requirements-judge.txt   # numpy, pandas, pyarrow, scikit-learn
 .venv/bin/python scripts/make_fixture.py              # synthetic program in the real file layout
-.venv/bin/python scripts/build_data.py --judge        # forward validation, backtest, JSON
-npm run dev                                           # http://localhost:5173, flagged "synthetic"
+.venv/bin/python scripts/build_data.py --judge        # forward validation, backtest, JSON: ~10 s
+npm install && npm run dev                            # http://localhost:5173, flagged "synthetic"
 ```
+
+Verified from a fresh clone with only those four packages: 8.6 seconds end to end. The full
+toolkit (`requirements.txt`) is only needed for team work beyond this pipeline.
 
 `make_fixture.py` writes a synthetic breeding program in the exact layout of the Bayer files:
 two clusters with recurring parents, winners joining the parent pool, testers with their own
