@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import type { StrategyRow, YearResult } from '../lib/types'
 import Info from './Info'
 
@@ -6,7 +6,7 @@ import Info from './Info'
 const BASE = 'standard GBLUP, rank by bushels'
 const AGGRESSIVE = 'ProMaize, rank by $/acre'
 const CONSERVATIVE = 'ProMaize, same share of every family'
-// a season whose new families often have neither parent on record: the family call is weak there
+// a season where many new families have parents with no earlier field results: the family step has less to go on
 const THIN = 0.15
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
   years: YearResult[]
   heldOut: number
   even: boolean                 // the left panel's conservative switch
+  share: number                 // the left panel's plots, as a share of the new lines
   revealed: boolean
   onReveal: (r: boolean) => void
 }
@@ -22,8 +23,9 @@ const usd = (v: number) => `${v >= 0 ? '+' : '−'}$${Math.abs(v).toFixed(2)}`
 
 /** The opening chart: what the same plots earned, season by season, over the usual practice; the
  *  decision year is a forecast until it is revealed. */
-function SeasonForecast({ rows, years, heldOut, even, revealed, onReveal }: Props) {
-  const [budget, setBudget] = useState(0.3)
+function SeasonForecast({ rows, years, heldOut, even, share, revealed, onReveal }: Props) {
+  // the record exists for plots for 30% and 50% of the lines: take the one nearest the plan
+  const budget = share >= 0.4 ? 0.5 : 0.3
   const plan = even ? CONSERVATIVE : AGGRESSIVE
   const gain = (y: number, s: string) => rows.find((r) => r.year === y && r.budget === budget && r.strategy === s)?.gain
   const thin = new Set(years.filter((y) => (y.families_none ?? 0) / (y.n_families || 1) >= THIN).map((y) => y.year))
@@ -63,26 +65,29 @@ function SeasonForecast({ rows, years, heldOut, even, revealed, onReveal }: Prop
 
   return (
     <div className="panel forecast">
-      <h2>Same plots, more value: season by season<Info wide>
-        Each bar is one past season. ProMaize and the usual practice (the standard method, GBLUP, ranking by bushels)
-        each chose which lines got plots ({Math.round(budget * 100)}% of the new lines), using only the seasons before it.
-        Every chosen line was then valued on what it really yielded, at $4.50 corn: yield times price, minus drying cost
-        and lodging loss. The bar is how much more per acre ProMaize's lines were worth. It scores the lines chosen,
-        not a farm's profit.<br /><br />
+      <h2>What choosing with ProMaize adds, season by season<Info wide>
+        Each bar is one past season, and both sides of it are real field results. With plots for{' '}
+        {Math.round(budget * 100)}% of the new lines, ProMaize chose which lines got them, and so did the usual way of
+        choosing (a standard model, ranking lines by predicted bushels), each using only the seasons before. Every chosen
+        line was then valued on what it really yielded, at $4.50 corn: yield times price, minus drying cost and lodging
+        loss. The bar is how much more an acre ProMaize's lines were worth.<br /><br />
         The shaded band is the forecast for {heldOut}: the range of the past seasons{even && basis === like ? <> that
-        looked like {heldOut} in January (many families with neither parent on record: {like.map((s) => s.year).join(' and ')})</> : null}.
-        We forecast the advantage, not the dollars: weather moves every method's dollars together.
+        looked like {heldOut} in January, when many new families had parents with no earlier results
+        ({like.map((s) => s.year).join(' and ')})</> : null}. We forecast what choosing well adds, not total dollars:
+        a season's weather moves every choice's dollars together.
       </Info></h2>
 
       <p className="forecast-head">
         {show
-          ? <><b>{heldOut} delivered {usd(actual!)} an acre</b> over the usual practice, {where} the forecast
+          ? <><b>Real {heldOut}: {usd(actual!)} an acre</b> added over the usual way of choosing, {where} the forecast
             ({usd(lo)} to {usd(hi)}).</>
           : even
-            ? <>With {heldOut}'s thin pedigree, giving every family the same share beat the usual practice in the seasons
-              like it ({like.map((s) => `${s.year}: ${usd(s.adv)}`).join(', ')}). <b>Forecast for {heldOut}: {usd(lo)} to {usd(hi)} an acre.</b></>
-            : <>ProMaize beat the usual practice in <b>{wins} of {past.length}</b> past seasons, by <b>{usd(mean)} an acre</b> on
-              average. <b>Forecast for {heldOut}: {usd(lo)} to {usd(hi)}.</b></>}
+            ? <>In seasons like {heldOut}, with many unknown parents, giving every family the same share added{' '}
+              {like.map((s) => `${usd(s.adv)} (${s.year})`).join(' and ')} an acre over the usual way of choosing.{' '}
+              <b>Forecast for {heldOut}: {usd(lo)} to {usd(hi)} an acre.</b></>
+            : <>{wins === past.length ? <>In each of the last {past.length} seasons</> : <>In {wins} of the last {past.length} seasons</>},
+              choosing with ProMaize added value over the usual way: <b>{usd(mean)} an acre</b> on average.{' '}
+              <b>Forecast for {heldOut}: {usd(lo)} to {usd(hi)} an acre.</b></>}
       </p>
 
       <div className="forecast-controls">
@@ -90,14 +95,7 @@ function SeasonForecast({ rows, years, heldOut, even, revealed, onReveal }: Prop
           <button className={!revealed ? 'on' : ''} onClick={() => onReveal(false)}>January {heldOut}</button>
           <button className={revealed ? 'on' : ''} onClick={() => onReveal(true)}>After harvest</button>
         </div>
-        <div className="toggle">
-          {[0.3, 0.5].map((b) => (
-            <button key={b} className={b === budget ? 'on' : ''} onClick={() => setBudget(b)}>plant {b * 100}%</button>
-          ))}
-        </div>
-        {!revealed && actual != null && (
-          <button className="link" onClick={() => onReveal(true)}>See what {heldOut} did →</button>
-        )}
+        <span className="small muted">plots for {Math.round(budget * 100)}% of the lines, as in your plan</span>
       </div>
 
       <div className="chartbox">
@@ -109,7 +107,7 @@ function SeasonForecast({ rows, years, heldOut, even, revealed, onReveal }: Prop
               <text x={L - 8} y={y(t) + 4} textAnchor="end" fontSize={11} fill="var(--text-3)">{t > 0 ? '+' : t < 0 ? '−' : ''}${Math.abs(t)}</text>
             </g>
           ))}
-          <text x={L} y={14} fontSize={11} fill="var(--text-3)">more $/acre than the usual practice</text>
+          <text x={L} y={14} fontSize={11} fill="var(--text-3)">$/acre added over the usual way of choosing (real results)</text>
 
           {/* the history: known in January */}
           {past.map((s, i) => {
@@ -150,12 +148,12 @@ function SeasonForecast({ rows, years, heldOut, even, revealed, onReveal }: Prop
             </g>
           )}
 
-          {/* seasons, and which ones had a thin pedigree */}
+          {/* seasons, and which ones had many unknown parents */}
           {slots.map((yr, i) => (
             <g key={yr}>
               <text x={cx(i)} y={H - B + 20} textAnchor="middle" fontSize={12} fontWeight={yr === heldOut ? 700 : 400}
                 fill={yr === heldOut ? 'var(--text)' : 'var(--text-2)'}>{yr}</text>
-              {thin.has(yr) && <text x={cx(i)} y={H - B + 36} textAnchor="middle" fontSize={10} fill="var(--text-3)">thin pedigree</text>}
+              {thin.has(yr) && <text x={cx(i)} y={H - B + 36} textAnchor="middle" fontSize={10} fill="var(--text-3)">unknown parents</text>}
             </g>
           ))}
         </svg>
@@ -164,7 +162,9 @@ function SeasonForecast({ rows, years, heldOut, even, revealed, onReveal }: Prop
         {even
           ? <>Conservative plan: every family gets the same share of plots and DNA picks the siblings.</>
           : <>Aggressive plan: every line ranked by its predicted $/acre.</>}{' '}
-        Switch the plan in the left panel. "Thin pedigree": many new families had neither parent on record.
+        Switch the plan in the left panel. "Unknown parents": many of that season's new families had parents with no
+        earlier field results. 2000 to 2002 have no bars: a season needs earlier seasons to learn from before it can be
+        graded.
       </p>
     </div>
   )

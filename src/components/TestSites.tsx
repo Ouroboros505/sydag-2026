@@ -126,7 +126,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
 
   return (
     <div className="panel" style={{ position: 'relative' }}>
-      <h2>Where your plan wins, and in what conditions<Info wide>
+      <h2>Where your plan pays off, and in what conditions<Info wide>
         Each dot is a test site with {year} plots, placed from its coordinates; a bigger dot means more of your lines are
         tested there. <b>Where it won:</b> a site is green when the lines your current plan advances earned more per acre
         there than the lines it leaves out, in the same fields, on what the field really paid in {year} at your prices
@@ -136,7 +136,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
       </Info></h2>
       <p style={{ marginTop: 0 }}>
         {mode === 'won'
-          ? <>Green: at that site, the lines your plan picks beat the lines it leaves out, in the same fields, on what
+          ? <>Green: at that site, the lines your plan picks earned more than the lines it leaves out, in the same fields, on what
             the field really paid in {year}. Switch the engine or the plan and watch the map change.</>
           : <>Your plan's tests, by the kind of summer each site usually gets, against all new lines. A plan that tilts
             toward one kind of summer is betting on it.</>}
@@ -172,7 +172,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
               <div className="small muted">{year}: your plan against the lines it left out</div>
               <div style={{ margin: '4px 0 8px' }}>
                 <span style={{ fontSize: 26, fontWeight: 700, color: 'var(--good)' }}>{total.won}</span>
-                <span className="small"> of {total.scored} sites won ({pct(total.won / (total.scored || 1))})</span>
+                <span className="small"> of {total.scored} sites paid off ({pct(total.won / (total.scored || 1))})</span>
               </div>
               <div className="small muted" style={{ display: 'flex' }}>
                 <span>kind of summer</span><span style={{ marginLeft: 'auto' }}>$/ac ahead · sites won</span>
@@ -192,7 +192,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
               })}
               <p className="small" style={{ margin: '10px 0 0' }}>
                 {everywhere
-                  ? <><b>Your plan won in every kind of summer:</b> hot or cool, wet or dry, its lines out-earned the ones it
+                  ? <><b>Your plan paid off in every kind of summer:</b> hot or cool, wet or dry, its lines earned more than the ones it
                     left out.</>
                   : <><b>Weakest in {LABEL[worst]} summers</b>: there its lines earned {fmtUSD(byClimate.out[worst].gain, 1)}/ac against the
                     rest.</>}

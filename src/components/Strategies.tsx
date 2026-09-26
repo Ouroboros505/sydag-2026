@@ -87,7 +87,7 @@ function Strategies({ rows, heldOut, match }: Props) {
         if (!now || !before) return null
         return (
           <p style={{ margin: '10px 0 0' }}>
-            <b>Our {heldOut} recommendation is the conservative plan.</b> Ranking all lines wins on average, but the family call
+            <b>Our {heldOut} recommendation is the conservative plan.</b> Ranking all lines earns more on average, but the family call
             is only as good as the pedigree on record, and {heldOut}'s is thin. In {heldOut - 1}, the last season like it,
             the even split gave up {fmtUSD(before.usd, 2)}/acre for {fmtNum(before.fe)} effective families instead
             of {fmtNum(before.fr)}; in {heldOut} it gave up {fmtUSD(now.usd, 2)} for {fmtNum(now.fe)} instead

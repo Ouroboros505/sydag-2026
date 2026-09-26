@@ -185,7 +185,7 @@ export default function App() {
           )}
           {heldOut && data.validation.strategies && data.validation.by_year && (
             <SeasonForecast rows={data.validation.strategies} years={data.validation.by_year} heldOut={heldOut}
-              even={dEven} revealed={revealed} onReveal={setRevealed} />
+              even={dEven} share={k / Math.max(1, data.meta.n_candidates)} revealed={revealed} onReveal={setRevealed} />
           )}
           <StatTiles {...summary} capped={dEven || Number.isFinite(dCap)} />
           {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}
