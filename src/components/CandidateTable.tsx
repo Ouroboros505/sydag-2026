@@ -12,6 +12,7 @@ interface Props {
 export default function CandidateTable({ advanced, yieldSet, prices, limit = 40 }: Props) {
   const shown = advanced.slice(0, limit)
   const showFamily = shown.some((c) => c.family !== c.id)
+  const showActual = shown.some((c) => c.actual_yield != null)
 
   function download() {
     const blob = new Blob([toCSV(advanced, prices)], { type: 'text/csv' })
@@ -28,7 +29,9 @@ export default function CandidateTable({ advanced, yieldSet, prices, limit = 40 
         <span>Advancement list<Info wide>
           The lines to advance, best first, ranked by predicted $/acre. <b>Yield</b> is the predicted yield of the line's
           test hybrid; the <b>90% band</b> is where the real yield will probably land (it's wide: predictions from DNA are
-          rough). <b>Moisture</b> and <b>lodging</b> are predicted too, and feed the dollar value. <b>Rank by bu</b> is
+          rough). <b>Field said</b>, when present, is what the line really yielded once it was grown, which the model
+          never saw; it is dimmed when it fell outside the band. <b>Moisture</b> and <b>lodging</b> are predicted too,
+          and feed the dollar value. <b>Rank by bu</b> is
           where the same line would sit in a bushel ranking. <b>Highlighted rows</b> are lines a bushel ranking would
           have cut. <b>Confidence</b> is how closely related the line is to lines with field records. Hover a $/acre
           value to see its breakdown.
@@ -46,6 +49,7 @@ export default function CandidateTable({ advanced, yieldSet, prices, limit = 40 
             {showFamily && <th className="l hide-sm">Family</th>}
             <th>$/acre</th>
             <th>Yield bu/ac</th>
+            {showActual && <th>Field said</th>}
             <th className="hide-sm">90% band</th>
             <th className="hide-sm">Moist. %</th>
             <th className="hide-sm">Lodg. %</th>
@@ -66,6 +70,12 @@ export default function CandidateTable({ advanced, yieldSet, prices, limit = 40 
                   <b>{fmtUSD(c.margin)}</b>
                 </td>
                 <td>{c.pred_yield.toFixed(1)}</td>
+                {showActual && (
+                  <td className={c.actual_yield != null && c.actual_yield >= c.lo && c.actual_yield <= c.hi ? '' : 'muted'}
+                    title="what the line's test hybrid actually yielded that season, environment-adjusted">
+                    {c.actual_yield != null ? c.actual_yield.toFixed(1) : ''}
+                  </td>
+                )}
                 <td className="muted hide-sm">{c.lo.toFixed(0)}–{c.hi.toFixed(0)}</td>
                 <td className="hide-sm">{c.pred_mst.toFixed(1)}</td>
                 <td className="hide-sm">{c.pred_lodging.toFixed(1)}</td>

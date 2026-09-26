@@ -132,6 +132,117 @@ export function summarize(scored: Scored[], k: number, cap: number): Summary {
   }
 }
 
+/** The same $/acre arithmetic on what the field actually said, when the cohort was held out.
+ *  Lodging falls back to the prediction when the plots were not scored for it. */
+export function actualMargin(c: Candidate, p: Prices): number | null {
+  if (c.actual_yield == null || c.actual_mst == null) return null
+  const y = c.actual_yield
+  const lodg = c.actual_lodging ?? c.pred_lodging
+  return y * p.corn_price
+    - Math.max(0, c.actual_mst - p.target_moisture) * p.drying_cost_per_point * y
+    - (lodg / 100) * p.lodging_loss_fraction * y * p.corn_price
+}
+
+export interface Backtest {
+  n: number                 // candidates with real results
+  mean: number              // realised $/acre of the average candidate
+  byMargin: number          // realised $/acre of the $-ranked advanced set, over that mean
+  byYield: number           // same for the bushel-ranked set
+  oracle: number            // the true top k, with hindsight, over that mean
+  topRecovered: number      // share of the true top k that the advanced set contains
+  chance: number            // what topRecovered would be at random: k / n
+  r: number                 // correlation, predicted $/acre vs realised
+  rYield: number            // the same for yield alone
+  deciles: number[]         // realised $/acre over the mean, by decile of predicted $/acre, best first
+}
+
+function pearson(xs: number[], ys: number[]): number {
+  const n = xs.length
+  if (n < 3) return 0
+  const mx = xs.reduce((s, v) => s + v, 0) / n
+  const my = ys.reduce((s, v) => s + v, 0) / n
+  let sxy = 0, sxx = 0, syy = 0
+  for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; syy += (ys[i] - my) ** 2 }
+  return sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0
+}
+
+/** Score the advancement decision against the cohort's real field results. */
+export function backtest(scored: Scored[], advanced: Scored[], yieldSet: Scored[], p: Prices): Backtest | null {
+  const rows: { id: string; pred: number; act: number }[] = []
+  for (const c of scored) {
+    const act = actualMargin(c, p)
+    if (act != null) rows.push({ id: c.id, pred: c.margin, act })
+  }
+  if (rows.length < 20) return null
+  const avg = (xs: number[]) => xs.reduce((s, v) => s + v, 0) / (xs.length || 1)
+  const act = new Map(rows.map((r) => [r.id, r.act]))
+  const mean = avg(rows.map((r) => r.act))
+  const setGain = (xs: Scored[]) => {
+    const v = xs.map((c) => act.get(c.id)).filter((x): x is number => x != null)
+    return v.length ? avg(v) - mean : 0
+  }
+  const k = advanced.length
+  const byActual = [...rows].sort((a, b) => b.act - a.act)
+  const topK = new Set(byActual.slice(0, k).map((r) => r.id))
+  const withYield = scored.filter((c) => c.actual_yield != null)
+  const byPred = [...rows].sort((a, b) => b.pred - a.pred)
+  const deciles: number[] = []
+  for (let d = 0; d < 10; d++) {
+    const slice = byPred.slice(Math.floor((d * rows.length) / 10), Math.floor(((d + 1) * rows.length) / 10))
+    deciles.push(avg(slice.map((r) => r.act)) - mean)
+  }
+  return {
+    n: rows.length, mean,
+    byMargin: setGain(advanced), byYield: setGain(yieldSet),
+    oracle: avg(byActual.slice(0, k).map((r) => r.act)) - mean,
+    topRecovered: k ? advanced.filter((c) => topK.has(c.id)).length / k : 0,
+    chance: k / rows.length,
+    r: pearson(rows.map((r) => r.pred), rows.map((r) => r.act)),
+    rYield: pearson(withYield.map((c) => c.pred_yield), withYield.map((c) => c.actual_yield as number)),
+    deciles,
+  }
+}
+
+export interface CapturePoint { planted: number; kept: number }
+
+/** Resource efficiency on the held-out cohort: plant the top x% by predicted $/acre, what share
+ *  of the real top `top` share (by realised $/acre) did you keep? Random planting keeps x%. */
+export function captureCurve(scored: Scored[], p: Prices, top = 0.1, steps = 50): CapturePoint[] {
+  const rows = scored
+    .map((c) => ({ pred: c.margin, act: actualMargin(c, p) }))
+    .filter((r): r is { pred: number; act: number } => r.act != null)
+  if (rows.length < 50) return []
+  const n = rows.length
+  const cut = [...rows].sort((a, b) => b.act - a.act)[Math.max(0, Math.floor(top * n) - 1)].act
+  const byPred = [...rows].sort((a, b) => b.pred - a.pred)
+  const winners = rows.filter((r) => r.act >= cut).length
+  const out: CapturePoint[] = [{ planted: 0, kept: 0 }]
+  let got = 0
+  let next = 1
+  for (let i = 0; i < n; i++) {
+    if (byPred[i].act >= cut) got++
+    if (i + 1 >= Math.round((next * n) / steps)) { out.push({ planted: (i + 1) / n, kept: got / winners }); next++ }
+  }
+  return out
+}
+
+/** Share of lines that must be planted to keep `want` of the real winners (1 if never). */
+export function plantedFor(curve: CapturePoint[], want: number): number {
+  const hit = curve.find((c) => c.kept >= want)
+  return hit ? hit.planted : 1
+}
+
+/** Mean of a numeric field over a set, ignoring missing values. */
+export function meanOf<T>(xs: T[], f: (x: T) => number | undefined | null): number | null {
+  let s = 0
+  let n = 0
+  for (const x of xs) {
+    const v = f(x)
+    if (v != null && Number.isFinite(v)) { s += v; n++ }
+  }
+  return n ? s / n : null
+}
+
 /** Evenly spaced "nice" tick values from 0 to at least max. */
 export function niceTicks(max: number, count = 5): number[] {
   if (max <= 0) return [0]
@@ -157,13 +268,20 @@ export function scenarios(base: Prices): Scenario[] {
 }
 
 export function toCSV(rows: Scored[], p: Prices): string {
-  const head = ['rank', 'line', 'family', 'usd_per_acre', 'gross', 'drying', 'lodging_loss',
-    'pred_yield_bu_ac', 'lo90', 'hi90', 'pred_moisture_pct', 'pred_lodging_pct', 'rank_by_yield', 'confidence']
+  const withActual = rows.some((c) => c.actual_yield != null)
+  const head = ['rank', 'line', 'family', 'tester', 'usd_per_acre', 'gross', 'drying', 'lodging_loss',
+    'pred_yield_bu_ac', 'lo90', 'hi90', 'pred_moisture_pct', 'pred_lodging_pct', 'rank_by_yield', 'confidence',
+    ...(withActual ? ['actual_yield_bu_ac', 'actual_moisture_pct', 'actual_lodging_pct', 'actual_usd_per_acre'] : [])]
   const esc = (v: string | number) => (typeof v === 'string' && /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : String(v))
   const lines = rows.map((c, i) => {
     const b = breakdown(c, p)
-    return [i + 1, c.id, c.family, c.margin.toFixed(2), b.gross.toFixed(2), b.drying.toFixed(2), b.lodging.toFixed(2),
-      c.pred_yield, c.lo, c.hi, c.pred_mst, c.pred_lodging, c.rankByYield, c.confidence].map(esc).join(',')
+    const cells: (string | number)[] = [i + 1, c.id, c.family, c.group, c.margin.toFixed(2), b.gross.toFixed(2),
+      b.drying.toFixed(2), b.lodging.toFixed(2), c.pred_yield, c.lo, c.hi, c.pred_mst, c.pred_lodging, c.rankByYield, c.confidence]
+    if (withActual) {
+      const act = actualMargin(c, p)
+      cells.push(c.actual_yield ?? '', c.actual_mst ?? '', c.actual_lodging ?? '', act == null ? '' : act.toFixed(2))
+    }
+    return cells.map(esc).join(',')
   })
   return [head.join(','), ...lines].join('\n') + '\n'
 }

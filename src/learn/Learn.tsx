@@ -62,12 +62,12 @@ export default function Learn() {
             <ol className="recap">
               <li>A seed company makes thousands of new corn lines a year and can field-test only a few hundred.</li>
               <li>DNA is cheap, fields are expensive. So: learn from past lines which DNA versions go with high yield.</li>
-              <li>Use that to predict new lines before planting. Accuracy is honestly low (~0.15), and we say so.</li>
+              <li>Use that to predict new lines before planting. Accuracy is honestly low (0.13 to 0.31 depending on the year), and we say so.</li>
               <li><b>ProMaize's twist:</b> rank by what an acre is worth in dollars, not just bushels, and keep the chosen lines genetically broad.</li>
             </ol>
             <p className="muted small">
-              Everything on this page uses a tiny made-up dataset so each idea is easy to see. The demo uses real public
-              breeding data (Genomes to Fields) as a stand-in until the challenge data arrives.
+              Everything on this page uses a tiny made-up dataset so each idea is easy to see. The demo uses the real
+              Bayer data: the 2008 cohort, ranked the way it stood in January 2008, then checked against what it did.
             </p>
             <a className="btn" href="/">Open the ProMaize demo →</a>
           </section>

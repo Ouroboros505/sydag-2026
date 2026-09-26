@@ -12,6 +12,7 @@ export interface Meta {
   generated: string       // ISO timestamp
   n_candidates: number
   notes?: string
+  held_out_year?: number | null   // set when the candidates are a real cohort scored after the fact
 }
 
 export interface PriceDefaults {
@@ -33,6 +34,12 @@ export interface Candidate {
   confidence: 'high' | 'medium' | 'low'
   pc1?: number          // genomic map coordinates (top two marker PCs)
   pc2?: number
+  tester?: string       // the line it was crossed to for its field test
+  pred_erm?: number     // estimated relative maturity, days
+  actual_yield?: number   // present when the cohort was held out: what the field then said
+  actual_mst?: number
+  actual_lodging?: number
+  actual_erm?: number
 }
 
 export interface Baseline {
@@ -47,6 +54,41 @@ export interface Validation {
   top20_recovery: number   // fraction of true top-20% recovered, chance = 0.20
   n_test: number
   traits?: Record<string, number>   // forward-validation r per trait the ranking uses
+  r_between?: number                // how well family means were ranked
+  r_within?: number                 // how well siblings were ranked inside their family
+  r_as_planted?: number             // r against the raw testcross result, tester included
+  by_year?: YearResult[]            // the same forward test repeated on earlier cohorts
+  coverage90?: number               // share of held-out lines inside their 90% band
+  ceiling?: number                  // best r any predictor could reach, given plot noise
+  leaky_r?: number
+  by_confidence?: Record<string, number | null>
+  families_by_parents_on_record?: Record<string, number>
+  strategies?: StrategyRow[]        // ways to spend the same plots, scored on what the field did
+  tuned_on?: number[]               // cohorts the settings were chosen on
+}
+
+export interface StrategyRow {
+  year: number | 'mean'
+  budget: number          // share of the cohort planted
+  strategy: string
+  gain: number            // realised $/acre of the advanced set over the cohort average
+  top10_kept: number      // share of the real top 10% that got a plot
+  eff_families: number | null
+  maturity_shift: number  // days of relative maturity, advanced set vs cohort
+}
+
+export interface YearResult {
+  year: number
+  r: number
+  r_between: number
+  r_within: number
+  top20: number
+  n_lines: number
+  n_families: number
+  r_gblup: number       // one ridge over all lines, the usual approach
+  r_pedigree: number    // parents' earlier families only, no markers
+  r_as_planted?: number         // same, against the raw result with the known tester effect added
+  r_gblup_as_planted?: number
 }
 
 export interface Recommendations {

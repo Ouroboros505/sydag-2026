@@ -182,3 +182,17 @@ a.pill:hover { color: var(--accent); border-color: var(--accent); }
   .tiles .tile:nth-child(odd) .infotip { left: 8px; right: auto; }
   .tiles .tile:nth-child(even) .infotip { left: auto; right: 8px; }
 }
+
+/* validation: forward results by year */
+.yeartable td, .yeartable th { padding: 5px 8px; }
+.rbar { display: block; height: 6px; border-radius: 3px; background: var(--accent); margin: 2px 0; }
+.rbar.alt { background: var(--text-3); opacity: 0.6; }
+
+/* backtest: deciles beside the capture curve */
+.twocol { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: end; margin-bottom: 8px; }
+@media (max-width: 760px) { .twocol { grid-template-columns: minmax(0, 1fr); } }
+
+/* two-state toggles (strategy budget) */
+.toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.toggle button { font: inherit; font-size: 13px; border: none; background: var(--surface); color: var(--text-2); padding: 5px 12px; cursor: pointer; }
+.toggle button.on { background: var(--accent); color: #fff; }

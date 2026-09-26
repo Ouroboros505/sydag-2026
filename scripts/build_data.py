@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -124,19 +125,17 @@ def real(source: str = "g2f") -> dict:
         cand = src.candidates_2024()
         M = src.markers()
         parents = None
-    elif source == "bayer":
-        from analysis import bayer as src
-        h = src.hybrids()
-        cand = src.candidates(h)
-        M = src.markers(keep=h.index.union(cand.index))
-        parents = src._parents()
+        h = h[h.index.isin(M.index)]
+        test_year = int(h.first_year.max())
+        h_train = h
     else:
         raise SystemExit(f"unknown source {source!r}")
 
-    h = h[h.index.isin(M.index)]
     cand = cand[cand.index.isin(M.index)]
-    test_year = int(h.first_year.max())
-    alpha = model.pick_alpha(M.loc[h.index], h["yield_adj"])
+    mean_yield, mean_mst = h.attrs["mean_yield_bu"], h.attrs["mean_mst"]
+    t0 = time.time()
+    alpha = model.pick_alpha(M.loc[h_train.index], h_train["yield_adj"])
+    print(f"[{time.time() - t0:5.0f}s] alpha={alpha}")
 
     # forward validation: single-stage always; two-stage too when parents are genotyped
     val = model.year_forward(h, M, "yield_adj", test_year=test_year, alpha=alpha)
@@ -149,8 +148,13 @@ def real(source: str = "g2f") -> dict:
         f = model.fit(M.loc[tr.index], tr["yield_adj"], alpha)
         pred = model.two_stage(f, M.loc[te.index], te["population"], Mp, parents)
         two_stage_r = float(np.corrcoef(pred, te["yield_adj"])[0, 1]) if len(te) > 5 else None
+    print(f"[{time.time() - t0:5.0f}s] forward r={val.r:.3f} (leaky {val.leaky_r:.3f}); traits {per_trait}; two-stage {two_stage_r}")
 
-    fits = {t: model.fit(M.loc[h.index], h[t], alpha) for t in ("yield_adj", "mst_adj", "lodging")}
+    # lodging is scored on a minority of plots: each trait trains on the lines that have it
+    fits = {}
+    for t in ("yield_adj", "mst_adj", "lodging"):
+        has = h_train[t].notna()
+        fits[t] = model.fit(M.loc[h_train.index[has]], h_train[t][has], alpha)
     Mc = M.loc[cand.index]
     fam = cand["population"] if "population" in cand.columns else pd.Series(cand.index, index=cand.index)
     if parents is not None:
@@ -158,23 +162,33 @@ def real(source: str = "g2f") -> dict:
         yld = model.two_stage(fits["yield_adj"], Mc, fam, Mp, parents)
     else:
         yld = fits["yield_adj"].predict(Mc)
-    yld = yld + h.attrs["mean_yield_bu"]
-    mst = fits["mst_adj"].predict(Mc) + h.attrs["mean_mst"]
+    yld = yld + mean_yield
+    mst = fits["mst_adj"].predict(Mc) + mean_mst
     lodg = np.clip(fits["lodging"].predict(Mc), 0, None)
-    tier = model.relatedness_tier(M.loc[h.index], Mc)
-    pcs = model.genomic_pcs(M.loc[h.index.union(cand.index)], cand.index)
+    tier = model.relatedness_tier(M.loc[h_train.index], Mc)
+    pcs = model.genomic_pcs(M.loc[h_train.index.union(cand.index)], cand.index)
     half = 1.645 * val.rmse
+    print(f"[{time.time() - t0:5.0f}s] {len(cand):,} candidates scored")
 
+    group = cand["tester"] if "tester" in cand.columns else cand.get("parent2", pd.Series("", index=cand.index))
+    held_out = "yield_adj" in cand.columns   # the cohort has real results: keep them for the backtest
     rows = []
     for i, cid in enumerate(cand.index):
-        rows.append({
-            "id": str(cid), "group": str(cand.parent2.get(cid, "")), "family": str(fam[cid]),
+        row = {
+            "id": str(cid), "group": str(group.get(cid, "")), "family": str(fam[cid]),
             "pred_yield": round(float(yld[i]), 2),
             "lo": round(float(yld[i] - half), 1), "hi": round(float(yld[i] + half), 1),
             "pred_mst": round(float(mst[i]), 2), "pred_lodging": round(float(lodg[i]), 2),
             "confidence": str(tier[cid]),
             "pc1": round(float(pcs.pc1[cid]), 3), "pc2": round(float(pcs.pc2[cid]), 3),
-        })
+        }
+        if held_out:
+            row["actual_yield"] = round(float(cand.yield_adj[cid] + mean_yield), 2)
+            if np.isfinite(cand.mst_adj[cid]):
+                row["actual_mst"] = round(float(cand.mst_adj[cid] + mean_mst), 2)
+            if np.isfinite(cand.lodging[cid]):
+                row["actual_lodging"] = round(float(cand.lodging[cid]), 2)
+        rows.append(row)
 
     # relatives baseline on the same forward split
     tr, te = h[h.first_year < test_year], h[h.first_year == test_year]
@@ -201,8 +215,12 @@ def real(source: str = "g2f") -> dict:
             "synthetic": False, "target": "yield (bu/ac, environment-adjusted)", "unit": "bu/ac",
             "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "n_candidates": len(rows),
-            "notes": f"Source: {source}. {len(h):,} lines with field records, {M.shape[1]:,} markers, "
-                     f"ridge alpha={alpha}; {fam.nunique()} families among the candidates.",
+            "notes": f"Source: {source}. {len(h_train):,} lines with field records ({h_train.first_year.min()}-"
+                     f"{h_train.first_year.max()}), {M.shape[1]:,} markers, ridge alpha={alpha}; "
+                     f"{fam.nunique()} families among the candidates"
+                     + (f", the {test_year} cohort, ranked before its field results and scored against them."
+                        if held_out else "."),
+            "held_out_year": test_year if held_out else None,
         },
         "price_defaults": PRICE_DEFAULTS,
         "candidates": rows,
@@ -215,7 +233,273 @@ def real(source: str = "g2f") -> dict:
     }
 
 
+TRAITS = {"yield_adj": "yield", "mst_adj": "moisture", "erm_adj": "maturity", "lodging_adj": "lodging"}
+# the cohorts the model's settings (ridge penalties, recency) were chosen on; later ones are held out
+TUNED_ON = [2005, 2006, 2007]
+
+
+def real_bayer(synthetic: bool = False) -> dict:
+    """The Bayer legacy data. The newest cohort is ranked blind, exactly as it stood in January of
+    that year: every one of its families is new, and nothing from that year is used in training.
+    Its field results come back only to score the ranking (the backtest the app shows)."""
+    import numpy as np
+    from analysis import bayer as src, model
+
+    t0 = time.time()
+    say = lambda *a: print(f"[{time.time() - t0:5.0f}s]", *a, flush=True)  # noqa: E731
+    h = src.hybrids()
+    X, meta = src._genotype_cache()
+    pos = {i: k for k, i in enumerate(meta["ids"])}
+    h = h[[i in pos for i in h.index]]
+    h = h.iloc[np.argsort(h["family"].to_numpy(), kind="stable")]   # rows grouped by family, once
+    say(f"{len(h):,} genotyped lines with field records, cohorts {h.first_year.min()}-{h.first_year.max()}")
+    Xl = np.asarray(X[[pos[i] for i in h.index]], dtype=np.float32)
+    fd = model.family_data(h, Xl, src.parent_markers(), list(TRAITS))
+    del Xl
+    cohort = int(fd.year.max())
+    years = sorted(int(y) for y in np.unique(fd.year))
+    eval_years = [y for y in years if y > years[0] + 2][-6:]      # at least three cohorts to learn from
+    dev_years = [y for y in eval_years if y != cohort]
+    say(f"{len(fd.families)} families; forward-validating {eval_years}, the headline is {cohort}")
+
+    # forward validation, every trait, every evaluation year
+    fwd = {t: {y: model.predict_cohort(fd, t, y) for y in eval_years} for t in TRAITS}
+    # moisture, maturity and lodging came out over-spread between families on the development
+    # years: rescale their two parts to the spread those years actually showed. Yield is left
+    # alone: rescaling it did not help ranking there, and its between-family slope is unstable.
+    def slope(x, y):
+        ok = np.isfinite(x) & np.isfinite(y)
+        x, y = x[ok] - x[ok].mean(), y[ok] - y[ok].mean()
+        return float((x * y).sum() / (x * x).sum()) if (x * x).sum() > 0 else 1.0
+    slopes = {"yield_adj": (1.0, 1.0)}
+    for t in [t for t in TRAITS if t != "yield_adj"]:
+        sb = np.mean([slope(fwd[t][y].between, fwd[t][y].truth) for y in dev_years])
+        sw = np.mean([slope(fwd[t][y].within, fwd[t][y].truth - fwd[t][y].between) for y in dev_years])
+        slopes[t] = (float(np.clip(sb, 0, 1.5)), float(np.clip(sw, 0, 2.0)))
+        fwd[t] = {y: model.predict_cohort(fd, t, y, slope_between=slopes[t][0], slope_within=slopes[t][1]) for y in eval_years}
+    met = {t: {y: model.cohort_metrics(fwd[t][y], fd, t) for y in eval_years} for t in TRAITS}
+    by_year = []
+    for y in eval_years:
+        cp = fwd["yield_adj"][y]
+        g = model.global_ridge_cohort(fd, "yield_adj", y)
+        pb = model.pedigree_cohort(fd, "yield_adj", y)
+        m = met["yield_adj"][y]
+        by_year.append({
+            "year": y, "r": round(m["r"], 3), "r_between": round(m["r_between"], 3), "r_within": round(m["r_within"], 3),
+            "top20": round(m["top20"], 3), "n_lines": m["n_lines"], "n_families": m["n_families"],
+            "r_gblup": round(model._r(g, cp.truth), 3), "r_pedigree": round(model._r(pb, cp.truth), 3),
+            "r_as_planted": round(m["r_as_planted"], 3), "r_gblup_as_planted": round(model._r(g, cp.raw), 3),
+        })
+        say(f"{y}: ours r={m['r']:.3f} (between {m['r_between']:.3f}, within {m['r_within']:.3f}) | "
+            f"standard GBLUP {by_year[-1]['r_gblup']:.3f} | pedigree BLUP {by_year[-1]['r_pedigree']:.3f} | "
+            f"as planted: ours {m['r_as_planted']:.3f}, GBLUP {by_year[-1]['r_gblup_as_planted']:.3f}")
+    head = met["yield_adj"][cohort]
+
+    # uncertainty: forward residuals on the development years, by how many parents are on record
+    kp = {y: model.known_parents(fd, y) for y in eval_years}
+    sd = {}
+    for c in (0, 1, 2):
+        res = np.concatenate([(fwd["yield_adj"][y].truth - fwd["yield_adj"][y].pred)[kp[y][fwd["yield_adj"][y].fam_index] == c]
+                              for y in dev_years])
+        res = res[np.isfinite(res)]
+        sd[c] = float(np.std(res)) if len(res) > 50 else float("nan")
+    fallback = float(np.nanmax(list(sd.values())))
+    sd = {c: (v if np.isfinite(v) else fallback) for c, v in sd.items()}
+    cp = fwd["yield_adj"][cohort]
+    cls = kp[cohort][cp.fam_index]
+    half = 1.645 * np.array([sd[c] for c in cls])
+    ok = np.isfinite(cp.truth)
+    coverage = float(np.mean(np.abs(cp.truth[ok] - cp.pred[ok]) <= half[ok]))
+    by_conf = {c: model._r(cp.pred[cls == c], cp.truth[cls == c]) for c in (0, 1, 2)}
+    say(f"90% bands: sd by parents on record {sd}; coverage in {cohort}: {coverage:.3f}; r by class {by_conf}")
+
+    # the leaky number: random 5-fold inside the cohort, so siblings sit in training
+    rng = np.random.default_rng(1)
+    fold = rng.integers(0, 5, len(cp.truth))
+    leak = np.full(len(cp.truth), np.nan)
+    for f in range(5):
+        tr = (fold != f) & ok
+        for k in np.unique(cp.fam_index):
+            m = cp.fam_index == k
+            if (m & tr).any():
+                leak[m & (fold == f)] = np.nanmean(cp.truth[m & tr]) + cp.within[m & (fold == f)]
+    leaky_r = model._r(leak, cp.truth)
+
+    # how much of a line's record is repeatable at all: the ceiling on any predictor
+    p = src.plots()
+    p = p[p["year"] == cohort].dropna(subset=["yield_bu"])
+    p = p.assign(adj=p["yield_bu"] - p.groupby("env")["yield_bu"].transform("mean"))
+    g = p.groupby("id")["adj"]
+    n_i, v_i = g.count(), g.var()
+    s2e = float(v_i[n_i > 1].mean())
+    s2m = float(g.mean()[n_i > 1].var())
+    H = max(0.0, (s2m - s2e * float((1 / n_i[n_i > 1]).mean())) / s2m)
+    say(f"line-mean repeatability {H:.2f} -> ceiling r ~ {np.sqrt(H):.2f}; plot noise sd {np.sqrt(s2e):.1f} vs line sd {np.sqrt(max(s2m - s2e / n_i.mean(), 0)):.1f} bu")
+
+    # genomic map: top two components, fitted on a sample of past lines, applied to the cohort
+    past = fd.rows(np.flatnonzero(fd.year < cohort))
+    samp = rng.choice(past, min(20000, len(past)), replace=False)
+    Z = fd.X[samp]
+    mu, s = Z.mean(0), Z.std(0) + 1e-6
+    Zs = (Z - mu) / s
+    _, V = np.linalg.eigh(Zs.T @ Zs)
+    V = V[:, ::-1][:, :2]
+    pcs = ((fd.X[cp.rows] - mu) / s) @ V
+
+    means = {"yield_adj": h.attrs["mean_yield_bu"], "mst_adj": h.attrs["mean_mst"], "erm_adj": h.attrs["mean_erm"],
+             "lodging_adj": h.attrs["mean_lodging"]}
+    pr = {t: fwd[t][cohort] for t in TRAITS}
+    conf = np.array(["low", "medium", "high"])[cls]
+    fams = fd.families[cp.fam_index]
+    rows = []
+    for i, r_ in enumerate(cp.rows):
+        yv = means["yield_adj"] + pr["yield_adj"].pred[i]
+        row = {
+            "id": str(fd.ids[r_]), "group": str(fd.cluster[cp.fam_index[i]]), "family": str(fams[i]),
+            "tester": str(fd.tester[cp.fam_index[i]]),
+            "pred_yield": round(float(yv), 1), "lo": round(float(yv - half[i]), 1), "hi": round(float(yv + half[i]), 1),
+            "pred_mst": round(float(means["mst_adj"] + pr["mst_adj"].pred[i]), 2),
+            "pred_lodging": round(float(max(0.0, means["lodging_adj"] + pr["lodging_adj"].pred[i])), 2),
+            "pred_erm": round(float(means["erm_adj"] + pr["erm_adj"].pred[i]), 1),
+            "confidence": str(conf[i]),
+            "pc1": round(float(pcs[i, 0]), 2), "pc2": round(float(pcs[i, 1]), 2),
+        }
+        for t, key in (("yield_adj", "actual_yield"), ("mst_adj", "actual_mst"), ("erm_adj", "actual_erm"),
+                       ("lodging_adj", "actual_lodging")):
+            v = pr[t].truth[i]
+            if np.isfinite(v):
+                row[key] = round(float(max(0.0, means[t] + v) if t == "lodging_adj" else means[t] + v), 1 if t != "mst_adj" else 2)
+        rows.append(row)
+
+    strategies = strategy_backtest(fd, fwd, eval_years, means, model)
+    for row in strategies:
+        if row["year"] == "mean":
+            say(f"strategy @{row['budget']:.0%}: {row['strategy']:<34s} gain ${row['gain']:6.2f}/ac  "
+                f"top10 kept {row['top10_kept']:.2f}  families {row['eff_families']:5.1f}  maturity {row['maturity_shift']:+.2f} d")
+
+    baselines = [
+        {"name": "environmental means (no genetics)", "metric": "r", "value": 0.0},
+        {"name": "pedigree BLUP: parents' earlier families, no markers", "metric": "r", "value": by_year[-1]["r_pedigree"]},
+        {"name": "standard GBLUP: one ridge over all lines", "metric": "r", "value": by_year[-1]["r_gblup"]},
+        {"name": "ProMaize: parents' genotypes -> family, sibling model -> line", "metric": "r", "value": round(head["r"], 3)},
+        {"name": "random k-fold, siblings in training (leaky, for contrast)", "metric": "r", "value": round(leaky_r, 3)},
+    ]
+    n_new = int((kp[cohort][np.unique(cp.fam_index)] == 0).sum())
+    return {
+        "meta": {
+            "synthetic": synthetic, "target": "testcross yield, trial- and tester-adjusted (GCA), bu/ac", "unit": "bu/ac",
+            "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "n_candidates": len(rows), "held_out_year": cohort,
+            "notes": f"Bayer legacy data: {int((fd.year < cohort).sum())} families ({years[0]}-{cohort - 1}) to learn from, "
+                     f"{head['n_families']} new families in {cohort}, {n_new} of them with neither parent on record. "
+                     f"{fd.X.shape[1]:,} markers. Lodging is barely predictable from DNA here "
+                     f"(forward r {round(met['lodging_adj'][cohort]['r'], 2):.2f}), so it moves the $/acre ranking little.",
+        },
+        "price_defaults": PRICE_DEFAULTS,
+        "candidates": rows,
+        "baselines": baselines,
+        "validation": {
+            "scheme": f"year-forward: every {cohort} family predicted from {years[0]}-{cohort - 1} only, none of them seen before",
+            "r": round(head["r"], 3), "top20_recovery": round(head["top20"], 3), "n_test": head["n_lines"],
+            "traits": {TRAITS[t]: round(met[t][cohort]["r"], 3) for t in TRAITS},
+            "r_between": round(head["r_between"], 3), "r_within": round(head["r_within"], 3),
+            "r_as_planted": round(head["r_as_planted"], 3),
+            "by_year": by_year, "coverage90": round(coverage, 3), "ceiling": round(float(np.sqrt(H)), 3),
+            "tuned_on": TUNED_ON,
+            "leaky_r": round(leaky_r, 3),
+            "by_confidence": {k: (round(v, 3) if np.isfinite(v) else None) for k, v in zip(("low", "medium", "high"), by_conf.values())},
+            "families_by_parents_on_record": {k: int((kp[cohort][np.unique(cp.fam_index)] == c).sum()) for k, c in (("none", 0), ("one", 1), ("both", 2))},
+            "strategies": strategies,
+        },
+    }
+
+
+def _margin(y, m, lodg, p=PRICE_DEFAULTS):
+    """$/acre, the same arithmetic as src/lib/econ.ts."""
+    import numpy as np
+    return (y * p["corn_price"] - np.maximum(0, m - p["target_moisture"]) * p["drying_cost_per_point"] * y
+            - lodg / 100 * p["lodging_loss_fraction"] * y * p["corn_price"])
+
+
+def strategy_backtest(fd, fwd, eval_years, means, model, budgets=(0.3, 0.5), cap=50) -> list[dict]:
+    """Every forward year, every way of spending the same plots, scored on what the field did.
+    Realised $/acre uses the measured yield and moisture (trial- and tester-adjusted); lodging
+    falls back to its prediction where plots were not scored, as in the app."""
+    import numpy as np
+    out = []
+    for y in eval_years:
+        Y, M, E, L = (fwd[t][y] for t in ("yield_adj", "mst_adj", "erm_adj", "lodging_adj"))
+        fam = Y.fam_index
+        ok = np.isfinite(Y.truth) & np.isfinite(M.truth)
+        pred_y = means["yield_adj"] + Y.pred
+        pred_m = means["mst_adj"] + M.pred
+        pred_l = np.maximum(0, means["lodging_adj"] + L.pred)
+        act_l = np.where(np.isfinite(L.truth), np.maximum(0, means["lodging_adj"] + L.truth), pred_l)
+        realised = _margin(means["yield_adj"] + Y.truth, means["mst_adj"] + M.truth, act_l)
+        erm = E.truth
+        g = model.global_ridge_cohort(fd, "yield_adj", y)
+        scores = {
+            "standard GBLUP, rank by bushels": g,
+            "ProMaize, rank by bushels": pred_y,
+            "ProMaize, rank by $/acre": _margin(pred_y, pred_m, pred_l),
+        }
+        idx = np.flatnonzero(ok)
+        mean_real = realised[idx].mean()
+        top10 = set(idx[np.argsort(-realised[idx])[: max(1, len(idx) // 10)]])
+        for b in budgets:
+            k = int(round(b * len(idx)))
+            picks = {name: idx[np.argsort(-sc[idx])[:k]] for name, sc in scores.items()}
+            # the same $ ranking with a family limit: greedy, skipping families already at the cap
+            order = idx[np.argsort(-scores["ProMaize, rank by $/acre"][idx])]
+            taken, per = [], {}
+            for i in order:
+                if per.get(fam[i], 0) < cap:
+                    taken.append(i); per[fam[i]] = per.get(fam[i], 0) + 1
+                if len(taken) == k:
+                    break
+            picks[f"ProMaize, $/acre, max {cap} per family"] = np.array(taken)
+            # every family gets the same share of its lines; markers only choose the siblings
+            marg = scores["ProMaize, rank by $/acre"]
+            even = []
+            for f_ in np.unique(fam[idx]):
+                members = idx[fam[idx] == f_]
+                q = int(round(b * len(members)))
+                even += list(members[np.argsort(-marg[members])[:q]])
+            picks["ProMaize, same share of every family"] = np.array(even)
+            out.append({"year": int(y), "budget": b, "strategy": "random", "gain": 0.0, "top10_kept": b,
+                        "eff_families": float("nan"), "maturity_shift": 0.0})
+            for name, sel in picks.items():
+                share = np.bincount(fam[sel]) / len(sel)
+                out.append({
+                    "year": int(y), "budget": b, "strategy": name,
+                    "gain": float(realised[sel].mean() - mean_real),
+                    "top10_kept": float(len(top10 & set(sel)) / len(top10)),
+                    "eff_families": float(1 / (share[share > 0] ** 2).sum()),
+                    "maturity_shift": float(np.nanmean(erm[sel]) - np.nanmean(erm[idx])),
+                })
+    # averages over the forward years, next to each year
+    rows = []
+    keys = sorted({(r["budget"], r["strategy"]) for r in out}, key=lambda x: (x[0], x[1] != "random", x[1]))
+    for b, name in keys:
+        rs = [r for r in out if r["budget"] == b and r["strategy"] == name]
+        rows.append({"year": "mean", "budget": b, "strategy": name,
+                     **{m: float(np.nanmean([r[m] for r in rs])) for m in ("gain", "top10_kept", "eff_families", "maturity_shift")}})
+    return [{k: (round(v, 3) if isinstance(v, float) else v) for k, v in r.items()} for r in rows + out]
+
+
+def _finite(v):
+    """NaN is not valid JSON: an undefined number goes out as null."""
+    if isinstance(v, dict):
+        return {k: _finite(x) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_finite(x) for x in v]
+    if isinstance(v, float) and not np.isfinite(v):
+        return None
+    return v
+
+
 def write(payload: dict, name: str = "recommendations.json") -> Path:
+    payload = _finite(payload)
     PUBLIC.mkdir(parents=True, exist_ok=True)
     out = PUBLIC / name
     out.write_text(json.dumps(payload, separators=(",", ":"), allow_nan=False))
@@ -229,8 +513,20 @@ def main() -> None:
     ap.add_argument("--synthetic", action="store_true", help="emit placeholder data")
     ap.add_argument("--source", default="g2f", choices=["g2f", "bayer"], help="dataset adapter")
     ap.add_argument("--n", type=int, default=2000)
+    ap.add_argument("--judge", action="store_true",
+                    help="judge mode: run the Bayer pipeline on the synthetic program from scripts/make_fixture.py")
     args = ap.parse_args()
-    write(synthetic(args.n) if args.synthetic else real(args.source))
+    if args.synthetic:
+        write(synthetic(args.n))
+    elif args.judge:
+        from analysis import bayer, data
+        sample = data.RAW / "bayer_sample"
+        if not any(sample.rglob("*Phenotype*.csv")):
+            raise SystemExit("No judge-mode data yet: python scripts/make_fixture.py")
+        bayer.use(sample, "bayer_sample")
+        write(real_bayer(synthetic=True))
+    else:
+        write(real_bayer() if args.source == "bayer" else real(args.source))
 
 
 if __name__ == "__main__":

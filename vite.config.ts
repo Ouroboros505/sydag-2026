@@ -30,7 +30,12 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
       },
-      workbox: { skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true },
+      workbox: {
+        skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true,
+        // the predictions ship as JSON: precache it too, or the offline demo has no data
+        globPatterns: ['**/*.{js,css,html,json,svg,png,ico,webmanifest}'],
+        maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
+      },
     }),
   ],
 })

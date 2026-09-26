@@ -8,9 +8,11 @@ import Scenarios from './components/Scenarios'
 import StatTiles from './components/StatTiles'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
-import { advanceOrder, byYieldOrder, frontier, score, summarize, type Prices } from './lib/econ'
+import { advanceOrder, backtest, byYieldOrder, captureCurve, frontier, meanOf, score, summarize, type Prices } from './lib/econ'
 import type { Recommendations } from './lib/types'
-import Info from './components/Info'
+import Backtest from './components/Backtest'
+import Validation from './components/Validation'
+import Strategies from './components/Strategies'
 
 export default function App() {
   const [data, setData] = useState<Recommendations | null>(null)
@@ -35,7 +37,8 @@ export default function App() {
           target_moisture: num('target', p.target_moisture),
           lodging_loss_fraction: num('lodging', p.lodging_loss_fraction),
         })
-        setBudget(Math.min(num('budget', 300), d.candidates.length))
+        // default: a 30% plot budget, the scenario's 'significantly reduced' season
+        setBudget(Math.min(num('budget', Math.round(d.candidates.length * 0.3 / 10) * 10), d.candidates.length))
         setCap(num('cap', Infinity))
       })
       .catch((e) => setError(String(e)))
@@ -54,11 +57,26 @@ export default function App() {
     [scored, cap],
   )
   const summary = useMemo(() => (scored.length ? summarize(scored, k, cap) : null), [scored, k, cap])
-  const yieldSet = useMemo(
-    () => new Set(advanceOrder(byYieldOrder(scored), cap).slice(0, k).map((c) => c.id)),
-    [scored, cap, k],
-  )
+  const yieldList = useMemo(() => advanceOrder(byYieldOrder(scored), cap).slice(0, k), [scored, cap, k])
+  const yieldSet = useMemo(() => new Set(yieldList.map((c) => c.id)), [yieldList])
   const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
+  const bt = useMemo(
+    () => (summary && prices ? backtest(scored, summary.advanced, yieldList, prices) : null),
+    [scored, summary, yieldList, prices],
+  )
+  const heldOut = data?.meta.held_out_year ?? null
+  const curve10 = useMemo(() => (prices && heldOut ? captureCurve(scored, prices) : []), [scored, prices, heldOut])
+  const maturity = useMemo(() => {
+    if (!summary) return null
+    const hasActual = scored.some((c) => c.actual_erm != null)
+    const f = hasActual ? (c: { actual_erm?: number }) => c.actual_erm : (c: { pred_erm?: number }) => c.pred_erm
+    const all = meanOf(scored, f)
+    if (all == null) return null
+    const m = meanOf(summary.advanced, f)
+    const y = meanOf(yieldList, f)
+    return { cohort: all, byMargin: m == null ? null : m - all, byYield: y == null ? null : y - all,
+      source: hasActual ? 'actual' as const : 'predicted' as const }
+  }, [scored, summary, yieldList])
 
   if (error) return <main><p>Could not load recommendations.json: {error}</p></main>
   if (!data || !prices || !summary) return <main><p className="muted">Loading…</p></main>
@@ -77,9 +95,12 @@ export default function App() {
         </span>
       </header>
       <p className="lede">
-        {data.meta.n_candidates.toLocaleString()} candidate lines, none of them field-tested yet, and plots for{' '}
-        {k.toLocaleString()}. Predictions come from markers and parentage; the ranking is by <b>dollars per acre</b>,
-        not bushels: yield after drying cost and lodging loss at the prices you set.
+        {data.meta.n_candidates.toLocaleString()} candidate lines
+        {heldOut
+          ? <>, the real {heldOut} cohort, ranked as it stood in January {heldOut} before any of them was planted,</>
+          : <>, none of them field-tested yet,</>}{' '}
+        and plots for {k.toLocaleString()}. Predictions come from markers and parentage; the ranking is by{' '}
+        <b>dollars per acre</b>, not bushels: yield after drying cost and lodging loss at the prices you set.
       </p>
 
       <div className="layout">
@@ -94,44 +115,16 @@ export default function App() {
             </p>
           )}
           <StatTiles {...summary} capped={Number.isFinite(cap)} />
+          {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}
+          {data.validation.strategies && data.validation.strategies.length > 0 && (
+            <Strategies rows={data.validation.strategies} heldOut={heldOut} />
+          )}
           <Frontier points={curve} budget={k} onBudget={setBudget} />
           <Scenarios candidates={data.candidates} prices={prices} budget={k} cap={cap} />
           <Breadth scored={scored} budget={k} cap={cap} onCap={setCap} />
           <GenomicMap all={scored} advanced={advancedIds} />
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={prices} />
-          <div className="panel validation">
-            <h2>How much to trust this<Info wide>
-              How good the predictions are, measured honestly: the model learned only from earlier years, then predicted
-              lines it had never seen, and was checked against their real results. <b>r</b> is the correlation between
-              predicted and real (1 = perfect ranking, 0 = no better than random). The <b>baselines</b> are simpler
-              methods to beat. The <b>leaky</b> number is what you'd get by testing on relatives of training lines: it
-              looks better and isn't real, and it's shown so nobody confuses the two.
-            </Info></h2>
-            <p>
-              <b>{data.validation.scheme}.</b> On {data.validation.n_test.toLocaleString()} held-out lines the model's
-              correlation with realised yield is <b>r = {data.validation.r.toFixed(2)}</b>, and it recovers{' '}
-              <b>{Math.round(data.validation.top20_recovery * 100)}%</b> of the true top 20% (chance is 20%).
-              Intervals in the table are 90% bands from that same forward error, not from a random split.
-            </p>
-            {data.validation.traits && (
-              <p>
-                The ranking also leans on predicted moisture and lodging. Same forward test:{' '}
-                {Object.entries(data.validation.traits).map(([key, v], i) => (
-                  <span key={key}>{i ? ' · ' : ''}{key} <b>r = {v.toFixed(2)}</b></span>
-                ))}
-              </p>
-            )}
-            <ul>
-              {data.baselines.map((b) => (
-                <li key={b.name}>{b.name}: <b>{b.metric} = {b.value.toFixed(2)}</b></li>
-              ))}
-            </ul>
-            <p className="muted">
-              Confidence tiers are terciles of each candidate's closest genomic match to any line the model was
-              trained on: <b>high</b> has near relatives in the record, <b>low</b> is furthest from anything seen.
-            </p>
-            {data.meta.notes && <p className="muted">{data.meta.notes}</p>}
-          </div>
+          <Validation v={data.validation} baselines={data.baselines} notes={data.meta.notes} heldOut={heldOut} />
         </div>
       </div>
     </main>
