@@ -78,6 +78,7 @@ export interface Validation {
   engines?: EngineInfo[]           // the prediction engines the app can switch between, with track records
   site_persistence?: number        // does a test site's reliability carry over to the next season?
   environment?: EnvironmentCheck   // what weather, soil and a joint trial fit were tested for
+  engine_value?: EngineValueRow[]   // the opening chart: forecast and real value, per engine, plan and budget
   location_specific?: {             // can a line's response across locations be predicted?
     r_oracle: number                // even knowing each trial's productivity
     r_history: number               // from each location's history, as known in January
@@ -131,6 +132,17 @@ export interface EngineInfo {
 }
 
 export type EngineId = EngineInfo['id']
+
+/** One season, engine, plan and plot budget: what the engine forecast for its picks in January and
+ *  what they really earned, both $/acre above the season's average line. */
+export interface EngineValueRow {
+  year: number
+  budget: number        // share of the new lines that got plots
+  engine: EngineId
+  plan: 'aggressive' | 'conservative'
+  predicted: number
+  real: number
+}
 
 /** Every plot of the held-out season, relative to its own trial, for the site-by-site check. */
 export interface SeasonPlots {

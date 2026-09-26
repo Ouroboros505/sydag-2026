@@ -23,7 +23,8 @@ interface Props {
   seasons?: number
   dataset?: string
   shape?: DataShape
-  real?: Partial<Record<EngineId, number>>   // what each engine's picks really earned in the held-out season, $/acre
+  real?: Partial<Record<EngineId, number | undefined>>   // what each engine's picks really earned in past seasons, $/acre
+  ceiling?: number                          // the best accuracy the field's own noise allows
   plotsPerLine?: number
 }
 
@@ -45,7 +46,7 @@ function Bar({ v, max, on }: { v: number; max: number; on: boolean }) {
   return <span className="minibar"><i style={{ width: `${Math.max(0, Math.min(1, v / (max || 1))) * 100}%`, opacity: on ? 1 : 0.45 }} /></span>
 }
 
-export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, dataset, shape, real, plotsPerLine }: Props) {
+export default function Controls({ n, budget, cap, even, maxFamily, prices, onBudget, onCap, onPrices, onEven, engines, engine, onEngine, heldOut, dataset, shape, real, plotsPerLine, ceiling }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
   const capTop = Math.min(maxFamily, 80)
@@ -104,11 +105,11 @@ export default function Controls({ n, budget, cap, even, maxFamily, prices, onBu
                 <table className="mini">
                   <thead><tr><th /> {engines.map((e) => <th key={e.id} className={e.id === peek ? 'hi' : ''}>{SHORT[e.id]}</th>)}</tr></thead>
                   <tbody>
-                    <tr><td>accuracy <span className="muted">(1 = perfect)</span></td>
+                    <tr><td>accuracy, past seasons{ceiling ? <span className="muted"> (best possible here: {ceiling.toFixed(2)})</span> : null}</td>
                       {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>{e.r_mean.toFixed(2)}
                         <Bar v={e.r_mean} max={Math.max(...engines.map((x) => x.r_mean))} on={e.id === peek} /></td>)}</tr>
-                    {heldOut && real && (
-                      <tr><td>real $/acre in {heldOut}</td>
+                    {real && (
+                      <tr><td>value of its picks, past seasons <span className="muted">($/acre above an average line)</span></td>
                         {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>
                           {real[e.id] != null ? `+$${real[e.id]!.toFixed(0)}` : ''}
                           <Bar v={real[e.id] ?? 0} max={Math.max(...engines.map((x) => real[x.id] ?? 0))} on={e.id === peek} /></td>)}</tr>

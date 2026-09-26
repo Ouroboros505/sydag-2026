@@ -8,7 +8,7 @@ import Scenarios from './components/Scenarios'
 import StatTiles from './components/StatTiles'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
-import { advanceOrder, backtest, backtestBase, byYieldOrder, captureCurve, evenShare, frontier, meanOf, score, summarize, withEngine, type Prices } from './lib/econ'
+import { advanceOrder, backtest, backtestBase, byYieldOrder, captureCurve, evenShare, frontier, meanOf, pastValue, score, summarize, withEngine, type Prices } from './lib/econ'
 import type { EngineId, Recommendations } from './lib/types'
 import Backtest from './components/Backtest'
 import Strategies from './components/Strategies'
@@ -83,11 +83,6 @@ export default function App() {
     return { lines: data.candidates.length, families: sizes.length, inFamilies: sizes.reduce((a, k) => a + k, 0),
       perFamily: sizes[Math.floor(sizes.length / 2)] ?? 0 }
   }, [data])
-  // what each engine's picks really earned in the held-out season, plant 30%
-  const real = useMemo(() => {
-    const row = (name: string) => data?.validation.strategies?.find((r) => r.year === data.meta.held_out_year && r.budget === 0.3 && r.strategy === name)?.gain
-    return { family: row('ProMaize, rank by $/acre'), gblup: row('standard GBLUP, rank by $/acre') }
-  }, [data])
   const scored = useMemo(() => (dPrices ? score(cands, dPrices) : []), [cands, dPrices])
   const byYield = useMemo(() => byYieldOrder(scored), [scored])
   const maxFamily = useMemo(() => {
@@ -97,6 +92,13 @@ export default function App() {
   }, [scored])
   const reachable = useMemo(() => (dEven ? scored.length : advanceOrder(scored, dCap).length), [scored, dCap, dEven])
   const k = Math.min(dBudget, reachable)
+  // what each engine's picks really earned in past seasons, for the plan and plots on screen
+  const real = useMemo(() => {
+    const ev = data?.validation.engine_value, h = data?.meta.held_out_year
+    if (!ev || !h) return undefined
+    const share = k / Math.max(1, data!.meta.n_candidates)
+    return { family: pastValue(ev, 'family', dEven, share, h), gblup: pastValue(ev, 'gblup', dEven, share, h) }
+  }, [data, dEven, k])
   const curve = useMemo(
     () => (moreOpen && scored.length ? frontier(scored, dCap, Math.max(1, Math.floor(scored.length / 200)), byYield) : []),
     [moreOpen, scored, dCap, byYield],
@@ -175,7 +177,7 @@ export default function App() {
         <Controls
           n={scored.length} budget={budget} cap={cap} maxFamily={maxFamily} prices={prices} even={even}
           onBudget={setBudget} onCap={onCap} onPrices={setPrices} onEven={setEven}
-          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape} real={real} plotsPerLine={plotsPerLine}
+          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape} real={real} plotsPerLine={plotsPerLine} ceiling={data.validation.ceiling}
         />
         <div className="stack" style={{ opacity: stale ? 0.72 : 1, transition: 'opacity 120ms' }}>
           {k < dBudget && (
@@ -183,9 +185,9 @@ export default function App() {
               The family limit leaves only {k.toLocaleString('en-US')} eligible lines. Loosen it or lower the budget.
             </p>
           )}
-          {heldOut && data.validation.strategies && data.validation.by_year && (
-            <SeasonForecast rows={data.validation.strategies} years={data.validation.by_year} heldOut={heldOut}
-              even={dEven} share={k / Math.max(1, data.meta.n_candidates)} revealed={revealed} onReveal={setRevealed} />
+          {heldOut && data.validation.engine_value && (
+            <SeasonForecast rows={data.validation.engine_value} heldOut={heldOut} engine={dEngine} even={dEven}
+              share={k / Math.max(1, data.meta.n_candidates)} revealed={revealed} onReveal={setRevealed} />
           )}
           <StatTiles {...summary} capped={dEven || Number.isFinite(dCap)} />
           {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}

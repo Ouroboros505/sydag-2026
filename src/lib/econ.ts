@@ -6,7 +6,7 @@
  *
  * Deliberately simple and fully visible. Every term is a number the user can move.
  */
-import type { Candidate, EngineId, PriceDefaults, SeasonPlots } from './types'
+import type { Candidate, EngineId, EngineValueRow, PriceDefaults, SeasonPlots } from './types'
 
 export interface Prices extends PriceDefaults {}
 
@@ -395,4 +395,25 @@ export function siteResults(sp: SeasonPlots, margins: Float64Array, chosen: Uint
   return Array.from({ length: nSites }, (_, s) => ({
     chosen: nc[s], others: no[s], gain: nc[s] >= min && no[s] >= min ? sc[s] / nc[s] - so[s] / no[s] : null,
   }))
+}
+
+/** One season's forecast and real value at any plot budget: straight-line between the budgets the
+ *  pipeline scored (every 5% of the lines). */
+export function valueAt(rows: EngineValueRow[], share: number): { predicted: number; real: number } | null {
+  if (!rows.length) return null
+  const s = [...rows].sort((a, b) => a.budget - b.budget)
+  const x = Math.min(s[s.length - 1].budget, Math.max(s[0].budget, share))
+  const j = Math.max(1, s.findIndex((r) => r.budget >= x))
+  const a = s[j - 1], b = s[Math.min(j, s.length - 1)]
+  const t = b.budget === a.budget ? 0 : (x - a.budget) / (b.budget - a.budget)
+  return { predicted: a.predicted + t * (b.predicted - a.predicted), real: a.real + t * (b.real - a.real) }
+}
+
+/** What an engine's picks really earned, averaged over the seasons before the decision year. */
+export function pastValue(rows: EngineValueRow[], engine: EngineId, even: boolean, share: number, heldOut: number): number | undefined {
+  const plan = even ? 'conservative' : 'aggressive'
+  const mine = rows.filter((r) => r.engine === engine && r.plan === plan && r.year < heldOut)
+  const years = [...new Set(mine.map((r) => r.year))]
+  const vals = years.map((y) => valueAt(mine.filter((r) => r.year === y), share)?.real).filter((v): v is number => v != null)
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : undefined
 }

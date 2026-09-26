@@ -488,6 +488,7 @@ def real_bayer(synthetic: bool = False) -> dict:
     say(f"{cohort} plots for the site-by-site check: {len(q):,} at {q['location'].nunique()} sites")
 
     strategies, match = strategy_backtest(fd, fwd, eval_years, means, model)
+    value = engine_value(fd, fwd, eval_years, means, model)
     for m_ in match:
         say(f"{m_['year']}: ProMaize at 30% keeps {m_['ours_kept']:.0%} of the real top 10%; standard GBLUP needs "
             f"{m_['standard_needs']:.0%} of lines for that ({m_['lines_saved']:,} more lines)")
@@ -556,8 +557,46 @@ def real_bayer(synthetic: bool = False) -> dict:
                 "family_call_joint_minus_location": round(float(np.mean(jt["fwd_joint_site"])), 3),
             },
             "plots_to_match": match,
+            "engine_value": value,
         },
     }
+
+
+def engine_value(fd, fwd, eval_years, means, model, budgets=tuple(round(0.05 * i, 2) for i in range(1, 20))) -> list[dict]:
+    """What each engine's picks were worth, season by season, at many plot budgets, for the chart
+    that opens the demo. For every season, engine and plan: the value it forecast in January for its
+    own picks (their predicted $/acre above the season's average line) and what they really earned
+    above the average line. The app corrects each forecast by how far earlier seasons' forecasts
+    overshot, so a season's forecast uses only what was known before it."""
+    import numpy as np
+    out = []
+    for y in eval_years:
+        Y, M, L = (fwd[t][y] for t in ("yield_adj", "mst_adj", "lodging_adj"))
+        fam = Y.fam_index
+        idx = np.flatnonzero(np.isfinite(Y.truth) & np.isfinite(M.truth))
+        pred_l = np.maximum(0, means["lodging_adj"] + L.pred)
+        act_l = np.where(np.isfinite(L.truth), np.maximum(0, means["lodging_adj"] + L.truth), pred_l)
+        real = _margin(means["yield_adj"] + Y.truth, means["mst_adj"] + M.truth, act_l)
+        g_l = np.maximum(0, means["lodging_adj"] + model.global_ridge_cohort(fd, "lodging_adj", y))
+        predicted = {
+            "family": _margin(means["yield_adj"] + Y.pred, means["mst_adj"] + M.pred, pred_l),
+            "gblup": _margin(means["yield_adj"] + model.global_ridge_cohort(fd, "yield_adj", y),
+                             means["mst_adj"] + model.global_ridge_cohort(fd, "mst_adj", y), g_l),
+        }
+        members = {f_: idx[fam[idx] == f_] for f_ in np.unique(fam[idx])}
+        for engine, pm in predicted.items():
+            order = idx[np.argsort(-pm[idx])]
+            within = {f_: m[np.argsort(-pm[m])] for f_, m in members.items()}   # each family, best first
+            for b in budgets:
+                aggressive = order[: int(round(b * len(idx)))]
+                even = np.concatenate([m[: int(round(b * len(m)))] for m in within.values()])
+                for plan, sel in (("aggressive", aggressive), ("conservative", even)):
+                    if not len(sel):
+                        continue
+                    out.append({"year": int(y), "budget": b, "engine": engine, "plan": plan,
+                                "predicted": round(float(pm[sel].mean() - pm[idx].mean()), 3),
+                                "real": round(float(real[sel].mean() - real[idx].mean()), 3)})
+    return out
 
 
 def _margin(y, m, lodg, p=PRICE_DEFAULTS):
