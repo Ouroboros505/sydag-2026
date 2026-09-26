@@ -95,6 +95,9 @@ export default function App() {
         <span className="sub">trial planner · which lines get the ground this season</span>
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           {data.meta.synthetic && <span className="banner" style={{ marginLeft: 0 }}>synthetic placeholder data</span>}
+          <a className="pill" href="/cleaning/" title="What we did to the data before any model saw it">
+            How we cleaned the data →
+          </a>
           <a className="pill" href="/learn/" title="The breeding problem, the data and the model, explained from zero">
             New to breeding? How this works →
           </a>
