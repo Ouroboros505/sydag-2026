@@ -66,6 +66,7 @@ export interface Validation {
   strategies?: StrategyRow[]        // ways to spend the same plots, scored on what the field did
   plots_to_match?: PlotsToMatch[]   // what the standard ranking needs to keep as many real winners
   tuned_on?: number[]               // cohorts the settings were chosen on
+  first_frozen_r?: number           // the decision year's score with the first frozen model (disclosure)
   location_specific?: {             // can a line's response across locations be predicted?
     r_oracle: number                // even knowing each trial's productivity
     r_history: number               // from each location's history, as known in January

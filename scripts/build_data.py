@@ -236,6 +236,8 @@ def real(source: str = "g2f") -> dict:
 TRAITS = {"yield_adj": "yield", "mst_adj": "moisture", "erm_adj": "maturity", "lodging_adj": "lodging"}
 # the cohorts the model's settings (ridge penalties, recency) were chosen on; later ones are held out
 TUNED_ON = [2005, 2006, 2007]
+# disclosure: 2008's score with the first model, frozen before 2008 was ever scored (README, section 3)
+FIRST_FROZEN_R = 0.120
 
 
 def real_bayer(synthetic: bool = False) -> dict:
@@ -414,6 +416,7 @@ def real_bayer(synthetic: bool = False) -> dict:
             "r_as_planted": round(head["r_as_planted"], 3),
             "by_year": by_year, "coverage90": round(coverage, 3), "ceiling": round(float(np.sqrt(H)), 3),
             "tuned_on": TUNED_ON,
+            "first_frozen_r": FIRST_FROZEN_R,
             "location_specific": {"r_oracle": round(loc["oracle"], 3), "r_history": round(loc["history"], 3),
                                   "n_plots": loc["n_plots"], "sd_within_line": round(loc["sd_within_line"], 1),
                                   "sd_between_lines": round(float(np.sqrt(max(s2m - s2e / n_i.mean(), 0))), 1)},

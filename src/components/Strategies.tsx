@@ -67,6 +67,23 @@ export default function Strategies({ rows, heldOut, match }: Props) {
           </p>
         )
       })()}
+      {heldOut != null && (() => {
+        const cost = (y: number) => {
+          const r = at('ProMaize, rank by $/acre', y), e = at('ProMaize, same share of every family', y)
+          return r && e ? { usd: r.gain - e.gain, fr: r.eff_families ?? 0, fe: e.eff_families ?? 0 } : null
+        }
+        const now = cost(heldOut), before = cost(heldOut - 1)
+        if (!now || !before) return null
+        return (
+          <p style={{ margin: '10px 0 0' }}>
+            <b>Our {heldOut} recommendation is the even split.</b> Ranking all lines wins on average, but the family call
+            is only as good as the pedigree on record, and {heldOut}'s is thin. In {heldOut - 1}, the last season like it,
+            the even split gave up {fmtUSD(before.usd, 2)}/acre for {fmtNum(before.fe)} effective families instead
+            of {fmtNum(before.fr)}; in {heldOut} it gave up {fmtUSD(now.usd, 2)} for {fmtNum(now.fe)} instead
+            of {fmtNum(now.fr)}. Switch it on in the left panel.
+          </p>
+        )
+      })()}
       <p className="muted small" style={{ margin: '8px 0 0' }}>
         Per acre of every line advanced, relative to planting at random; corn at $4.50 and drying at $0.045/bu/pt. Lodging
         counts where it was scored, trial-adjusted.
