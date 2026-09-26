@@ -150,6 +150,8 @@ training reads r = 0.56 on the same 2008 lines.
 | rescaling the yield model's two parts | hurt the ranking (0.234 vs 0.252) | no (kept for moisture, maturity) |
 | do parents appear as earlier tested lines? | 474 of 514 parents' closest genotype is their own child: no | no |
 | 50/50 midparent as the family genotype (first version) | r 0.256; the family's mean genotype gives 0.271 | replaced |
+| within-family penalty and weight re-tuned after that change | 0.264-0.274 across the grid: a plateau around the current setting | unchanged |
+| weighting each trial by its reliability (1/noise variance) | 0.270-0.271 vs 0.271 | no |
 
 ## 4. Results
 
