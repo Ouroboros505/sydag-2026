@@ -79,26 +79,16 @@ export default function App() {
   const byYield = useMemo(() => byYieldOrder(scored), [scored])
   const reachable = useMemo(() => (dEven ? scored.length : advanceOrder(scored, dCap).length), [scored, dCap, dEven])
   const k = Math.min(dBudget, reachable)
-  // every season's forecast and real value, both engines, at the prices, plots and share on screen
+  // every season's forecast and real value for the engine on screen, at the prices, plots and share on screen
   const heldOutYear = data?.meta.held_out_year ?? null
   const share = k / Math.max(1, data?.meta.n_candidates ?? 1)
   const seasons = useMemo(() => {
     if (!data || !dPrices) return null
-    const calc = (e: EngineId) => (lines ? seasonValues(lines, e, dPrices, share)
-      : data.validation.engine_value ? seasonsFromRows(data.validation.engine_value, e, share) : [])
-    return { family: calc('family'), gblup: calc('gblup') }
-  }, [data, lines, dPrices, share])
-  const forecast = useMemo(() => (seasons && heldOutYear ? forecastFrom(seasons[dEngine === 'gblup' ? 'gblup' : 'family'], heldOutYear) : null),
-    [seasons, dEngine, heldOutYear])
-  // what each engine's picks really earned in past seasons, for the engine card
-  const real = useMemo(() => {
-    if (!seasons || !heldOutYear) return undefined
-    const avg = (xs: { year: number; real: number }[]) => {
-      const past = xs.filter((x) => x.year < heldOutYear)
-      return past.length ? past.reduce((a, x) => a + x.real, 0) / past.length : undefined
-    }
-    return { family: avg(seasons.family), gblup: avg(seasons.gblup) }
-  }, [seasons, heldOutYear])
+    const e: EngineId = dEngine === 'gblup' ? 'gblup' : 'family'
+    return lines ? seasonValues(lines, e, dPrices, share)
+      : data.validation.engine_value ? seasonsFromRows(data.validation.engine_value, e, share) : []
+  }, [data, lines, dPrices, share, dEngine])
+  const forecast = useMemo(() => (seasons && heldOutYear ? forecastFrom(seasons, heldOutYear) : null), [seasons, heldOutYear])
   const curve = useMemo(
     () => (moreOpen && scored.length ? frontier(scored, dCap, Math.max(1, Math.floor(scored.length / 200)), byYield) : []),
     [moreOpen, scored, dCap, byYield],
@@ -177,7 +167,7 @@ export default function App() {
         <Controls
           n={scored.length} budget={budget} prices={prices}
           onBudget={setBudget} onPrices={setPrices}
-          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape} real={real} ceiling={data.validation.ceiling}
+          engines={data.validation.engines} engine={engine} onEngine={setEngine} heldOut={heldOut} seasons={data.validation.by_year?.length} dataset={data.meta.dataset} shape={shape}
         />
         <div className="stack" style={{ opacity: stale ? 0.72 : 1, transition: 'opacity 120ms' }}>
           {k < dBudget && (

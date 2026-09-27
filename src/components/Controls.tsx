@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Prices } from '../lib/econ'
 import type { EngineId, EngineInfo } from '../lib/types'
@@ -18,8 +18,6 @@ interface Props {
   seasons?: number
   dataset?: string
   shape?: DataShape
-  real?: Partial<Record<EngineId, number | undefined>>   // what each engine's picks really earned in past seasons, $/acre
-  ceiling?: number                          // the best accuracy the field's own noise allows
 }
 
 /** How the loaded lines are organized: the fact that decides which engine fits. */
@@ -33,17 +31,17 @@ const fmtNum1 = (x: number) => `${Number(x.toFixed(1))}`
 // what each engine runs on, for the hover
 const FOR: Record<EngineId, string> = { family: 'for data with families', gblup: 'for data without families', environment: '' }
 const HOW: Record<EngineId, string> = {
-  family: "Step 1 rates each cross from its parents' DNA; step 2 ranks the lines inside each family.",
-  gblup: 'One model over every line, no family needed: the usual method (GBLUP).',
+  family: "Rates each cross from its parents' DNA, then ranks the siblings.",
+  gblup: 'One model over every line: the usual method (GBLUP).',
   environment: '',
 }
 
-/** a tiny bar under a number in the engine card, so the difference reads at a glance */
+/** a bar beside each engine's accuracy in the engine card, so the difference reads at a glance */
 function Bar({ v, max, on }: { v: number; max: number; on: boolean }) {
   return <span className="minibar"><i style={{ width: `${Math.max(0, Math.min(1, v / (max || 1))) * 100}%`, opacity: on ? 1 : 0.45 }} /></span>
 }
 
-export default function Controls({ n, budget, prices, onBudget, onPrices, engines, engine, onEngine, heldOut, dataset, shape, real, ceiling }: Props) {
+export default function Controls({ n, budget, prices, onBudget, onPrices, engines, engine, onEngine, heldOut, dataset, shape }: Props) {
   const set = (key: keyof Prices) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onPrices({ ...prices, [key]: Number(e.target.value) })
 
@@ -96,21 +94,17 @@ export default function Controls({ n, budget, prices, onBudget, onPrices, engine
             {peek && at && createPortal(
               <div className="enginecard" role="tooltip" style={{ left: at.left, top: at.top }}>
                 <div><b>{SHORT[peek]}</b> <span className="muted">{FOR[peek]}</span></div>
-                <div style={{ margin: '4px 0 8px' }}>{HOW[peek]}</div>
-                <table className="mini">
-                  <thead><tr><th /> {engines.map((e) => <th key={e.id} className={e.id === peek ? 'hi' : ''}>{SHORT[e.id]}</th>)}</tr></thead>
-                  <tbody>
-                    <tr><td>accuracy, past seasons{ceiling ? <span className="muted"> (best possible here: {ceiling.toFixed(2)})</span> : null}</td>
-                      {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>{e.r_mean.toFixed(2)}
-                        <Bar v={e.r_mean} max={Math.max(...engines.map((x) => x.r_mean))} on={e.id === peek} /></td>)}</tr>
-                    {real && (
-                      <tr><td>value of its picks, past seasons <span className="muted">($/acre above an average line)</span></td>
-                        {engines.map((e) => <td key={e.id} className={e.id === peek ? 'hi' : ''}>
-                          {real[e.id] != null ? `+$${real[e.id]!.toFixed(0)}` : ''}
-                          <Bar v={real[e.id] ?? 0} max={Math.max(...engines.map((x) => real[x.id] ?? 0))} on={e.id === peek} /></td>)}</tr>
-                    )}
-                  </tbody>
-                </table>
+                <div style={{ margin: '4px 0 10px' }}>{HOW[peek]}</div>
+                <div className="muted" style={{ marginBottom: 4 }}>accuracy, past seasons</div>
+                <div className="enginebars">
+                  {engines.map((e) => (
+                    <Fragment key={e.id}>
+                      <span className={e.id === peek ? 'on' : ''}>{SHORT[e.id]}</span>
+                      <Bar v={e.r_mean} max={Math.max(...engines.map((x) => x.r_mean))} on={e.id === peek} />
+                      <span className={e.id === peek ? 'on' : ''}>{e.r_mean.toFixed(2)}</span>
+                    </Fragment>
+                  ))}
+                </div>
               </div>, document.body,
             )}
             {shape && (
