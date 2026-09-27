@@ -10,6 +10,7 @@ import { loadJson } from './lib/data'
 import { advanceOrder, byYieldOrder, evenShare, forecastFrom, frontier, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
 import type { EngineId, Recommendations, SeasonLines } from './lib/types'
 import RankStairs from './components/RankStairs'
+import SeasonAccuracy from './components/SeasonAccuracy'
 import Evidence from './components/Evidence'
 import TestSites from './components/TestSites'
 import SeasonForecast from './components/SeasonForecast'
@@ -161,9 +162,12 @@ export default function App() {
           )}
           <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={dPrices} />
           <details className="more" onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
-            <summary>More tools: the budget curve, price scenarios, the genomic map</summary>
+            <summary>More visualizations: accuracy by season, the budget curve, price scenarios, the genomic map</summary>
             {moreOpen && (
               <div className="stack" style={{ marginTop: 12 }}>
+                {data.validation.by_year && (
+                  <SeasonAccuracy years={data.validation.by_year} heldOut={heldOut} revealed={revealed} ceiling={data.validation.ceiling} />
+                )}
                 <Frontier points={curve} budget={k} onBudget={setBudget} />
                 <Scenarios candidates={cands} prices={dPrices} budget={k} cap={dCap} even={dEven} />
                 <GenomicMap all={scored} advanced={advancedIds} />

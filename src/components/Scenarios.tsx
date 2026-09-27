@@ -24,8 +24,8 @@ function Scenarios({ candidates, prices, budget, cap, even = false }: Props) {
     <div className="panel tablewrap">
       <h2>
         <span>When the ranking changes<Info wide>
-          The same budget and the same predictions, under different season economics. Each row recalculates the tiles
-          above with one price changed: expensive drying (a propane spike), cheaper corn, or a year where fallen plants
+          The same budget and the same predictions, under different season economics. Each row recalculates the plan
+          with one price changed: expensive drying (a propane spike), cheaper corn, or a year where fallen plants
           are mostly lost. It shows <b>when</b> ranking by dollars instead of bushels matters most: the gap grows when
           drying or lodging get expensive.
         </Info></span>
