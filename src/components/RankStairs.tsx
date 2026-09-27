@@ -1,8 +1,17 @@
 import { memo } from 'react'
 import type { SeasonPoint } from '../lib/econ'
+import type { EngineId, YearResult } from '../lib/types'
 import Info from './Info'
 
-interface Props { seasons: SeasonPoint[] | null; heldOut: number; revealed: boolean; share: number }
+interface Props {
+  seasons: SeasonPoint[] | null
+  heldOut: number
+  revealed: boolean
+  share: number
+  years?: YearResult[]          // each season's accuracy, for the breeders' line in the (i)
+  engine: EngineId
+  ceiling?: number | null
+}
 
 // whole dollars with their sign; anything that rounds to nothing is just $0
 const usd0 = (v: number) => {
@@ -14,10 +23,25 @@ const usd0 = (v: number) => {
  *  predicted income, best first. Ticks are what January predicted each fifth to earn against its own
  *  family's average; after harvest, bars show what it really earned. The dashed line is the plot budget:
  *  every family plants its lines left of it, so the green is the selected lines. */
-function RankStairs({ seasons, heldOut, revealed, share }: Props) {
+function RankStairs({ seasons, heldOut, revealed, share, years, engine, ceiling }: Props) {
   const now = seasons?.find((s) => s.year === heldOut && s.stairs && s.stairsPred)
   if (!now) return null
   const pred = now.stairsPred!, real = now.stairs!
+  // what a line earns on its own, so a bar below the line reads as 'less than its siblings', not a loss
+  const pastIncome = (seasons ?? []).filter((s) => s.year < heldOut && s.income != null).map((s) => s.income!)
+  const typical = pastIncome.length ? Math.round(pastIncome.reduce((a, b) => a + b, 0) / pastIncome.length / 10) * 10 : null
+  // the breeders' number: accuracy r, the decision year only after its harvest
+  const acc = (() => {
+    const past = (years ?? []).filter((y) => y.year < heldOut), last = (years ?? []).find((y) => y.year === heldOut)
+    if (!past.length) return null
+    const mean = (f: (y: YearResult) => number) => past.reduce((a, y) => a + f(y), 0) / past.length
+    const mine = (y: YearResult) => (engine === 'gblup' ? y.r_gblup : y.r), other = (y: YearResult) => (engine === 'gblup' ? y.r : y.r_gblup)
+    const span = `${past[0].year} to ${past[past.length - 1].year}`
+    const shown = revealed && last
+      ? `${mine(last).toFixed(2)} in ${heldOut} and ${mean(mine).toFixed(2)} on average in ${span} (${engine === 'gblup' ? '2-Step' : 'Standard'}: ${other(last).toFixed(2)} and ${mean(other).toFixed(2)})`
+      : `${mean(mine).toFixed(2)} on average in ${span} (${engine === 'gblup' ? '2-Step' : 'Standard'}: ${mean(other).toFixed(2)})`
+    return `${shown}.${ceiling != null ? ` Field noise caps any method near ${ceiling.toFixed(2)} here.` : ''}`
+  })()
 
   const W = 720, H = 230, L = 104, R = 16, T = 30, B = 30
   const lim = Math.max(1, ...pred.map(Math.abs), ...(revealed ? real.map(Math.abs) : [])) * 1.3
@@ -34,7 +58,10 @@ function RankStairs({ seasons, heldOut, revealed, share }: Props) {
         Each family's new lines, split into five equal groups by predicted income per acre, from ranked best to ranked
         worst. <b>Ticks</b>: what each group was predicted in January to earn against its own family's average.{' '}
         <b>Bars</b>, after harvest: what it really earned. <b>The dashed line</b> is your plot budget: every family plants
-        its lines to the left of it.
+        its lines to the left of it.<br /><br />
+        Below the line means less than the family's average, not a loss{typical ? <>: a test hybrid here earns about
+        ${typical.toLocaleString('en-US')} an acre</> : null}.
+        {acc && <><br /><br />In breeders' terms, accuracy r = {acc}</>}
       </Info></h2>
       <div className="chartbox">
         <svg className="chart" viewBox={`0 0 ${W} ${H}`} width="100%" role="img"

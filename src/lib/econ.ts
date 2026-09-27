@@ -418,6 +418,7 @@ export interface SeasonPoint {
   // each family's lines split into fifths by predicted income, best first: what each fifth really earned
   // above its own family's average, and what it was predicted to, $/acre
   stairs?: number[]; stairsPred?: number[]
+  income?: number               // what the season's average line really earned, $/acre
 }
 export interface SeasonValue extends SeasonPoint { forecast: number | null; lo: number | null; hi: number | null }
 export interface PlanForecast { past: SeasonValue[]; now: SeasonPoint; forecast: number; lo: number; hi: number }
@@ -513,7 +514,7 @@ export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share
     for (const members of fams) for (const i of members) if (real[i] > top || (real[i] === top && level-- > 0)) kept += chosen[i]
     const stairs = stairSum.map((s, f) => (stairN[f] ? s / stairN[f] : 0))
     const stairsPred = stairPred.map((s, f) => (stairN[f] ? s / stairN[f] : 0))
-    if (picked) out.push({ year, predicted: sp / picked - ap / all, real: sr / picked - ar / all, best, kept, picked, lines: all, stairs, stairsPred })
+    if (picked) out.push({ year, predicted: sp / picked - ap / all, real: sr / picked - ar / all, best, kept, picked, lines: all, stairs, stairsPred, income: ar / all })
   }
   return out
 }

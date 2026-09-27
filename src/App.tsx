@@ -10,7 +10,6 @@ import { loadJson } from './lib/data'
 import { advanceOrder, byYieldOrder, evenShare, forecastFrom, frontier, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
 import type { EngineId, Recommendations, SeasonLines } from './lib/types'
 import RankStairs from './components/RankStairs'
-import SeasonAccuracy from './components/SeasonAccuracy'
 import Evidence from './components/Evidence'
 import TestSites from './components/TestSites'
 import SeasonForecast from './components/SeasonForecast'
@@ -154,10 +153,8 @@ export default function App() {
               revealed={revealed} onReveal={setRevealed} />
           )}
           {heldOut && <BestKept seasons={seasons} heldOut={heldOut} revealed={revealed} />}
-          {heldOut && <RankStairs seasons={seasons} heldOut={heldOut} revealed={revealed} share={share} />}
-          {data.validation.by_year && (
-            <SeasonAccuracy years={data.validation.by_year} heldOut={heldOut} revealed={revealed} ceiling={data.validation.ceiling} />
-          )}
+          {heldOut && <RankStairs seasons={seasons} heldOut={heldOut} revealed={revealed} share={share}
+            years={data.validation.by_year} engine={dEngine} ceiling={data.validation.ceiling} />}
           {data.locations && data.locations.length > 0 && data.season_plots && (
             <TestSites sites={data.locations} year={heldOut} candidates={data.candidates} plots={data.season_plots}
               prices={dPrices} advanced={summary.advanced} />
