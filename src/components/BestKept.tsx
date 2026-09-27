@@ -14,17 +14,19 @@ function BestKept({ seasons, heldOut, revealed }: Props) {
   const past = graded.filter((s) => s.year < heldOut)
   const now = graded.find((s) => s.year === heldOut)
   if (!past.length) return null
-  const [big, small] = revealed && now
-    ? [`${fmt(now.kept!)} of ${fmt(now.best!)}`, `best ${heldOut} lines got a plot (random: ${fmt(Math.round((now.best! * now.picked!) / now.lines!))})`]
-    : [`${Math.round(mean(past.map((s) => s.kept! / s.best!)) * 100)}%`,
-      `of each season's best lines got a plot (random: ${Math.round(mean(past.map((s) => s.picked! / s.lines!)) * 100)}%)`]
+  // what a random pick of as many lines would keep, for the (i)
+  const [big, small, random] = revealed && now
+    ? [`${fmt(now.kept!)} of ${fmt(now.best!)}`, `best ${heldOut} lines got a plot`, `about ${fmt(Math.round((now.best! * now.picked!) / now.lines!))} of them`]
+    : [`${Math.round(mean(past.map((s) => s.kept! / s.best!)) * 100)}%`, "of each season's best lines got a plot",
+      `${Math.round(mean(past.map((s) => s.picked! / s.lines!)) * 100)}%`]
   return (
     <div className="evidence" role="list" aria-label="Best lines kept">
       <div className="ev" role="listitem">
         <b>{big}</b>
         <span>{small}<Info>
           <b>Best lines</b>: the top 10% of a season's lines by real income per acre, measured in the field
-          {revealed && now ? '.' : `, ${past[0].year} to ${past[past.length - 1].year}.`}
+          {revealed && now ? '.' : `, ${past[0].year} to ${past[past.length - 1].year}.`} A random pick of as many lines
+          would keep {random}.
         </Info></span>
       </div>
     </div>

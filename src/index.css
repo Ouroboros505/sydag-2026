@@ -66,7 +66,6 @@ header .sub { color: var(--text-2); }
 .lede { color: var(--text-2); margin: 4px 0 20px; max-width: 70ch; }
 .lede p { margin: 0 0 6px; }
 .lede b { color: var(--text); }
-.lede .who { font-size: 13px; color: var(--text-3); }
 .engine-note { font-size: 12px; color: var(--text-2); margin-top: 6px; line-height: 1.45; }
 .engine-note b { color: var(--text); }
 

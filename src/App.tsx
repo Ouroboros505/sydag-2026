@@ -65,7 +65,6 @@ export default function App() {
 
   const half90 = data?.validation.engines?.find((e) => e.id === dEngine)?.half90
   const cands = useMemo(() => (data ? withEngine(data.candidates, dEngine, half90) : []), [data, dEngine, half90])
-  const nFamilies = useMemo(() => new Set(data?.candidates.map((c) => c.family)).size, [data])
   // how the lines are organized decides the engine: families of siblings, or lines that stand alone
   const shape = useMemo(() => {
     if (!data) return undefined
@@ -147,17 +146,8 @@ export default function App() {
       </header>
       <div className="lede">
         <p>
-          <b>{heldOut ? `January ${heldOut}. ` : ''}The field budget has been cut.</b>{' '}
-          {data.meta.n_candidates.toLocaleString('en-US')} new lines{nFamilies > 1 ? <>, from {nFamilies} families never grown in a field,</> : null}{' '}
-          are waiting, and there are plots for {k.toLocaleString('en-US')}. A line that gets no plot is dropped for good.
-        </p>
-        <p>
           <b>ProMaize chooses which lines get the plots.</b> It predicts each line's value from its DNA, in dollars per
           acre at your prices, and shows how far each prediction can be trusted.
-        </p>
-        <p className="who">
-          Built for the people who own that budget: the heads of maize breeding at Bayer Crop Science, Corteva,
-          Syngenta and KWS.
         </p>
       </div>
 
