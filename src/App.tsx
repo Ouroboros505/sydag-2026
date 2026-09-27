@@ -86,7 +86,6 @@ export default function App() {
   }, [data, lines, dPrices, share, dEngine])
   const forecast = useMemo(() => (seasons && heldOutYear ? forecastFrom(seasons, heldOutYear) : null), [seasons, heldOutYear])
   const summary = useMemo(() => (scored.length ? summarize(scored, k, dCap, dEven, byYield) : null), [scored, k, dCap, dEven, byYield])
-  const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
   const heldOut = data?.meta.held_out_year ?? null
 
   if (error) return <main><p>Could not load recommendations.json: {error}</p></main>
@@ -153,7 +152,7 @@ export default function App() {
                 {data.validation.by_year && (
                   <SeasonAccuracy years={data.validation.by_year} heldOut={heldOut} revealed={revealed} ceiling={data.validation.ceiling} />
                 )}
-                <GenomicMap all={scored} advanced={advancedIds} />
+                <GenomicMap all={scored} prices={dPrices} revealed={revealed} />
               </div>
             )}
           </details>
