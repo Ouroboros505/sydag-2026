@@ -1,12 +1,10 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import CandidateTable from './components/CandidateTable'
 import Controls from './components/Controls'
-import Frontier from './components/Frontier'
 import GenomicMap from './components/GenomicMap'
-import Scenarios from './components/Scenarios'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
-import { advanceOrder, byYieldOrder, forecastFrom, frontier, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
+import { advanceOrder, byYieldOrder, forecastFrom, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
 import type { EngineId, Recommendations, SeasonLines } from './lib/types'
 import RankStairs from './components/RankStairs'
 import SeasonAccuracy from './components/SeasonAccuracy'
@@ -87,10 +85,6 @@ export default function App() {
       : data.validation.engine_value ? seasonsFromRows(data.validation.engine_value, e, share) : []
   }, [data, lines, dPrices, share, dEngine])
   const forecast = useMemo(() => (seasons && heldOutYear ? forecastFrom(seasons, heldOutYear) : null), [seasons, heldOutYear])
-  const curve = useMemo(
-    () => (moreOpen && scored.length ? frontier(scored, dCap, Math.max(1, Math.floor(scored.length / 200)), byYield) : []),
-    [moreOpen, scored, dCap, byYield],
-  )
   const summary = useMemo(() => (scored.length ? summarize(scored, k, dCap, dEven, byYield) : null), [scored, k, dCap, dEven, byYield])
   const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
   const heldOut = data?.meta.held_out_year ?? null
@@ -153,14 +147,12 @@ export default function App() {
           )}
           <CandidateTable advanced={summary.advanced} prices={dPrices} revealed={revealed} />
           <details className="more" onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
-            <summary>More visualizations: accuracy by season, the budget curve, price scenarios, the genomic map</summary>
+            <summary>More visualizations: accuracy by season, the genomic map</summary>
             {moreOpen && (
               <div className="stack" style={{ marginTop: 12 }}>
                 {data.validation.by_year && (
                   <SeasonAccuracy years={data.validation.by_year} heldOut={heldOut} revealed={revealed} ceiling={data.validation.ceiling} />
                 )}
-                <Frontier points={curve} budget={k} onBudget={setBudget} />
-                <Scenarios candidates={cands} prices={dPrices} budget={k} cap={dCap} even={dEven} />
                 <GenomicMap all={scored} advanced={advancedIds} />
               </div>
             )}
