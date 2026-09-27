@@ -410,7 +410,12 @@ export function valueAt(rows: EngineValueRow[], share: number): { predicted: num
 }
 
 
-export interface SeasonPoint { year: number; predicted: number; real: number }
+export interface SeasonPoint {
+  year: number; predicted: number; real: number
+  // worked out from the season lines only: how many of the season's best lines (its top tenth by real
+  // income) got a plot, out of how many, and how many lines were planted, out of how many
+  best?: number; kept?: number; picked?: number; lines?: number
+}
 export interface SeasonValue extends SeasonPoint { forecast: number | null; lo: number | null; hi: number | null }
 export interface PlanForecast { past: SeasonValue[]; now: SeasonPoint; forecast: number; lo: number; hi: number }
 
@@ -458,6 +463,7 @@ export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share
   }
   const out: SeasonPoint[] = []
   const buf = new Float64Array(n)
+  const chosen = new Uint8Array(n)
   for (const [year, fams] of familiesOf(sl)) {
     let sp = 0, sr = 0, picked = 0, ap = 0, ar = 0, all = 0
     for (const members of fams) {
@@ -474,10 +480,23 @@ export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share
       for (let j = 0; j < size; j++) {
         const i = members[j]
         ap += pred[i]; ar += real[i]; all++
-        if (pred[i] > cut || (pred[i] === cut && ties-- > 0)) { sp += pred[i]; sr += real[i]; picked++ }
+        const take = pred[i] > cut || (pred[i] === cut && ties-- > 0)
+        chosen[i] = take ? 1 : 0
+        if (take) { sp += pred[i]; sr += real[i]; picked++ }
       }
     }
-    if (picked) out.push({ year, predicted: sp / picked - ap / all, real: sr / picked - ar / all })
+    // the season's best lines, its top tenth by real income (found the same way), and how many got a plot
+    const v = buf.subarray(0, all)
+    let j = 0
+    for (const members of fams) for (const i of members) v[j++] = real[i]
+    v.sort()
+    const best = roundHalfEven(0.1 * all)
+    const top = best > 0 ? v[all - best] : Infinity
+    let level = best
+    for (let t = all - best; t < all; t++) if (v[t] > top) level--
+    let kept = 0
+    for (const members of fams) for (const i of members) if (real[i] > top || (real[i] === top && level-- > 0)) kept += chosen[i]
+    if (picked) out.push({ year, predicted: sp / picked - ap / all, real: sr / picked - ar / all, best, kept, picked, lines: all })
   }
   return out
 }

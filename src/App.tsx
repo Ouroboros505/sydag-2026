@@ -4,7 +4,7 @@ import Controls from './components/Controls'
 import Frontier from './components/Frontier'
 import GenomicMap from './components/GenomicMap'
 import Scenarios from './components/Scenarios'
-import StatTiles from './components/StatTiles'
+import BestKept from './components/BestKept'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
 import { advanceOrder, backtest, backtestBase, byYieldOrder, captureCurve, evenShare, forecastFrom, frontier, meanOf, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
@@ -179,7 +179,7 @@ export default function App() {
             <SeasonForecast f={forecast} heldOut={heldOut} engine={dEngine} corn={dPrices.corn_price}
               revealed={revealed} onReveal={setRevealed} />
           )}
-          <StatTiles {...summary} capped={dEven || Number.isFinite(dCap)} />
+          {heldOut && <BestKept seasons={seasons} heldOut={heldOut} revealed={revealed} />}
           {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}
           {data.locations && data.locations.length > 0 && data.season_plots && (
             <TestSites sites={data.locations} year={heldOut} candidates={data.candidates} plots={data.season_plots}
