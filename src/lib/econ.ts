@@ -415,7 +415,7 @@ export interface SeasonPoint {
   // worked out from the season lines only: how many of the season's best lines (its top tenth by real
   // income) got a plot, out of how many, and how many lines were planted, out of how many
   best?: number; kept?: number; picked?: number; lines?: number
-  // each family's lines split into fifths by predicted income, best first: what each fifth really earned
+  // each family's lines split into tenths by predicted income, best first: what each tenth really earned
   // above its own family's average, and what it was predicted to, $/acre
   stairs?: number[]; stairsPred?: number[]
   income?: number               // what the season's average line really earned, $/acre
@@ -432,6 +432,9 @@ const roundHalfEven = (x: number) => {
 /** The fair share, every graded season, at these prices: each family plants its best share of lines by
  *  the engine's predicted $/acre; the season's forecast is the predicted gain of those picks over the
  *  average line, and the real gain is what they earned over it. */
+// how finely the staircase splits each family: tenths
+const STEPS = 10
+
 // each season's families (line numbers in file order), worked out once per file: a knob step then only
 // re-prices and re-sorts
 const seasonFamilies = new WeakMap<SeasonLines, [number, number[][]][]>()
@@ -470,7 +473,7 @@ export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share
   const chosen = new Uint8Array(n)
   for (const [year, fams] of familiesOf(sl)) {
     let sp = 0, sr = 0, picked = 0, ap = 0, ar = 0, all = 0
-    const stairSum = [0, 0, 0, 0, 0], stairPred = [0, 0, 0, 0, 0], stairN = [0, 0, 0, 0, 0]
+    const stairSum = new Array(STEPS).fill(0), stairPred = new Array(STEPS).fill(0), stairN = new Array(STEPS).fill(0)
     for (const members of fams) {
       const size = members.length
       const q = roundHalfEven(share * size)
@@ -489,7 +492,7 @@ export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share
         chosen[i] = take ? 1 : 0
         if (take) { sp += pred[i]; sr += real[i]; picked++ }
       }
-      // the fifths: a line's rank is how many siblings are predicted above it, read off the sorted values
+      // the tenths: a line's rank is how many siblings are predicted above it, read off the sorted values
       let famReal = 0, famPred = 0
       for (let j = 0; j < size; j++) { famReal += real[members[j]]; famPred += pred[members[j]] }
       famReal /= size; famPred /= size
@@ -497,7 +500,7 @@ export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share
         const i = members[j]
         let lo = 0, hi = size
         while (lo < hi) { const mid = (lo + hi) >> 1; if (v[mid] <= pred[i]) lo = mid + 1; else hi = mid }
-        const f = Math.min(4, Math.floor(((size - lo) * 5) / size))
+        const f = Math.min(STEPS - 1, Math.floor(((size - lo) * STEPS) / size))
         stairSum[f] += real[i] - famReal; stairPred[f] += pred[i] - famPred; stairN[f]++
       }
     }

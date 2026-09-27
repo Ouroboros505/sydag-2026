@@ -19,8 +19,8 @@ const usd0 = (v: number) => {
   return r === 0 ? '$0' : `${r < 0 ? '−' : '+'}$${Math.abs(r)}`
 }
 
-/** The decision year's ranking: each family's lines split into fifths by predicted income, best first.
- *  In January the bars are what each fifth was predicted to earn against its own family's average; after
+/** The decision year's ranking: each family's lines split into tenths by predicted income, best first.
+ *  In January the bars are what each tenth was predicted to earn against its own family's average; after
  *  harvest they settle at what it really earned, on the same scale, so the move is the forecast's miss.
  *  The dashed line is the plot budget: every family plants its lines left of it. */
 function RankStairs({ seasons, heldOut, revealed, share, years, engine, ceiling }: Props) {
@@ -49,14 +49,15 @@ function RankStairs({ seasons, heldOut, revealed, share, years, engine, ceiling 
   const y = (v: number) => T + ((lim - v) / (2 * lim)) * (H - T - B)
   const x = (frac: number) => L + frac * (W - L - R)        // rank inside the family, 0 = best, 1 = worst
   const cut = x(Math.min(1, Math.max(0, share)))
-  const gap = 10
+  const n = pred.length
+  const gap = n > 5 ? 5 : 10
   // numbers stay readable where the budget line crosses them
   const halo = { stroke: 'var(--surface)', strokeWidth: 5, paintOrder: 'stroke' as const, strokeLinejoin: 'round' as const }
 
   return (
     <div className="panel">
       <h2>Final {heldOut} prediction<Info wide>
-        Each family's new lines, split into five equal groups by predicted income per acre, from ranked best to ranked
+        Each family's new lines, split into ten equal groups by predicted income per acre, from ranked best to ranked
         worst. <b>In January</b> each bar is what that group was predicted to earn against its own family's average;{' '}
         <b>after harvest</b>, what it really earned. <b>The dashed line</b> is your plot budget: every family plants its
         lines to the left of it.<br /><br />
@@ -66,7 +67,7 @@ function RankStairs({ seasons, heldOut, revealed, share, years, engine, ceiling 
       </Info></h2>
       <div className="chartbox">
         <svg className="chart" viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
-          aria-label={`${heldOut} lines by predicted rank, best to worst fifth: predicted ${pred.map(usd0).join(', ')}${revealed ? `; real ${real.map(usd0).join(', ')}` : ''}`}>
+          aria-label={`${heldOut} lines by predicted rank, best to worst tenth: predicted ${pred.map(usd0).join(', ')}${revealed ? `; real ${real.map(usd0).join(', ')}` : ''}`}>
           {/* the lines that get a plot */}
           <rect x={L} y={T - 18} width={Math.max(0, cut - L)} height={H - T - B + 18} fill={revealed ? 'var(--good)' : 'var(--accent)'} opacity={0.07} />
           <line x1={L} x2={W - R} y1={y(0)} y2={y(0)} stroke="var(--text-3)" strokeWidth={1.2} />
@@ -74,7 +75,7 @@ function RankStairs({ seasons, heldOut, revealed, share, years, engine, ceiling 
           <line x1={cut} x2={cut} y1={T - 18} y2={H - B} stroke="var(--text-2)" strokeDasharray="4 4" />
 
           {(revealed ? real : pred).map((v, f) => {
-            const x0 = x(f / 5) + gap, x1 = x((f + 1) / 5) - gap, mid = (x0 + x1) / 2
+            const x0 = x(f / n) + gap, x1 = x((f + 1) / n) - gap, mid = (x0 + x1) / 2
             const top = Math.min(y(0), y(v)), h = Math.max(1.5, Math.abs(y(v) - y(0)))
             const split = Math.min(x1, Math.max(x0, cut))
             // the forecast in the opening chart's blue; the harvest in its green; dropped lines grey in both
@@ -93,8 +94,8 @@ function RankStairs({ seasons, heldOut, revealed, share, years, engine, ceiling 
           <text x={cut - 6} y={T - 6} textAnchor="end" fontSize={11} fontWeight={600} fill={revealed ? 'var(--good)' : 'var(--accent)'}>planted</text>
           <text x={cut + 6} y={T - 6} fontSize={11} fill="var(--text-3)">dropped</text>
 
-          <text x={x(0.1)} y={H - 8} textAnchor="middle" fontSize={12} fill="var(--text-2)">ranked best</text>
-          <text x={x(0.9)} y={H - 8} textAnchor="middle" fontSize={12} fill="var(--text-2)">ranked worst</text>
+          <text x={x(0)} y={H - 8} fontSize={12} fill="var(--text-2)">ranked best</text>
+          <text x={x(1)} y={H - 8} textAnchor="end" fontSize={12} fill="var(--text-2)">ranked worst</text>
         </svg>
       </div>
       <div className="legend" style={{ marginTop: 2 }}>
