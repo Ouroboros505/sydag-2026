@@ -119,7 +119,7 @@ function GenomicMap({ all, prices, revealed }: Props) {
   const hv = hover ? value(hover) : undefined
   return (
     <div className="panel" style={{ position: 'relative' }}>
-      <h2>The new lines, grouped by DNA<Info wide>
+      <h2>Income by DNA group<Info wide>
         Each dot is a new line, placed by its DNA markers: close dots are close relatives, so a family's siblings sit
         together and the two genetic pools, the C1 and C2 lines, sit apart. (For breeders: the top two principal
         components of the marker matrix.) <b>Colour</b> is the line's family average income per acre against the

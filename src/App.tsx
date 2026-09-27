@@ -146,7 +146,7 @@ export default function App() {
           )}
           <CandidateTable advanced={summary.advanced} prices={dPrices} revealed={revealed} />
           <details className="more" onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
-            <summary>More visualizations: accuracy by season, the genomic map</summary>
+            <summary>More visualizations: accuracy by season, income by DNA group</summary>
             {moreOpen && (
               <div className="stack" style={{ marginTop: 12 }}>
                 {data.validation.by_year && (
