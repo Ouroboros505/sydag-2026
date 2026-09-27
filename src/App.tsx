@@ -154,7 +154,7 @@ export default function App() {
               revealed={revealed} onReveal={setRevealed} />
           )}
           {heldOut && <BestKept seasons={seasons} heldOut={heldOut} revealed={revealed} />}
-          {heldOut && <RankStairs seasons={seasons} heldOut={heldOut} revealed={revealed} />}
+          {heldOut && <RankStairs seasons={seasons} heldOut={heldOut} revealed={revealed} share={share} />}
           {data.validation.by_year && (
             <SeasonAccuracy years={data.validation.by_year} heldOut={heldOut} revealed={revealed} ceiling={data.validation.ceiling} />
           )}

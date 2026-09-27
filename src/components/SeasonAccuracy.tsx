@@ -42,7 +42,7 @@ function SeasonAccuracy({ years, heldOut, revealed, ceiling, bare }: Props) {
           )}
           {shown.map((s, i) => (
             <g key={s.year}>
-              <title>{`${s.year}: 2-Step ${s.r.toFixed(2)}, Standard ${s.r_gblup.toFixed(2)}, ${s.n_families} families`}</title>
+              <title>{`${s.year}: 2-Step ${s.r.toFixed(2)}, Standard ${s.r_gblup.toFixed(2)}. ${s.families_both != null ? `${s.families_both} of ${s.n_families} families had both parents tested before` : `${s.n_families} families`}`}</title>
               <rect x={cx(i) - sw / 2} y={T} width={sw} height={H - T - B} fill="transparent" />
               <line x1={cx(i)} x2={cx(i)} y1={y(s.r_gblup)} y2={y(s.r)} stroke="var(--border)" strokeWidth={3} strokeLinecap="round" />
               <circle cx={cx(i)} cy={y(s.r_gblup)} r={6} fill="var(--text-3)" />
