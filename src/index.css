@@ -231,6 +231,15 @@ button.pill:hover, label.pill:hover { color: var(--accent); border-color: var(--
 /* anchor tips to the tile/panel, so they never run off the screen edge */
 .tile, .panel { position: relative; }
 .tile .info, .panel h2 .info { position: static; }
+/* a word or icon that explains itself on hover (or tap), without an (i) */
+.hovertip { position: relative; cursor: help; outline: none; }
+.hovertip .tipbox {
+  display: none; position: absolute; left: 0; top: calc(100% + 6px); z-index: 20; width: 250px; padding: 8px 10px;
+  border-radius: 8px; background: var(--surface); color: var(--text-2); border: 1px solid var(--border);
+  box-shadow: 0 6px 24px rgba(0,0,0,.18); font-size: 12px; line-height: 1.45; white-space: normal;
+}
+.hovertip .tipbox b { color: var(--text); }
+.hovertip:hover .tipbox, .hovertip:focus .tipbox { display: block; }
 /* the map's zoom buttons, stacked in its top-left corner */
 .mapzoom { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 4px; }
 .mapzoom button {

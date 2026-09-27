@@ -130,8 +130,12 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
   }, [placed, res])
   const pct = (x: number) => `${Math.round(x * 100)}%`
   // the weather file is metric; a US audience reads Fahrenheit and inches
-  const toF = (c: number) => Math.round((c * 9) / 5 + 32)
-  const toIn = (mm: number) => Math.round(mm / 25.4)
+  const toF = (c: number) => ((c * 9) / 5 + 32).toFixed(1)
+  const toIn = (mm: number) => (mm / 25.4).toFixed(1)
+  // what a kind of summer means, shown on hover beside its icons
+  const describe = (c: Climate) =>
+    `July averages ${c.startsWith('hot') ? `${toF(cut.heat)}°F or more` : `below ${toF(cut.heat)}°F`}; ` +
+    `${c.endsWith('wet') ? `${toIn(cut.rain)} in or more` : `less than ${toIn(cut.rain)} in`} of rain, June to August.`
 
   // zoom and pan, in the map's own units; dots keep their size as it zooms, so crowded sites separate
   const [view, setView] = useState({ k: 1, x: W / 2, y: H / 2 })
@@ -224,8 +228,11 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
             const o = byClimate[c]
             return (
               <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '6px 0' }}>
-                <Icons c={c} />
-                <span className="small" style={{ whiteSpace: 'nowrap' }}>{LABEL[c]}</span>
+                <span className="hovertip" tabIndex={0} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <Icons c={c} />
+                  <span className="small" style={{ whiteSpace: 'nowrap' }}>{LABEL[c]}</span>
+                  <span className="tipbox" role="tooltip"><b>{LABEL[c]}</b>: {describe(c)}</span>
+                </span>
                 <span className="small" style={{ marginLeft: 'auto', whiteSpace: 'nowrap' }}>
                   {o && o.scored
                     ? <b style={{ color: o.gain > 0 ? 'var(--good)' : LOST }}>{o.gain > 0 ? '+' : ''}{fmtUSD(o.gain, 1)} /acre</b>
@@ -234,9 +241,6 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
               </div>
             )
           })}
-          <div className="small muted" style={{ marginTop: 8 }}>
-            Hot: July averages about {toF(cut.heat)}°F or more. Wet: about {toIn(cut.rain)} in or more of rain, June to August.
-          </div>
           {hs && hr && (
             <div className="lanes" style={{ marginTop: 12 }}>
               <b>{hs.loc}</b>
@@ -245,7 +249,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
                   ? <>your lines here: <b style={{ color: hr.gain > 0 ? 'var(--good)' : LOST }}>{hr.gain > 0 ? '+' : ''}{fmtUSD(hr.gain, 1)}/ac</b> against the rest<br /></>
                   : <>too few of your lines here to compare<br /></>}
                 {hr.chosen.toLocaleString('en-US')} of your plots, {hr.others.toLocaleString('en-US')} others<br />
-                {hs.rain != null && hs.heat != null && <>summer rain {(hs.rain / 25.4).toFixed(1)} in · July {toF(hs.heat)}°F<br /></>}
+                {hs.rain != null && hs.heat != null && <>summer rain {toIn(hs.rain)} in · July {toF(hs.heat)}°F<br /></>}
                 {hs.clay != null && <>topsoil {hs.clay}% clay, {hs.sand}% sand</>}
               </div>
             </div>
