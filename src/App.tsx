@@ -6,7 +6,7 @@ import GenomicMap from './components/GenomicMap'
 import Scenarios from './components/Scenarios'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
-import { advanceOrder, byYieldOrder, evenShare, forecastFrom, frontier, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
+import { advanceOrder, byYieldOrder, forecastFrom, frontier, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
 import type { EngineId, Recommendations, SeasonLines } from './lib/types'
 import RankStairs from './components/RankStairs'
 import SeasonAccuracy from './components/SeasonAccuracy'
@@ -92,11 +92,6 @@ export default function App() {
     [moreOpen, scored, dCap, byYield],
   )
   const summary = useMemo(() => (scored.length ? summarize(scored, k, dCap, dEven, byYield) : null), [scored, k, dCap, dEven, byYield])
-  const yieldList = useMemo(
-    () => (dEven ? evenShare(byYield, k) : advanceOrder(byYield, dCap).slice(0, k)),
-    [byYield, dCap, k, dEven],
-  )
-  const yieldSet = useMemo(() => new Set(yieldList.map((c) => c.id)), [yieldList])
   const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
   const heldOut = data?.meta.held_out_year ?? null
 
@@ -156,7 +151,7 @@ export default function App() {
             <TestSites sites={data.locations} year={heldOut} candidates={data.candidates} plots={data.season_plots}
               prices={dPrices} advanced={summary.advanced} />
           )}
-          <CandidateTable advanced={summary.advanced} yieldSet={yieldSet} prices={dPrices} />
+          <CandidateTable advanced={summary.advanced} prices={dPrices} revealed={revealed} />
           <details className="more" onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
             <summary>More visualizations: accuracy by season, the budget curve, price scenarios, the genomic map</summary>
             {moreOpen && (

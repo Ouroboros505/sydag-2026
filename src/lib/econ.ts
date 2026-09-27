@@ -343,16 +343,17 @@ export function scenarios(base: Prices): Scenario[] {
   ]
 }
 
-export function toCSV(rows: Scored[], p: Prices): string {
-  const withActual = rows.some((c) => c.actual_yield != null)
+/** The advancement list as a file: what the page shows, and the real results only once they are revealed. */
+export function toCSV(rows: Scored[], p: Prices, revealed = true): string {
+  const withActual = revealed && rows.some((c) => c.actual_yield != null)
   const head = ['rank', 'line', 'family', 'tester', 'usd_per_acre', 'gross', 'drying', 'lodging_loss',
-    'pred_yield_bu_ac', 'lo90', 'hi90', 'pred_moisture_pct', 'pred_lodging_pct', 'rank_by_yield', 'confidence',
+    'pred_yield_bu_ac', 'lo90', 'hi90', 'pred_moisture_pct', 'pred_lodging_pct',
     ...(withActual ? ['actual_yield_bu_ac', 'actual_moisture_pct', 'actual_lodging_pct', 'actual_usd_per_acre'] : [])]
   const esc = (v: string | number) => (typeof v === 'string' && /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : String(v))
   const lines = rows.map((c, i) => {
     const b = breakdown(c, p)
     const cells: (string | number)[] = [i + 1, c.id, c.family, c.group, c.margin.toFixed(2), b.gross.toFixed(2),
-      b.drying.toFixed(2), b.lodging.toFixed(2), c.pred_yield, c.lo, c.hi, c.pred_mst, c.pred_lodging, c.rankByYield, c.confidence]
+      b.drying.toFixed(2), b.lodging.toFixed(2), c.pred_yield, c.lo, c.hi, c.pred_mst, c.pred_lodging]
     if (withActual) {
       const act = actualMargin(c, p)
       cells.push(c.actual_yield ?? '', c.actual_mst ?? '', c.actual_lodging ?? '', act == null ? '' : act.toFixed(2))
