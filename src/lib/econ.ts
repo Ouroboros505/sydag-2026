@@ -411,8 +411,8 @@ export function valueAt(rows: EngineValueRow[], share: number): { predicted: num
 
 
 export interface SeasonPoint { year: number; predicted: number; real: number }
-export interface SeasonValue extends SeasonPoint { forecast: number | null }
-export interface PlanForecast { past: SeasonValue[]; now: SeasonPoint; forecast: number; lo: number; hi: number; avgReal: number }
+export interface SeasonValue extends SeasonPoint { forecast: number | null; lo: number | null; hi: number | null }
+export interface PlanForecast { past: SeasonValue[]; now: SeasonPoint; forecast: number; lo: number; hi: number }
 
 // numpy and Python round halves to even: match them, so the app and the pipeline pick the same lines
 const roundHalfEven = (x: number) => {
@@ -491,7 +491,10 @@ export function seasonsFromRows(rows: EngineValueRow[], engine: EngineId, share:
 
 /** The decision year's forecast and the record before it. An engine's raw forecast is its own
  *  prediction for its own picks; each season's is corrected by how far the earlier seasons' forecasts
- *  missed, so a season's forecast uses only what was known before it. */
+ *  missed, so a season's forecast uses only what was known before it. Its range is the raw forecast
+ *  corrected as if the season went like the worst or the best of the earlier ones: if seasons are alike,
+ *  a new one lands outside only when it is the worst or the best of them all, so with n earlier seasons
+ *  it lands inside n - 1 times in n + 1. */
 export function forecastFrom(seasons: SeasonPoint[], heldOut: number): PlanForecast | null {
   const pastRaw = seasons.filter((s) => s.year < heldOut)
   const now = seasons.find((s) => s.year === heldOut)
@@ -502,11 +505,14 @@ export function forecastFrom(seasons: SeasonPoint[], heldOut: number): PlanForec
   if (!ratios.length) return null
   const past = pastRaw.map((s, i) => {
     const before = pastRaw.slice(0, i).map(ratio).filter(Number.isFinite)
-    return { ...s, forecast: before.length ? s.predicted * mean(before) : null }
+    const ranged = before.length >= 2   // a worst and a best need two seasons
+    return {
+      ...s, forecast: before.length ? s.predicted * mean(before) : null,
+      lo: ranged ? s.predicted * Math.min(...before) : null, hi: ranged ? s.predicted * Math.max(...before) : null,
+    }
   })
   return {
     past, now, forecast: now.predicted * mean(ratios),
     lo: now.predicted * Math.min(...ratios), hi: now.predicted * Math.max(...ratios),
-    avgReal: mean(pastRaw.map((s) => s.real)),
   }
 }

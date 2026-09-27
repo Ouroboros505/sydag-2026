@@ -171,7 +171,7 @@ export default function App() {
         </p>
       </div>
 
-      <Evidence v={data.validation} heldOut={heldOut} f={forecast} revealed={revealed} />
+      <Evidence v={data.validation} heldOut={heldOut} revealed={revealed} />
 
       <div className="layout">
         <Controls

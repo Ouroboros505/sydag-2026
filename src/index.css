@@ -227,6 +227,10 @@ table.mini .hi { color: var(--text); font-weight: 700; background: var(--highlig
 /* anchor tips to the tile/panel, so they never run off the screen edge */
 .tile, .panel { position: relative; }
 .tile .info, .panel h2 .info { position: static; }
+/* a knob's ⓘ opens under the knob, from its left edge */
+.control { position: relative; }
+.control label .info { position: static; }
+.control .infotip { top: 22px; left: 0; transform: none; }
 .tile .infotip { top: 34px; left: 8px; right: 8px; width: auto; min-width: 0; transform: none; }
 .panel h2 .infotip { top: 40px; left: 16px; transform: none; max-width: calc(100% - 32px); }
 .tile .infotip { width: 290px; max-width: calc(100vw - 40px); left: 8px; right: auto; }

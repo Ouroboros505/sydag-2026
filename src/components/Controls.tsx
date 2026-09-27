@@ -161,13 +161,15 @@ export default function Controls({ n, budget, prices, onBudget, onPrices, engine
       </div>
 
       <div className="control">
-        <label>Drying cost <b>{fmtCents(prices.drying_cost_per_point)} per bushel per point</b></label>
+        <label>
+          {/* a worked example that follows the knobs: 'point' is one percent of moisture */}
+          <span>Drying cost<Info>
+            Wet corn is dried to the target moisture before it's sold. Harvested at 20%, that's{' '}
+            {fmtNum1(20 - prices.target_moisture)} points to remove: {fmtCents((20 - prices.target_moisture) * prices.drying_cost_per_point)} a bushel.
+          </Info></span>
+          <b>{fmtCents(prices.drying_cost_per_point)} per bushel per point</b>
+        </label>
         <input type="range" min={0} max={0.1} step={0.005} value={prices.drying_cost_per_point} onChange={set('drying_cost_per_point')} />
-        {/* a worked example that follows the knobs: 'point' is one percent of moisture */}
-        <div className="hint">
-          Wet corn is dried to the target moisture before it's sold. Harvested at 20%, that's{' '}
-          {fmtNum1(20 - prices.target_moisture)} points to remove: {fmtCents((20 - prices.target_moisture) * prices.drying_cost_per_point)} a bushel.
-        </div>
       </div>
 
       <div className="control">
