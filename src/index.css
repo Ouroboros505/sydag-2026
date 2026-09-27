@@ -14,6 +14,9 @@
   --warn: #c98500;
   --row-alt: #f7f7f4;
   --highlight: #eaf2fc;
+  --map-land: #ebe8df;
+  --map-line: #ffffff;
+  --map-edge: #b9b5aa;
 }
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
@@ -29,6 +32,9 @@
     --series-2: #d95926;
     --row-alt: #1f1f1e;
     --highlight: #1d2a3a;
+    --map-land: #3d3d39;
+    --map-line: #5a5a54;
+    --map-edge: #7a7a72;
   }
 }
 :root[data-theme="dark"] {
@@ -44,6 +50,9 @@
   --series-2: #d95926;
   --row-alt: #1f1f1e;
   --highlight: #1d2a3a;
+  --map-land: #3d3d39;
+  --map-line: #5a5a54;
+  --map-edge: #7a7a72;
 }
 
 * { box-sizing: border-box; }
@@ -222,6 +231,14 @@ button.pill:hover, label.pill:hover { color: var(--accent); border-color: var(--
 /* anchor tips to the tile/panel, so they never run off the screen edge */
 .tile, .panel { position: relative; }
 .tile .info, .panel h2 .info { position: static; }
+/* the map's zoom buttons, stacked in its top-left corner */
+.mapzoom { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 4px; }
+.mapzoom button {
+  width: 30px; height: 30px; font: inherit; font-size: 16px; line-height: 1; cursor: pointer; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 7px; box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+.mapzoom button:hover { border-color: var(--accent); color: var(--accent); }
+.mapzoom button:disabled { opacity: .4; cursor: default; }
 /* a knob's ⓘ opens under the knob, from its left edge */
 .control { position: relative; }
 .control label .info { position: static; }

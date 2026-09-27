@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import { geoAlbersUsa, geoPath } from 'd3-geo'
 import { feature, mesh } from 'topojson-client'
 import type { GeometryCollection, Topology } from 'topojson-specification'
@@ -43,6 +43,7 @@ function Icons({ c }: { c: Climate }) {
 const topo = us as unknown as Topology
 const states = feature(topo, topo.objects.states as GeometryCollection)
 const borders = mesh(topo, topo.objects.states as GeometryCollection, (a, b) => a !== b)
+const coast = mesh(topo, topo.objects.states as GeometryCollection, (a, b) => a === b)
 
 interface Props {
   sites: TestSite[]
@@ -62,13 +63,12 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
   const [mode, setMode] = useState<Mode>('won')
   const idIndex = useMemo(() => new Map(candidates.map((c, i) => [c.id, i])), [candidates])
 
-  // zoomed to the test network (the Corn Belt and east), so 180 sites don't sit in a thumbnail of the country
-  const { projection, statePaths, borderPath } = useMemo(() => {
-    const pts = { type: 'MultiPoint' as const, coordinates: sites.filter((s) => s.used).map((s) => [s.lon, s.lat]) }
-    const projection = geoAlbersUsa().fitExtent([[24, 16], [W - 24, H - 16]], pts)
+  // the whole country, so it reads as the US at a glance; the zoom buttons bring the Corn Belt close
+  const { projection, statePaths, borderPath, coastPath } = useMemo(() => {
+    const projection = geoAlbersUsa().fitExtent([[12, 12], [W - 12, H - 12]], states)
     const path = geoPath(projection)
-    return { projection, statePaths: states.features.map((f) => path(f) ?? ''), borderPath: path(borders) ?? '' }
-  }, [sites])
+    return { projection, statePaths: states.features.map((f) => path(f) ?? ''), borderPath: path(borders) ?? '', coastPath: path(coast) ?? '' }
+  }, [])
   const placed = useMemo(() => {
     const withClim = sites.filter((s) => s.rain != null && s.heat != null)
     const med = (xs: number[]) => { const v = [...xs].sort((a, b) => a - b); return v[Math.floor(v.length / 2)] ?? 0 }
@@ -120,38 +120,63 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
     .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap))[0]
   const pct = (x: number) => `${Math.round(x * 100)}%`
 
+  // zoom and pan, in the map's own units; dots keep their size as it zooms, so crowded sites separate
+  const [view, setView] = useState({ k: 1, x: W / 2, y: H / 2 })
+  const centre = useMemo(() => {
+    const xy = placed.map((p) => p.xy!)
+    return xy.length ? [xy.reduce((a, p) => a + p[0], 0) / xy.length, xy.reduce((a, p) => a + p[1], 0) / xy.length] : [W / 2, H / 2]
+  }, [placed])
+  const whole = { k: 1, x: W / 2, y: H / 2 }
+  const zoom = (f: number) => setView((v) => {
+    const k = Math.min(12, Math.max(1, v.k * f))
+    if (k <= 1.01) return whole
+    return v.k === 1 ? { k, x: centre[0], y: centre[1] } : { ...v, k }   // the first step zooms onto the test network
+  })
+  const drag = useRef<{ px: number; py: number; x: number; y: number; unit: number } | null>(null)
+  const onDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (view.k === 1) return
+    drag.current = { px: e.clientX, py: e.clientY, x: view.x, y: view.y, unit: W / e.currentTarget.getBoundingClientRect().width }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const d = drag.current
+    if (!d) return
+    const x = d.x - ((e.clientX - d.px) * d.unit) / view.k, y = d.y - ((e.clientY - d.py) * d.unit) / view.k
+    setView((v) => ({ ...v, x: Math.min(W, Math.max(0, x)), y: Math.min(H, Math.max(0, y)) }))
+  }
+
   const hs = hover != null ? sites[hover] : null
   const hr = hover != null ? res[hover] : null
-  const radius = (i: number) => (res[i].chosen > 0 ? 2.5 + 11 * Math.sqrt(res[i].chosen / maxPlots) : 2.5)
+  const radius = (i: number) => (res[i].chosen > 0 ? 2.5 + 11 * Math.sqrt(res[i].chosen / maxPlots) : 2.5) / Math.sqrt(view.k)
 
   return (
     <div className="panel" style={{ position: 'relative' }}>
-      <h2>Where your plan pays off, and in what conditions<Info wide>
+      <h2>Payoff by test site<Info wide>
         Each dot is a test site with {year} plots, placed from its coordinates; a bigger dot means more of your lines are
         tested there. <b>Where it won:</b> a site is green when the lines your current plan advances earned more per acre
         there than the lines it leaves out, in the same fields, on what the field really paid in {year} at your prices
         (each plot compared within its own trial; a site needs five plots of each to count). <b>Kind of summer:</b> the
         site's usual June to August rain and July temperature from the organizers' weather file, averaged over earlier
-        seasons and split at the middle value of all sites. Hover a site for its details.
+        seasons and split at the middle value of all sites. Hover a site for its details; zoom with + and −, then drag
+        to move around.
       </Info></h2>
-      <p style={{ marginTop: 0 }}>
-        {mode === 'won'
-          ? <>Green: at that site, the lines your plan picks earned more than the lines it leaves out, in the same fields, on what
-            the field really paid in {year}. Switch the engine or the plan and watch the map change.</>
-          : <>Your plan's tests, by the kind of summer each site usually gets, against all new lines. A plan that tilts
-            toward one kind of summer is betting on it.</>}
-      </p>
       <div className="toggle" style={{ marginBottom: 8 }}>
         <button className={mode === 'won' ? 'on' : ''} onClick={() => setMode('won')}>where it won</button>
         <button className={mode === 'summer' ? 'on' : ''} onClick={() => setMode('summer')}>kind of summer</button>
       </div>
       <div className="twocol" style={{ alignItems: 'start' }}>
         <div className="chartbox">
+          <div style={{ position: 'relative' }}>
           <svg className="chart" viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
             aria-label={mode === 'won' ? `Map of the ${year} test sites where the plan's lines won` : `Map of the ${year} test sites by summer climate`}
-            onMouseLeave={() => setHover(null)}>
-            {statePaths.map((d, i) => <path key={i} d={d} fill="var(--border)" />)}
-            <path d={borderPath} fill="none" stroke="var(--surface)" strokeWidth={1.2} />
+            onMouseLeave={() => setHover(null)} onPointerDown={onDown} onPointerMove={onMove}
+            onPointerUp={() => { drag.current = null }} onPointerCancel={() => { drag.current = null }}
+            style={{ cursor: view.k > 1 ? 'grab' : undefined, touchAction: view.k > 1 ? 'none' : undefined }}>
+            <g style={{ transform: `translate(${W / 2}px, ${H / 2}px) scale(${view.k}) translate(${-view.x}px, ${-view.y}px)`,
+              transition: drag.current ? 'none' : 'transform .35s ease' }}>
+            {statePaths.map((d, i) => <path key={i} d={d} fill="var(--map-land)" />)}
+            <path d={borderPath} fill="none" stroke="var(--map-line)" strokeWidth={0.9} vectorEffect="non-scaling-stroke" />
+            <path d={coastPath} fill="none" stroke="var(--map-edge)" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
             {placed.map((p) => {
               const r = res[p.i]
               const col = mode === 'won'
@@ -159,12 +184,19 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
                 : (p.climate ? COLOR[p.climate] : 'var(--text-3)')
               const empty = r.chosen === 0 || (mode === 'won' && r.gain == null)
               return (
-                <circle key={p.s.loc} cx={p.xy![0]} cy={p.xy![1]} r={radius(p.i) + (hover === p.i ? 2 : 0)}
-                  fill={empty ? 'none' : col} fillOpacity={0.82} stroke={empty ? col : 'var(--surface)'} strokeWidth={1}
-                  onMouseEnter={() => setHover(p.i)} style={{ cursor: 'pointer' }} />
+                <circle key={p.s.loc} cx={p.xy![0]} cy={p.xy![1]} r={radius(p.i) + (hover === p.i ? 2 / Math.sqrt(view.k) : 0)}
+                  fill={empty ? 'none' : col} fillOpacity={0.88} stroke={empty ? col : 'var(--surface)'} strokeWidth={1}
+                  vectorEffect="non-scaling-stroke" onMouseEnter={() => setHover(p.i)} style={{ cursor: 'pointer' }} />
               )
             })}
+            </g>
           </svg>
+          <div className="mapzoom">
+            <button onClick={() => zoom(1.6)} aria-label="Zoom in" title="Zoom in" disabled={view.k >= 12}>+</button>
+            <button onClick={() => zoom(1 / 1.6)} aria-label="Zoom out" title="Zoom out" disabled={view.k === 1}>−</button>
+            <button onClick={() => setView(whole)} aria-label="Whole country" title="Whole country" disabled={view.k === 1}>↺</button>
+          </div>
+          </div>
         </div>
         <div>
           {mode === 'won' ? (
