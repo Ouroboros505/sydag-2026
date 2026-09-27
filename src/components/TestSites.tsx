@@ -31,7 +31,7 @@ const COLOR: Record<Climate, string> = {
   'hot-dry': '#d9822b', 'hot-wet': '#2e9e6a', 'cool-dry': '#b8a15a', 'cool-wet': '#3a7bd5',
 }
 const LABEL: Record<Climate, string> = {
-  'hot-dry': 'hot and dry', 'hot-wet': 'hot and wet', 'cool-dry': 'cooler and dry', 'cool-wet': 'cooler and wet',
+  'hot-dry': 'Hot, dry', 'hot-wet': 'Hot, wet', 'cool-dry': 'Cool, dry', 'cool-wet': 'Cool, wet',
 }
 
 function Sun() {
@@ -174,16 +174,16 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
     <div className="panel" style={{ position: 'relative' }}>
       <h2>Payoff by test site<Info wide>
         Each dot is a test site with {year} plots, placed from its coordinates; a bigger dot means more of your lines are
-        tested there. <b>Where it won:</b> a site is green when the lines your current plan advances earned more per acre
+        tested there. <b>Payoff:</b> a site is green when the lines your current plan advances earned more per acre
         there than the lines it leaves out, in the same fields, on what the field really paid in {year} at your prices
-        (each plot compared within its own trial; a site needs five plots of each to count). <b>Kind of summer:</b> the
+        (each plot compared within its own trial; a site needs five plots of each to count). <b>Climate:</b> the
         site's usual June to August rain and July temperature from the organizers' weather file, averaged over earlier
         seasons and split at the middle value of all sites. Hover a site for its details; zoom with + and −, then drag
         to move around.
       </Info></h2>
       <div className="toggle" style={{ marginBottom: 8 }}>
-        <button className={mode === 'won' ? 'on' : ''} onClick={() => setMode('won')}>where it won</button>
-        <button className={mode === 'summer' ? 'on' : ''} onClick={() => setMode('summer')}>kind of summer</button>
+        <button className={mode === 'won' ? 'on' : ''} onClick={() => setMode('won')}>Payoff</button>
+        <button className={mode === 'summer' ? 'on' : ''} onClick={() => setMode('summer')}>Climate</button>
       </div>
       <div className="twocol" style={{ alignItems: 'start' }}>
         <div className="chartbox">
@@ -214,9 +214,9 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
             </g>
           </svg>
           {mode === 'won' && (
-            <div className="legend" style={{ marginTop: 4, alignItems: 'center' }}>
-              <span>Selected lines' profit in each location, over the dropped lines ($/acre)</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <div className="legend" style={{ marginTop: 4, flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+              <span style={{ whiteSpace: 'normal' }}>Selected lines' profit in each location, over the dropped lines ($/acre)</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
                 −${lim}
                 <i style={{ width: 120, height: 8, margin: 0, borderRadius: 4, background: `linear-gradient(to right, ${LOST}, ${EVEN}, ${WON})` }} />
                 +${lim}
@@ -233,13 +233,13 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
         <div>
           {mode === 'won' ? (
             <>
-              <div className="small muted">{year}: your plan against the lines it left out</div>
               <div style={{ margin: '4px 0 8px' }}>
                 <span style={{ fontSize: 26, fontWeight: 700, color: 'var(--good)' }}>{total.won}</span>
-                <span className="small"> of {total.scored} sites paid off ({pct(total.won / (total.scored || 1))})</span>
+                <span className="small"> of {total.scored} locations above $0 ({pct(total.won / (total.scored || 1))})</span>
               </div>
               <div className="small muted" style={{ display: 'flex' }}>
-                <span>kind of summer</span><span style={{ marginLeft: 'auto' }}>$/ac ahead · sites won</span>
+                <span style={{ whiteSpace: 'nowrap' }}>Summer climate</span>
+                <span style={{ marginLeft: 'auto', whiteSpace: 'nowrap' }}>$/acre · above $0</span>
               </div>
               {CLIMATES.map((c) => {
                 const o = byClimate.out[c]
@@ -256,15 +256,13 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
               })}
               <p className="small" style={{ margin: '10px 0 0' }}>
                 {everywhere
-                  ? <><b>Your plan paid off in every kind of summer:</b> hot or cool, wet or dry, its lines earned more than the ones it
-                    left out.</>
-                  : <><b>Weakest in {LABEL[worst]} summers</b>: there its lines earned {fmtUSD(byClimate.out[worst].gain, 1)}/ac against the
-                    rest.</>}
+                  ? <b>Ahead in every summer climate.</b>
+                  : <><b>Weakest in {LABEL[worst].toLowerCase()} summers</b>: {fmtUSD(byClimate.out[worst].gain, 1)}/acre over the dropped lines.</>}
               </p>
             </>
           ) : (
             <>
-              <div className="small muted">your plan's tests, by usual summer <span style={{ whiteSpace: 'nowrap' }}>(all new lines)</span></div>
+              <div className="small muted">Share of your tests by summer climate <span style={{ whiteSpace: 'nowrap' }}>(all new lines)</span></div>
               {CLIMATES.map((c) => (
                 <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '6px 0' }}>
                   <span style={{ width: 12, height: 12, borderRadius: 99, background: COLOR[c], display: 'inline-block' }} />
@@ -277,9 +275,9 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
               ))}
               <p className="small" style={{ margin: '10px 0 0' }}>
                 {tilt && Math.abs(tilt.gap) >= 0.05
-                  ? <><b>Your plan tilts {tilt.gap > 0 ? 'toward' : 'away from'} {LABEL[tilt.c]} summers:</b> {pct(share(tilt.c, 'tests'))} of
-                    its tests, against {pct(share(tilt.c, 'all'))} for all new lines.</>
-                  : <><b>Your plan keeps the full mix of summers</b>, within five points of all new lines everywhere.</>}
+                  ? <><b>Tilts {tilt.gap > 0 ? 'toward' : 'away from'} {LABEL[tilt.c].toLowerCase()} summers:</b> {pct(share(tilt.c, 'tests'))} of
+                    your tests, against {pct(share(tilt.c, 'all'))} for all new lines.</>
+                  : <b>Keeps the full mix of summer climates.</b>}
               </p>
             </>
           )}
