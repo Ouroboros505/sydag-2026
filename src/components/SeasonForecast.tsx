@@ -70,7 +70,7 @@ function SeasonForecast({ f, heldOut, engine, corn, revealed, onReveal }: Props)
 
   return (
     <div className="panel forecast" ref={panel}>
-      <h2>Income per acre of tested hybrids<Info wide>
+      <h2>Extra income per acre of tested hybrids<Info wide>
         <b>Bars</b>: the income per acre of the test hybrids of the lines {NAME[engine]} chose, measured in the real
         field, above what a random pick of lines earns (the "random pick" line). Income is yield times price (${corn.toFixed(2)} corn),
         minus drying cost and lodging loss, at an average test site: each trial's weather is taken out.<br /><br />
