@@ -415,6 +415,9 @@ export interface SeasonPoint {
   // worked out from the season lines only: how many of the season's best lines (its top tenth by real
   // income) got a plot, out of how many, and how many lines were planted, out of how many
   best?: number; kept?: number; picked?: number; lines?: number
+  // each family's lines split into fifths by predicted income, best first: what each fifth really earned
+  // above its own family's average, $/acre
+  stairs?: number[]
 }
 export interface SeasonValue extends SeasonPoint { forecast: number | null; lo: number | null; hi: number | null }
 export interface PlanForecast { past: SeasonValue[]; now: SeasonPoint; forecast: number; lo: number; hi: number }
@@ -466,6 +469,7 @@ export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share
   const chosen = new Uint8Array(n)
   for (const [year, fams] of familiesOf(sl)) {
     let sp = 0, sr = 0, picked = 0, ap = 0, ar = 0, all = 0
+    const stairSum = [0, 0, 0, 0, 0], stairN = [0, 0, 0, 0, 0]
     for (const members of fams) {
       const size = members.length
       const q = roundHalfEven(share * size)
@@ -484,6 +488,17 @@ export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share
         chosen[i] = take ? 1 : 0
         if (take) { sp += pred[i]; sr += real[i]; picked++ }
       }
+      // the fifths: a line's rank is how many siblings are predicted above it, read off the sorted values
+      let famReal = 0
+      for (let j = 0; j < size; j++) famReal += real[members[j]]
+      famReal /= size
+      for (let j = 0; j < size; j++) {
+        const i = members[j]
+        let lo = 0, hi = size
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (v[mid] <= pred[i]) lo = mid + 1; else hi = mid }
+        const f = Math.min(4, Math.floor(((size - lo) * 5) / size))
+        stairSum[f] += real[i] - famReal; stairN[f]++
+      }
     }
     // the season's best lines, its top tenth by real income (found the same way), and how many got a plot
     const v = buf.subarray(0, all)
@@ -496,7 +511,8 @@ export function seasonValues(sl: SeasonLines, engine: EngineId, p: Prices, share
     for (let t = all - best; t < all; t++) if (v[t] > top) level--
     let kept = 0
     for (const members of fams) for (const i of members) if (real[i] > top || (real[i] === top && level-- > 0)) kept += chosen[i]
-    if (picked) out.push({ year, predicted: sp / picked - ap / all, real: sr / picked - ar / all, best, kept, picked, lines: all })
+    const stairs = stairSum.map((s, f) => (stairN[f] ? s / stairN[f] : 0))
+    if (picked) out.push({ year, predicted: sp / picked - ap / all, real: sr / picked - ar / all, best, kept, picked, lines: all, stairs })
   }
   return out
 }

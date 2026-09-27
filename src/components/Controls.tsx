@@ -80,8 +80,7 @@ export default function Controls({ n, budget, prices, onBudget, onPrices, engine
             brothers and sisters inside the family.<br />
             <b>Standard</b>: GBLUP, the method most breeding programs use; one model over all earlier lines.<br /><br />
             <b>Accuracy</b> is how well the predicted ranking matched the real one, in seasons the engine never saw:
-            1 is perfect, 0 is no better than chance. Switch engines and every panel on the page updates, including
-            what {heldOut ?? 'the field'} actually said.
+            1 is perfect, 0 is no better than chance. Switch engines and every panel on the page updates.
           </Info></h2>
           <div className="control" style={{ position: 'relative' }}>
             <div className="toggle">

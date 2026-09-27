@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import type { Baseline, Validation as V } from '../lib/types'
 import Info from './Info'
+import SeasonAccuracy from './SeasonAccuracy'
 
 interface Props { v: V; baselines: Baseline[]; notes?: string; heldOut: number | null }
 
@@ -10,7 +11,6 @@ const f2 = (x: number | null | undefined) => (x == null || !Number.isFinite(x) ?
  *  baselines it has to beat, and how honest its error bands turned out to be. */
 function Validation({ v, baselines, notes, heldOut }: Props) {
   const years = v.by_year ?? []
-  const maxR = Math.max(0.05, ...years.flatMap((y) => [y.r, y.r_gblup, y.r_pedigree]).filter(Number.isFinite))
   return (
     <div className="panel validation">
       <h2>How much to trust this<Info wide>
@@ -39,36 +39,11 @@ function Validation({ v, baselines, notes, heldOut }: Props) {
         )}
       </p>
       {years.length > 1 && (
-        <div className="tablewrap" style={{ marginBottom: 12 }}>
-          <table className="yeartable">
-            <thead>
-              <tr>
-                <th className="l wrap">Predicted year</th>
-                <th>Families</th>
-                <th>2-Step</th>
-                <th className="l hide-sm" style={{ width: '38%' }}>vs standard GBLUP and pedigree</th>
-                <th className="wrap">Standard</th>
-                <th className="hide-sm">Pedigree</th>
-              </tr>
-            </thead>
-            <tbody>
-              {years.map((y) => (
-                <tr key={y.year} className={y.year === heldOut ? 'swap' : undefined}>
-                  <td className="l wrap">{y.year}{y.year === heldOut ? ' (the decision year)' : ''}</td>
-                  <td>{y.n_families}</td>
-                  <td><b>{f2(y.r)}</b></td>
-                  <td className="l hide-sm">
-                    <span className="rbar" style={{ width: `${Math.max(0, (y.r / maxR) * 100)}%` }} />
-                    <span className="rbar alt" style={{ width: `${Math.max(0, (y.r_gblup / maxR) * 100)}%` }} />
-                  </td>
-                  <td className="muted">{f2(y.r_gblup)}</td>
-                  <td className="muted hide-sm">{f2(y.r_pedigree)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ marginBottom: 12 }}>
+          <SeasonAccuracy years={years} heldOut={heldOut} revealed ceiling={v.ceiling} bare />
           <p className="muted small" style={{ margin: '6px 0 0' }}>
-            Each row is a separate forward test: that year's families predicted from the years before it.
+            Each season is a separate forward test: that year's families predicted from the years before it. Hover a
+            season for its numbers.
             {v.tuned_on && <> Every setting was chosen on earlier seasons; {heldOut}, the decision year, was kept aside as the final test.</>}
           </p>
         </div>

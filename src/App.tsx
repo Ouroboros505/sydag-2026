@@ -7,9 +7,10 @@ import Scenarios from './components/Scenarios'
 import BestKept from './components/BestKept'
 import ThemeToggle from './components/ThemeToggle'
 import { loadJson } from './lib/data'
-import { advanceOrder, backtest, backtestBase, byYieldOrder, captureCurve, evenShare, forecastFrom, frontier, meanOf, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
+import { advanceOrder, byYieldOrder, evenShare, forecastFrom, frontier, score, seasonsFromRows, seasonValues, summarize, withEngine, type Prices } from './lib/econ'
 import type { EngineId, Recommendations, SeasonLines } from './lib/types'
-import Backtest from './components/Backtest'
+import RankStairs from './components/RankStairs'
+import SeasonAccuracy from './components/SeasonAccuracy'
 import Evidence from './components/Evidence'
 import TestSites from './components/TestSites'
 import SeasonForecast from './components/SeasonForecast'
@@ -99,24 +100,7 @@ export default function App() {
   )
   const yieldSet = useMemo(() => new Set(yieldList.map((c) => c.id)), [yieldList])
   const advancedIds = useMemo(() => new Set(summary?.advanced.map((c) => c.id) ?? []), [summary])
-  const btBase = useMemo(() => (dPrices ? backtestBase(scored, dPrices) : null), [scored, dPrices])
-  const bt = useMemo(
-    () => (summary && btBase ? backtest(btBase, summary.advanced, yieldList) : null),
-    [btBase, summary, yieldList],
-  )
   const heldOut = data?.meta.held_out_year ?? null
-  const curve10 = useMemo(() => (dPrices && heldOut ? captureCurve(scored, dPrices) : []), [scored, dPrices, heldOut])
-  const maturity = useMemo(() => {
-    if (!summary) return null
-    const hasActual = scored.some((c) => c.actual_erm != null)
-    const f = hasActual ? (c: { actual_erm?: number }) => c.actual_erm : (c: { pred_erm?: number }) => c.pred_erm
-    const all = meanOf(scored, f)
-    if (all == null) return null
-    const m = meanOf(summary.advanced, f)
-    const y = meanOf(yieldList, f)
-    return { cohort: all, byMargin: m == null ? null : m - all, byYield: y == null ? null : y - all,
-      source: hasActual ? 'actual' as const : 'predicted' as const }
-  }, [scored, summary, yieldList])
 
   if (error) return <main><p>Could not load recommendations.json: {error}</p></main>
   if (!data || !prices || !dPrices || !summary) return <main><p className="muted">Loading…</p></main>
@@ -170,7 +154,10 @@ export default function App() {
               revealed={revealed} onReveal={setRevealed} />
           )}
           {heldOut && <BestKept seasons={seasons} heldOut={heldOut} revealed={revealed} />}
-          {bt && heldOut && <Backtest bt={bt} year={heldOut} k={k} curve={curve10} maturity={maturity} />}
+          {heldOut && <RankStairs seasons={seasons} heldOut={heldOut} revealed={revealed} />}
+          {data.validation.by_year && (
+            <SeasonAccuracy years={data.validation.by_year} heldOut={heldOut} revealed={revealed} ceiling={data.validation.ceiling} />
+          )}
           {data.locations && data.locations.length > 0 && data.season_plots && (
             <TestSites sites={data.locations} year={heldOut} candidates={data.candidates} plots={data.season_plots}
               prices={dPrices} advanced={summary.advanced} />
