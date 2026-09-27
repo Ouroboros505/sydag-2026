@@ -58,4 +58,3 @@ rich
 typer
 python-dotenv
 biopython
-anthropic

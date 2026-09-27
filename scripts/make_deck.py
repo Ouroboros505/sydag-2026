@@ -238,7 +238,7 @@ def main() -> None:
         "Multi-trait economic index with test weight and maturity windows per market.",
     ], 22)
 
-    # speaker notes: the pitch (docs/pitch.md), slide by slide, numbers from the same JSON
+    # speaker notes: the pitch, slide by slide, numbers from the same JSON
     ly = {r["strategy"]: r for r in v.get("strategies", []) if r["year"] == "mean" and r["budget"] == 0.3}
     ours, std = ly.get("ProMaize, rank by $/acre"), ly.get("standard GBLUP, rank by bushels")
     lift = f"{ours['gain'] / std['gain'] - 1:.0%}" if ours and std and std["gain"] > 0 else "n/a"
@@ -270,7 +270,7 @@ def main() -> None:
             + (f"In plots: the standard ranking needed {m08['lines_saved']:,} more lines in {year} to keep the same winners. "
                if m08 else "")
             + f"Recommendation for {year}: the conservative plan, the same share of every family, DNA picking the "
-            "siblings: 4,789 lines in docs/advance_2008.csv, with a one-page memo for the breeding lead. We need from "
+            "siblings: 4,789 lines in the advancement list, with a one-page memo for the breeding lead. We need from "
             "them: their plot budget, their drying costs, and confirmation that lines are judged on GCA. (45 s)",
         "Future Development": "Limits first: the family call is weak in a year like 2008; lodging is barely predictable from "
             "DNA; costs are sliders with typical values. Next: choose crosses, not only lines; location placement once lines "

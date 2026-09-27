@@ -32,3 +32,8 @@ outputs/
 
 # wrangler local state
 .wrangler/
+
+# written by the pipeline from the competition data, which is not ours to publish
+public/recommendations.json
+public/season_lines.json
+docs/advance_2008*.csv

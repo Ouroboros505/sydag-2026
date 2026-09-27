@@ -37,7 +37,7 @@ if [ -x .venv/bin/python ]; then
 import importlib
 mods=['pandas','numpy','scipy','polars','duckdb','sklearn','statsmodels','xgboost','lightgbm',
       'matplotlib','seaborn','plotly','altair','geopandas','rasterio','xarray','shapely','folium',
-      'PIL','skimage','cv2','requests','bs4','openpyxl','fitz','streamlit','fastapi','rich','anthropic']
+      'PIL','skimage','cv2','requests','bs4','openpyxl','fitz','streamlit','fastapi','rich']
 print(' '.join(m for m in mods if not importlib.util.find_spec(m)))
 PY
 )

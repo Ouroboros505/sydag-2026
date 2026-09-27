@@ -33,10 +33,10 @@ good" has nothing to say about next year's. ProMaize splits the question the way
   broad-acre GCA is the right target at this stage.
 
 **Recommendation for 2008.** Plant the same share of every family and let markers choose the
-siblings (`docs/advance_2008.csv`, 4,789 lines, all 157 families). With pedigree this thin, the
+siblings (4,789 lines, all 157 families; `scripts/export_list.py` writes the list). With pedigree this thin, the
 family call is weak: in the two earlier thin seasons (2003, 2007) the even split cost $2.02 and $0.33/acre
 for about twice the families, against $4.5-7.5 with a well-recorded pedigree; in 2008 it cost $0.08. With a well-recorded pedigree, rank every line by $/acre instead
-(`docs/advance_2008_ranked.csv`).
+(the ranked list, from the same script).
 
 **Rigor.** Settings chosen on 2005-2007; 2008 held out. The first frozen model scored 0.120 on 2008;
 three later changes, each chosen on 2005-2007 and applied to every year, are disclosed. A leaky
