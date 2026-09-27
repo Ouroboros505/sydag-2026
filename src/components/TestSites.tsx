@@ -3,6 +3,8 @@ import { geoAlbersUsa, geoPath } from 'd3-geo'
 import { feature, mesh } from 'topojson-client'
 import type { GeometryCollection, Topology } from 'topojson-specification'
 import us from 'us-atlas/states-10m.json'
+// Canada and Mexico near the border (Natural Earth, lakes cut out), so the Ontario sites sit on land
+import neighbors from '../lib/neighbors.json'
 import { fmtUSD, plotMargins, siteResults, type Prices, type Scored, type SiteResult } from '../lib/econ'
 import type { Candidate, SeasonPlots, TestSite } from '../lib/types'
 import Info from './Info'
@@ -64,10 +66,13 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
   const idIndex = useMemo(() => new Map(candidates.map((c, i) => [c.id, i])), [candidates])
 
   // the whole country, so it reads as the US at a glance; the zoom buttons bring the Corn Belt close
-  const { projection, statePaths, borderPath, coastPath } = useMemo(() => {
+  const { projection, statePaths, borderPath, coastPath, neighborPaths } = useMemo(() => {
     const projection = geoAlbersUsa().fitExtent([[12, 12], [W - 12, H - 12]], states)
     const path = geoPath(projection)
-    return { projection, statePaths: states.features.map((f) => path(f) ?? ''), borderPath: path(borders) ?? '', coastPath: path(coast) ?? '' }
+    return {
+      projection, statePaths: states.features.map((f) => path(f) ?? ''), borderPath: path(borders) ?? '', coastPath: path(coast) ?? '',
+      neighborPaths: (neighbors as GeoJSON.FeatureCollection).features.map((f) => path(f) ?? ''),
+    }
   }, [])
   const placed = useMemo(() => {
     const withClim = sites.filter((s) => s.rain != null && s.heat != null)
@@ -174,6 +179,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
             style={{ cursor: view.k > 1 ? 'grab' : undefined, touchAction: view.k > 1 ? 'none' : undefined }}>
             <g style={{ transform: `translate(${W / 2}px, ${H / 2}px) scale(${view.k}) translate(${-view.x}px, ${-view.y}px)`,
               transition: drag.current ? 'none' : 'transform .35s ease' }}>
+            {neighborPaths.map((d, i) => <path key={`n${i}`} d={d} fill="var(--map-land)" opacity={0.55} />)}
             {statePaths.map((d, i) => <path key={i} d={d} fill="var(--map-land)" />)}
             <path d={borderPath} fill="none" stroke="var(--map-line)" strokeWidth={0.9} vectorEffect="non-scaling-stroke" />
             <path d={coastPath} fill="none" stroke="var(--map-edge)" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
@@ -191,6 +197,12 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
             })}
             </g>
           </svg>
+          {mode === 'won' && (
+            <div className="legend" style={{ marginTop: 4 }}>
+              <span><i style={{ background: WON, width: 10, height: 10, borderRadius: '50%' }} />your picks earned more here</span>
+              <span><i style={{ background: LOST, width: 10, height: 10, borderRadius: '50%' }} />earned less</span>
+            </div>
+          )}
           <div className="mapzoom">
             <button onClick={() => zoom(1.6)} aria-label="Zoom in" title="Zoom in" disabled={view.k >= 12}>+</button>
             <button onClick={() => zoom(1 / 1.6)} aria-label="Zoom out" title="Zoom out" disabled={view.k === 1}>−</button>
