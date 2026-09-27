@@ -215,7 +215,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
           </svg>
           {mode === 'won' && (
             <div className="legend" style={{ marginTop: 4, alignItems: 'center' }}>
-              <span>your picks against the dropped lines, $/acre</span>
+              <span>Selected lines' profit in each location, over the dropped lines ($/acre)</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 −${lim}
                 <i style={{ width: 120, height: 8, margin: 0, borderRadius: 4, background: `linear-gradient(to right, ${LOST}, ${EVEN}, ${WON})` }} />
