@@ -13,6 +13,17 @@ const W = 760
 const H = 440
 const WON = '#2e9e4a'
 const LOST = '#d04a3a'
+const EVEN = '#9a988f'
+// a site's colour runs from red through grey ($0) to green with the size of its gain, not just its sign
+const rgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
+const mix = (a: string, b: string, t: number) => {
+  const A = rgb(a), B = rgb(b)
+  return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`
+}
+const gainColor = (g: number, lim: number) => {
+  const t = Math.max(-1, Math.min(1, g / lim))
+  return t >= 0 ? mix(EVEN, WON, t) : mix(EVEN, LOST, -t)
+}
 
 type Climate = 'hot-dry' | 'hot-wet' | 'cool-dry' | 'cool-wet'
 const CLIMATES: Climate[] = ['hot-dry', 'hot-wet', 'cool-dry', 'cool-wet']
@@ -96,6 +107,11 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
   }, [advanced, idIndex, candidates.length])
   const res: SiteResult[] = useMemo(() => siteResults(plots, margins, chosen, sites.length), [plots, margins, chosen, sites.length])
   const maxPlots = useMemo(() => Math.max(1, ...res.map((r) => r.chosen + r.others)), [res])
+  // the colour scale's end: nine sites in ten fall inside it, rounded to $5
+  const lim = useMemo(() => {
+    const a = res.flatMap((r) => (r.gain == null ? [] : [Math.abs(r.gain)])).sort((x, y) => x - y)
+    return a.length ? Math.max(5, Math.round(a[Math.floor(0.9 * (a.length - 1))] / 5) * 5) : 20
+  }, [res])
 
   const byClimate = useMemo(() => {
     const out: Record<string, { scored: number; won: number; gain: number; tests: number; all: number }> = {}
@@ -186,7 +202,7 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
             {placed.map((p) => {
               const r = res[p.i]
               const col = mode === 'won'
-                ? (r.gain == null ? 'var(--text-3)' : r.gain > 0 ? WON : LOST)
+                ? (r.gain == null ? 'var(--text-3)' : gainColor(r.gain, lim))
                 : (p.climate ? COLOR[p.climate] : 'var(--text-3)')
               const empty = r.chosen === 0 || (mode === 'won' && r.gain == null)
               return (
@@ -198,9 +214,13 @@ function TestSites({ sites, year, candidates, plots, prices, advanced }: Props) 
             </g>
           </svg>
           {mode === 'won' && (
-            <div className="legend" style={{ marginTop: 4 }}>
-              <span><i style={{ background: WON, width: 10, height: 10, borderRadius: '50%' }} />your picks earned more here</span>
-              <span><i style={{ background: LOST, width: 10, height: 10, borderRadius: '50%' }} />earned less</span>
+            <div className="legend" style={{ marginTop: 4, alignItems: 'center' }}>
+              <span>your picks against the dropped lines, $/acre</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                −${lim}
+                <i style={{ width: 120, height: 8, margin: 0, borderRadius: 4, background: `linear-gradient(to right, ${LOST}, ${EVEN}, ${WON})` }} />
+                +${lim}
+              </span>
             </div>
           )}
           <div className="mapzoom">
