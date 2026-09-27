@@ -94,8 +94,8 @@ function RankStairs({ seasons, heldOut, revealed, share, years, engine, ceiling 
           <text x={cut - 6} y={T - 6} textAnchor="end" fontSize={11} fontWeight={600} fill={revealed ? 'var(--good)' : 'var(--accent)'}>planted</text>
           <text x={cut + 6} y={T - 6} fontSize={11} fill="var(--text-3)">dropped</text>
 
-          <text x={x(0)} y={H - 8} fontSize={12} fill="var(--text-2)">ranked best</text>
-          <text x={x(1)} y={H - 8} textAnchor="end" fontSize={12} fill="var(--text-2)">ranked worst</text>
+          <text x={x(0)} y={H - 8} fontSize={12} fill="var(--text-2)">each family's best</text>
+          <text x={x(1)} y={H - 8} textAnchor="end" fontSize={12} fill="var(--text-2)">each family's worst</text>
         </svg>
       </div>
       <div className="legend" style={{ marginTop: 2 }}>

@@ -11,7 +11,6 @@ import { advanceOrder, byYieldOrder, evenShare, forecastFrom, frontier, score, s
 import type { EngineId, Recommendations, SeasonLines } from './lib/types'
 import RankStairs from './components/RankStairs'
 import SeasonAccuracy from './components/SeasonAccuracy'
-import Evidence from './components/Evidence'
 import TestSites from './components/TestSites'
 import SeasonForecast from './components/SeasonForecast'
 
@@ -135,7 +134,6 @@ export default function App() {
         </p>
       </div>
 
-      <Evidence v={data.validation} heldOut={heldOut} revealed={revealed} />
 
       <div className="layout">
         <Controls
