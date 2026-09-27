@@ -117,7 +117,14 @@ def main() -> None:
     ph = pd.DataFrame(rows)
     for cluster in ("C1", "C2"):
         ph[ph["CLUSTER"] == int(cluster[1])].to_csv(out / f"{cluster}_Phenotype_Data_V2.csv", index=False)
-    env = pd.DataFrame([{"YEAR": y, "LOC": l, "X07_PRCP": rng.gamma(3, 30), "X07_TAVG": rng.normal(24, 2)}
+    # the organizers' weather and soil columns, so every step of the real pipeline runs on the fixture
+    soil = {l: {"clay_0_5cm": rng.uniform(10, 40), "sand_0_5cm": rng.uniform(10, 60), "soc_0_5cm": rng.uniform(5, 40),
+                "phh2o_0_5cm": rng.uniform(5.5, 7.5), "nitrogen_0_5cm": rng.uniform(1, 5)} for l in LOCS}
+    env = pd.DataFrame([{"YEAR": y, "LOC": l,
+                         **{f"X0{m}_PRCP": rng.gamma(3, 30) for m in range(4, 9)},
+                         **{f"X0{m}_CLDD": rng.gamma(4, 60) for m in range(6, 9)},
+                         **{f"X0{m}_DP10": int(rng.poisson(8)) for m in range(6, 9)},
+                         "X07_TAVG": rng.normal(24, 2), **soil[l]}
                         for y in YEARS for l in LOCS])
     env.to_csv(out / "environmental_features.csv", index=False)
     print(f"synthetic program written under {out}: {ph['LINE_UNIQUE_ID'].nunique():,} lines, "
